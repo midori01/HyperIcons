@@ -1,13 +1,13 @@
 # HyperIcons
 
 [![Version](https://img.shields.io/badge/version-v5.3.2%20(Build%2029)-blue.svg)](https://github.com/midori01/HyperIcons/releases)
-[![Target OS](https://img.shields.io/badge/HyperOS-3.0-orange.svg)](#)
+[![Target OS](https://img.shields.io/badge/HyperOS-3.3%20Global-orange.svg)](#)
 [![Android](https://img.shields.io/badge/Android-17%20(API%2037)-green.svg)](#)
 [![Framework](https://img.shields.io/badge/Framework-LSPosed-purple.svg)](#)
 [![Oracle Verification](https://img.shields.io/badge/Oracle%20Tests-1%2C409%2C935%20Passed%20(100%25)-brightgreen.svg)](tests/)
 [![License](https://img.shields.io/badge/License-Apache--2.0-yellow.svg)](LICENSE)
 
-**HyperIcons** is an advanced LSPosed module crafted specifically for **Xiaomi HyperOS 3.0 (Android 17, API 37)**. It intercepts the SystemUI cellular icon dispatch pipeline and modem service frameworks to bypass carrier restrictions, delivering granular status bar customization for 5G Carrier Aggregation, legacy RAT indicators, HD voice, Wi-Fi calling, two-tier dual-SIM configurations, and hardware-level cellular feature persistence.
+**HyperIcons** is an advanced LSPosed module crafted specifically for **Xiaomi HyperOS 3.3 Global (Android 17, API 37)**. It intercepts the SystemUI cellular icon dispatch pipeline and modem service frameworks to bypass carrier restrictions, delivering granular status bar customization for 5G Carrier Aggregation, legacy RAT indicators, HD voice, Wi-Fi calling, two-tier dual-SIM configurations, and hardware-level cellular feature persistence.
 
 ---
 
@@ -97,7 +97,7 @@ bash run_tests.sh
 ## 3. Installation & Usage
 
 1. Download the latest `HyperIcons.apk` from [GitHub Releases](https://github.com/midori01/HyperIcons/releases).
-2. Install the APK on a rooted device running **HyperOS 3.0 (Android 17)**.
+2. Install the APK on a rooted device running **HyperOS 3.3 Global (Android 17, API 37)**.
 3. Open **LSPosed Manager** and enable the module. Recommended scopes are automatically declared:
    - `System UI (com.android.systemui)`
    - `Phone Services (com.android.phone)`

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HyperIcons</string>
+    <string name="xposed_description">HyperOS 状态栏网络数据角标增强</string>
+
+    <string name="title_header">HyperIcons</string>
+    <string name="subtitle_header">HyperOS 状态栏网络图标定制</string>
+
+    <string name="sec_5g_ca_title">5G 载波聚合图标</string>
+    <string name="sec_5g_ca_desc">当手机处于 5G 载波聚合或 5G-A 大带宽网络时的角标显示</string>
+    <string name="opt_default">系统默认</string>
+    <string name="opt_5ga">5GA</string>
+    <string name="opt_5g_plus">5G+</string>
+    <string name="opt_5g_plus_plus">5G++</string>
+    <string name="opt_5guwb">5GUWB</string>
+    <string name="opt_5ge">5Ge</string>
+    <string name="opt_5g_6rx">5G 6Rx</string>
+    <string name="opt_5g_plus_plus_6rx">5G++ 6Rx</string>
+    <string name="opt_5guwb_6rx">5GUWB 6Rx</string>
+
+    <string name="sec_5g_basic_title">基础 5G 显示模式</string>
+    <string name="sec_5g_basic_desc">普通单载波 5G 驻留时的角标显示模式</string>
+    <string name="opt_5g_default">系统默认 (5G)</string>
+    <string name="opt_5g_follow_ca">跟随 5G CA 图标</string>
+
+    <string name="sec_capsule_style_title">图标胶囊样式</string>
+    <string name="sec_capsule_style_desc">将 5G/4G 图标统一封装为 9.0dp 圆角胶囊徽章，双载波聚合 CA 自动激活发光微光呼吸</string>
+    <string name="opt_capsule_default">系统默认 (纯排版文字)</string>
+    <string name="opt_capsule_korean">韩国胶囊徽章 (开启)</string>
+
+    <string name="sec_4g_title">4G / LTE 样式定制</string>
+    <string name="sec_4g_desc">4G 单载波与载波聚合的角标展示风格</string>
+    <string name="opt_4g_default">系统默认</string>
+    <string name="opt_4g_force_4g">强制 4G / 4G+</string>
+    <string name="opt_4g_force_lte">强制 LTE / LTE+</string>
+    <string name="opt_4g_force_4g_lte">强制 4G LTE / 4G LTE+</string>
+    <string name="opt_4g_force_45g">强制 4.5G / 4.5G+</string>
+    <string name="opt_4g_force_ltea">强制 LTE / LTE-A</string>
+
+    <string name="sec_always_show_rat_title">Wi-Fi 连接时显示数据图标</string>
+    <string name="sec_always_show_rat_desc">控制连接 Wi-Fi 时是否依然在状态栏显示移动数据网络类型图标 (RAT)</string>
+    <string name="opt_always_show_rat_default">系统默认</string>
+    <string name="opt_always_show_rat_always">始终显示数据图标</string>
+    <string name="opt_always_show_rat_wifi_hide">连接 Wi-Fi 时隐藏</string>
+
+    <string name="sec_volte_title">VoLTE / VoNR 图标样式</string>
+    <string name="sec_volte_desc">自由切换 VoLTE / VoNR 图标形态或完全隐藏</string>
+    <string name="opt_volte_default">系统默认</string>
+    <string name="opt_volte_intl_solid">实心胶囊</string>
+    <string name="opt_volte_intl_4g">VoLTE 4G</string>
+    <string name="opt_volte_intl_hollow">空心无框</string>
+    <string name="opt_volte_intl_hd_voice">HD Voice</string>
+    <string name="opt_volte_china_hd">经典大 HD</string>
+    <string name="opt_volte_china_hd_plus">中国标准大 HD+</string>
+    <string name="opt_volte_intl_vo4g">Vo4G</string>
+    <string name="opt_volte_hide">完全隐藏</string>
+
+    <string name="sec_vowifi_title">VoWiFi / Wi-Fi 通话图标</string>
+    <string name="sec_vowifi_desc">切换 VoWiFi 图标显示样式或完全隐藏</string>
+    <string name="opt_vowifi_default">系统默认</string>
+    <string name="opt_vowifi_standard">标准 VoWiFi</string>
+    <string name="opt_vowifi_wifi">Wi-Fi 弧线听筒</string>
+    <string name="opt_vowifi_call">卡槽序号话筒</string>
+    <string name="opt_vowifi_hide">隐藏 VoWiFi</string>
+
+    <string name="sec_roaming_title">国际漫游图标 (R)</string>
+    <string name="sec_roaming_desc">控制漫游指示符样式，或隐藏以节省状态栏空间</string>
+    <string name="opt_roaming_default">系统默认</string>
+    <string name="opt_roaming_small">紧凑角标小 R</string>
+    <string name="opt_roaming_hide">隐藏漫游图标</string>
+
+    <string name="status_active_desc">模块已激活 · Direct Punch 毫秒级重绘管线就绪</string>
+    <string name="status_inactive_desc">模块就绪 · 等待 SystemUI 加载 (请在 LSPosed 中勾选 SystemUI 并重启)</string>
+
+    <string name="btn_refresh_text">立即同步并刷新状态栏</string>
+    <string name="btn_restart_sysui_text">一键重启 SystemUI</string>
+    <string name="tip_footer">配置即选即存。点击上方「立即同步」即可 0 毫秒热生效（无需重启 SystemUI，避免触发锁屏重载）。仅在必要时点击下方重启。</string>
+
+    <string name="toast_refresh_success">刷新成功</string>
+    <string name="toast_restart_sysui_requesting">正在请求 Root 重启 SystemUI…</string>
+    <string name="toast_restart_sysui_success">已成功触发 SystemUI 重启</string>
+    <string name="toast_restart_sysui_failed">重启 SystemUI 失败，请检查是否已授权 Root 权限</string>
+
+    <string name="mode_unified">双卡统一设置</string>
+    <string name="mode_separate">双卡独立设置</string>
+    <string name="tab_sub_sim1">SIM 1</string>
+    <string name="tab_sub_sim2">SIM 2 / eSIM</string>
+    <string name="hint_mode_unified">当前模式：双卡统一设置（对 SIM 1 与 SIM 2 / eSIM 同步生效）</string>
+    <string name="hint_separate_sim1">当前正在独立配置：SIM 1 (Slot 0)</string>
+    <string name="hint_separate_sim2">当前正在独立配置：SIM 2 / eSIM (Slot 1)</string>
+
+    <string name="btn_experimental_title">🧪 实验性功能</string>
+    <string name="btn_back">返回</string>
+    <string name="title_experimental">实验性功能</string>
+    <string name="subtitle_experimental">高级协议与基带底层特性调优</string>
+    <string name="pref_5ga_keepalive_title">蜂窝网络与 5G+ 特性锁定保活</string>
+    <string name="pref_5ga_keepalive_desc">在 SIM 2 / eSIM (Slot 1) 切换时，自动按您原有的设置锁定保活 3GPP 协议版本、5G+、VoNR、双卡双通及强制 APN 编辑</string>
+    <string name="status_enabled">[已启用]</string>
+    <string name="status_disabled_default">[已关闭 (默认)]</string>
+    <string name="experimental_explain_title">功能背景与工作原理</string>
+    <string name="experimental_explain_content">【痛点背景】\n双卡槽+eSIM 设备（如小米 17 系列国际版等）在通过拨号盘输入 *#*#7469542#*#* 开启隐藏调试菜单后，可在「系统设置 -&gt; 开发者选项 -&gt; 蜂窝网络 / 5G+特性中心」中针对卡槽配置 3GPP 协议版本、5G-A、VoNR 高清通话、双卡双通 (DSDA) 以及强制 APN 编辑等高级参数。但在 SIM 2 / eSIM (Slot 1) 执行互相切换时，底层高通基带进行 UICC 断电与重新枚举，会将挥发性寄存器重置，导致 3GPP 协议版本被强制打回默认的 R16，且 5G-A、1024QAM 高阶调制 (HOM)、超级上行 (SWUL)、全功率发射、VoNR、双卡双通以及强制 APN 编辑等已调配的开关状态均会被冲掉重置。\n\n【实现原理】\n开启本功能后，模块将在电话服务底层（com.android.phone）智能监听 SIM 2 / eSIM (Slot 1) 就绪与运营商配置载入事件。模块会持续记忆您在隐藏调试菜单及系统设置中所保存的各项偏好，在卡槽切换后基带状态机就绪的毫秒窗口内，采用多阶段自愈引擎自动向高通基带及电话框架重写您原有的全部配置值（严格尊重用户原配置：原先设定的 3GPP 协议版本精准回写，原先开启的开关自动恢复开启，原先关闭的开关保持关闭），实现无缝平滑接力。\n\n【免重启说明】\nSIM 2 / eSIM (Slot 1) 切换时基带已完成协议栈与无线信道重建，模块在卡槽初始化时即刻向基带更新并生效原配置，随后在初始附着 (RRC Attach) 中直接按您预设的参数与基站协商，彻底免去手动重新输入暗码进入开发者选项重新调配，更无需重启手机。</string>
+    <string name="experimental_tip_active">运行中：电话底层拦截已就绪，SIM 2 / eSIM (Slot 1) 切换时将自动按原有设置锁定保活各项特性。</string>
+    <string name="experimental_tip_inactive">已关闭：保持系统原生行为，SIM 2 / eSIM (Slot 1) 切换时遵循基带初始默认值。</string>
+</resources>

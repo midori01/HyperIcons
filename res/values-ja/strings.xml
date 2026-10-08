@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HyperIcons</string>
+    <string name="xposed_description">HyperOS ステータスバーモバイルデータアイコン拡張</string>
+
+    <string name="title_header">HyperIcons</string>
+    <string name="subtitle_header">HyperOS ステータスバーネットワークアイコン設定</string>
+
+    <string name="sec_5g_ca_title">5G キャリアアグリゲーションアイコン</string>
+    <string name="sec_5g_ca_desc">5G キャリアアグリゲーションまたは 5G-A 接続時のアイコン表示</string>
+    <string name="opt_default">システムデフォルト</string>
+    <string name="opt_5ga">5GA</string>
+    <string name="opt_5g_plus">5G+</string>
+    <string name="opt_5g_plus_plus">5G++</string>
+    <string name="opt_5guwb">5GUWB</string>
+    <string name="opt_5ge">5Ge</string>
+    <string name="opt_5g_6rx">5G 6Rx</string>
+    <string name="opt_5g_plus_plus_6rx">5G++ 6Rx</string>
+    <string name="opt_5guwb_6rx">5GUWB 6Rx</string>
+
+    <string name="sec_5g_basic_title">基本 5G 表示モード</string>
+    <string name="sec_5g_basic_desc">通常の単一搬送波 5G 接続時のアイコン表示</string>
+    <string name="opt_5g_default">システムデフォルト (5G)</string>
+    <string name="opt_5g_follow_ca">5G CA アイコンに追随</string>
+
+    <string name="sec_capsule_style_title">アイコンカプセルバッジ</string>
+    <string name="sec_capsule_style_desc">5G/4Gアイコンを9.0dp角丸カプセルバッジに統一、CA通信時は微光ブレス発光効果を付与</string>
+    <string name="opt_capsule_default">システム標準 (フラットテキスト)</string>
+    <string name="opt_capsule_korean">韓国カプセルバッジ (有効)</string>
+
+    <string name="sec_4g_title">4G / LTE カスタマイズ</string>
+    <string name="sec_4g_desc">4G および LTE キャリアアグリゲーションの表示スタイル</string>
+    <string name="opt_4g_default">システムデフォルト</string>
+    <string name="opt_4g_force_4g">4G / 4G+ を強制</string>
+    <string name="opt_4g_force_lte">LTE / LTE+ を強制</string>
+    <string name="opt_4g_force_4g_lte">4G LTE / 4G LTE+ を強制</string>
+    <string name="opt_4g_force_45g">4.5G / 4.5G+ を強制</string>
+    <string name="opt_4g_force_ltea">LTE / LTE-A を強制</string>
+
+    <string name="sec_always_show_rat_title">Wi-Fi 接続時のデータアイコン表示</string>
+    <string name="sec_always_show_rat_desc">Wi-Fi 接続時にもモバイルデータアイコン (RAT) を表示し続けるかを設定</string>
+    <string name="opt_always_show_rat_default">システムデフォルト</string>
+    <string name="opt_always_show_rat_always">常にデータアイコンを表示</string>
+    <string name="opt_always_show_rat_wifi_hide">Wi-Fi 接続時は非表示</string>
+
+    <string name="sec_volte_title">VoLTE / VoNR アイコンスタイル</string>
+    <string name="sec_volte_desc">VoLTE / VoNR アイコンスタイルの切り替えまたは完全非表示</string>
+    <string name="opt_volte_default">システムデフォルト</string>
+    <string name="opt_volte_intl_solid">ソリッドカプセル</string>
+    <string name="opt_volte_intl_4g">VoLTE 4G</string>
+    <string name="opt_volte_intl_hollow">フレームなし（中空）</string>
+    <string name="opt_volte_intl_hd_voice">HD Voice</string>
+    <string name="opt_volte_china_hd">クラシック大型 HD</string>
+    <string name="opt_volte_china_hd_plus">クラシック特大 HD+</string>
+    <string name="opt_volte_intl_vo4g">Vo4G</string>
+    <string name="opt_volte_hide">完全に非表示</string>
+
+    <string name="sec_vowifi_title">VoWiFi / Wi-Fi 通話アイコン</string>
+    <string name="sec_vowifi_desc">VoWiFi アイコンの表示スタイルを切り替えるか完全に非表示にします</string>
+    <string name="opt_vowifi_default">システムデフォルト</string>
+    <string name="opt_vowifi_standard">標準 VoWiFi</string>
+    <string name="opt_vowifi_wifi">Wi-Fi 波形受話器</string>
+    <string name="opt_vowifi_call">SIM スロット番号受話器</string>
+    <string name="opt_vowifi_hide">VoWiFi を非表示</string>
+
+    <string name="sec_roaming_title">国際ローミングアイコン (R)</string>
+    <string name="sec_roaming_desc">ローミング表示のスタイルを制御するか非表示にして省スペース化します</string>
+    <string name="opt_roaming_default">システムデフォルト</string>
+    <string name="opt_roaming_small">コンパクト小 R</string>
+    <string name="opt_roaming_hide">ローミングアイコンを非表示</string>
+
+    <string name="status_active_desc">モジュール有効 · Direct Punch 高速パイプライン準備完了</string>
+    <string name="status_inactive_desc">モジュール準備完了 · SystemUI 読み込み待機中 (LSPosed でスコープ確認)</string>
+
+    <string name="btn_refresh_text">ステータスバーを即時同期・更新</string>
+    <string name="btn_restart_sysui_text">SystemUI を再起動</string>
+    <string name="tip_footer">設定は自動保存されます。上の「即時同期」をタップすれば SystemUI を再起動せずに瞬時に反映されます（ロック画面の再ロードを回避）。必要な場合のみ下の再起動をご利用ください。</string>
+
+    <string name="toast_refresh_success">更新に成功しました</string>
+    <string name="toast_restart_sysui_requesting">Root 権限で SystemUI の再起動を要求中…</string>
+    <string name="toast_restart_sysui_success">SystemUI の再起動を実行しました</string>
+    <string name="toast_restart_sysui_failed">SystemUI の再起動に失敗しました。Root 権限が付与されているか確認してください</string>
+
+    <string name="mode_unified">デュアルSIM統一設定</string>
+    <string name="mode_separate">個別設定</string>
+    <string name="tab_sub_sim1">SIM 1</string>
+    <string name="tab_sub_sim2">SIM 2 / eSIM</string>
+    <string name="hint_mode_unified">現在のモード：SIM 1 と SIM 2 / eSIM に統一設定を適用中</string>
+    <string name="hint_separate_sim1">個別設定中：SIM 1 (Slot 0)</string>
+    <string name="hint_separate_sim2">個別設定中：SIM 2 / eSIM (Slot 1)</string>
+
+    <string name="btn_experimental_title">🧪 実験的機能</string>
+    <string name="btn_back">戻る</string>
+    <string name="title_experimental">実験的機能</string>
+    <string name="subtitle_experimental">高度なプロトコルおよびモデム最適化</string>
+    <string name="pref_5ga_keepalive_title">モバイルネットワークと 5G+ 機能ロック保持</string>
+    <string name="pref_5ga_keepalive_desc">SIM 2 / eSIM (Slot 1) 切替時に、元の設定に基づき 3GPP プロトコルバージョン、5G+、VoNR、DSDA、強制APN編集を自動保持します</string>
+    <string name="status_enabled">[有効]</string>
+    <string name="status_disabled_default">[無効 (デフォルト)]</string>
+    <string name="experimental_explain_title">機能の背景と動作原理</string>
+    <string name="experimental_explain_content">【課題と背景】\nデュアル SIM スロット + eSIM 構成の端末（Xiaomi 17 シリーズグローバル版等）では、ダイヤラーで「*#*#7469542#*#*」を入力して非表示メニューを有効化することで、「システム設定 -&gt; 開発者向けオプション -&gt; モバイルネットワーク / 5G+機能センター」から 3GPP プロトコルバージョン、5G-A、VoNR、DSDA（デュアルSIMデュアルアクティブ）、強制APN編集などの高度な通信パラメータを設定できます。しかし、SIM 2 / eSIM (Slot 1) を切り替える際、クアルコム製モデムが UICC の電源遮断と再列挙を行うため揮発性レジスタがリセットされ、3GPP プロトコルバージョンがデフォルトの R16 に強制リセットされるとともに、5G-A、1024QAM (HOM)、SWUL（スーパーアップリンク）、フルパワーモード、VoNR、DSDA、強制APN編集などの設定済みスイッチがすべて初期化されてしまいます。\n\n【動作原理】\n本機能を有効にすると、モジュールが電話サービス層（com.android.phone）で SIM 2 / eSIM (Slot 1) の準備完了およびキャリア設定の読み込みを検知します。モジュールは非表示デバッグメニューやシステム設定でユーザーが設定した各パラメータを記憶し、切り替え直後のミリ秒単位のタイミングで、マルチフェーズ自己修復エンジンがモデムおよび電話フレームワークへ元の設定値を自動再書き込みします（元の設定を厳格に尊重：設定していた 3GPP バージョンを忠実に再適用、有効にしていたスイッチは有効に復元、無効の項目は無効状態を維持）。\n\n【再起動不要について】\nSIM 2 / eSIM (Slot 1) の切り替え時にモデムはすでにプロトコルスタックを再構築しているため、初期化時に直接モデムへ元の設定を反映させることで、初期接続（RRC Attach）時に設定済みのパラメータで基地局と直接ネゴシエーションされます。暗証コードを再入力して開発者向けオプションを開き直したり、端末を再起動したりする必要はありません。</string>
+    <string name="experimental_tip_active">動作中: 電話サービス層のフックが待機中です。SIM 2 / eSIM (Slot 1) 切り替え時に元の設定に基づき各機能が自動保持されます。</string>
+    <string name="experimental_tip_inactive">無効: システム標準の挙動を維持します。SIM 2 / eSIM (Slot 1) 切り替え時はモデムの初期値に従います。</string>
+</resources>

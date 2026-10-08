@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#0066FF</color>
+    <color name="primary_dark">#0052CC</color>
+    <color name="accent">#0066FF</color>
+    <color name="background">#F2F4F7</color>
+    <color name="card_bg">#FFFFFF</color>
+    <color name="card_stroke">#E5E7EB</color>
+    <color name="text_title">#111827</color>
+    <color name="text_body">#374151</color>
+    <color name="text_caption">#6B7280</color>
+    <color name="radio_checked">#0066FF</color>
+    <color name="btn_bg">#0066FF</color>
+    <color name="btn_text">#FFFFFF</color>
+    <color name="btn_secondary_bg">#374151</color>
+    <color name="btn_secondary_text">#FFFFFF</color>
+</resources>

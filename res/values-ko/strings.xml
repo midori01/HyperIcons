@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HyperIcons</string>
+    <string name="xposed_description">HyperOS 상태표시줄 모바일 데이터 아이콘 강화 모듈</string>
+
+    <string name="title_header">HyperIcons</string>
+    <string name="subtitle_header">HyperOS 상태표시줄 네트워크 아이콘 커스텀</string>
+
+    <string name="sec_5g_ca_title">5G 캐리어 어그리게이션 아이콘</string>
+    <string name="sec_5g_ca_desc">5G 주파수 묶음(CA) 또는 5G-A 환경 연결 시 아이콘 표시 스타일</string>
+    <string name="opt_default">시스템 기본값</string>
+    <string name="opt_5ga">5GA</string>
+    <string name="opt_5g_plus">5G+</string>
+    <string name="opt_5g_plus_plus">5G++</string>
+    <string name="opt_5guwb">5GUWB</string>
+    <string name="opt_5ge">5Ge</string>
+    <string name="opt_5g_6rx">5G 6Rx</string>
+    <string name="opt_5g_plus_plus_6rx">5G++ 6Rx</string>
+    <string name="opt_5guwb_6rx">5GUWB 6Rx</string>
+
+    <string name="sec_5g_basic_title">기본 5G 표시 모드</string>
+    <string name="sec_5g_basic_desc">일반 단일 대역 5G 연결 시 아이콘 표시 스타일</string>
+    <string name="opt_5g_default">시스템 기본값 (5G)</string>
+    <string name="opt_5g_follow_ca">5G CA 아이콘 따름</string>
+
+    <string name="sec_capsule_style_title">아이콘 캡슐 배지 스타일</string>
+    <string name="sec_capsule_style_desc">5G/4G 아이콘을 9.0dp 둥근 캡슐 배지로 통합하고, CA 연결 시 브리딩 발광 효과 적용</string>
+    <string name="opt_capsule_default">시스템 기본 (플랫 텍스트)</string>
+    <string name="opt_capsule_korean">한국 캡슐 배지 (활성화)</string>
+
+    <string name="sec_4g_title">4G / LTE 스타일 커스텀</string>
+    <string name="sec_4g_desc">4G 단일 대역 및 CA 환경 아이콘 표시 스타일</string>
+    <string name="opt_4g_default">시스템 기본값</string>
+    <string name="opt_4g_force_4g">4G / 4G+ 강제</string>
+    <string name="opt_4g_force_lte">LTE / LTE+ 강제</string>
+    <string name="opt_4g_force_4g_lte">4G LTE / 4G LTE+ 고정</string>
+    <string name="opt_4g_force_45g">4.5G / 4.5G+ 강제</string>
+    <string name="opt_4g_force_ltea">LTE / LTE-A 고정</string>
+
+    <string name="sec_always_show_rat_title">Wi-Fi 연결 시 데이터 아이콘 표시</string>
+    <string name="sec_always_show_rat_desc">Wi-Fi 연결 중에도 모바일 데이터 네트워크 유형 아이콘(RAT)을 계속 표시할지 설정</string>
+    <string name="opt_always_show_rat_default">시스템 기본값</string>
+    <string name="opt_always_show_rat_always">항상 데이터 아이콘 표시</string>
+    <string name="opt_always_show_rat_wifi_hide">Wi-Fi 연결 시 숨기기</string>
+
+    <string name="sec_volte_title">VoLTE / VoNR 아이콘 스타일</string>
+    <string name="sec_volte_desc">VoLTE / VoNR 아이콘 스타일 전환 또는 완전 숨김</string>
+    <string name="opt_volte_default">시스템 기본값</string>
+    <string name="opt_volte_intl_solid">솔리드 캡슐</string>
+    <string name="opt_volte_intl_4g">VoLTE 4G</string>
+    <string name="opt_volte_intl_hollow">프레임 없음 (외곽선)</string>
+    <string name="opt_volte_intl_hd_voice">HD Voice</string>
+    <string name="opt_volte_china_hd">클래식 대형 HD</string>
+    <string name="opt_volte_china_hd_plus">클래식 대형 HD+</string>
+    <string name="opt_volte_intl_vo4g">Vo4G</string>
+    <string name="opt_volte_hide">완전 숨김</string>
+
+    <string name="sec_vowifi_title">VoWiFi / Wi-Fi 통화 아이콘</string>
+    <string name="sec_vowifi_desc">VoWiFi 아이콘 표시 스타일을 전환하거나 완전히 숨깁니다</string>
+    <string name="opt_vowifi_default">시스템 기본값</string>
+    <string name="opt_vowifi_standard">표준 VoWiFi</string>
+    <string name="opt_vowifi_wifi">Wi-Fi 웨이브 수화기</string>
+    <string name="opt_vowifi_call">SIM 슬롯 번호 수화기</string>
+    <string name="opt_vowifi_hide">VoWiFi 숨기기</string>
+
+    <string name="sec_roaming_title">국제 로밍 아이콘 (R)</string>
+    <string name="sec_roaming_desc">로밍 표시 스타일을 제어하거나 숨겨 상태 표시줄 공간을 절약합니다</string>
+    <string name="opt_roaming_default">시스템 기본값</string>
+    <string name="opt_roaming_small">컴팩트 소형 R</string>
+    <string name="opt_roaming_hide">로밍 아이콘 숨기기</string>
+
+    <string name="status_active_desc">모듈 활성화됨 · Direct Punch 초고속 파이프라인 준비 완료</string>
+    <string name="status_inactive_desc">모듈 준비 완료 · SystemUI 로드 대기 중 (LSPosed 범위 확인)</string>
+
+    <string name="btn_refresh_text">상태표시줄 즉시 동기화 및 새로고침</string>
+    <string name="btn_restart_sysui_text">SystemUI 재시작</string>
+    <string name="tip_footer">설정이 즉시 저장됩니다. 상단의 \'즉시 동기화\'를 누르면 SystemUI 재부팅 없이 즉시 적용됩니다 (잠금 화면 재로드 방지). 필요한 경우에만 아래 재시작을 이용하세요.</string>
+
+    <string name="toast_refresh_success">새로고침 완료</string>
+    <string name="toast_restart_sysui_requesting">Root 권한으로 SystemUI 재시작 요청 중…</string>
+    <string name="toast_restart_sysui_success">SystemUI 재시작 명령을 성공적으로 전송했습니다</string>
+    <string name="toast_restart_sysui_failed">SystemUI 재시작 실패. Root 권한이 허용되어 있는지 확인해 주세요</string>
+
+    <string name="mode_unified">듀얼 SIM 통합 설정</string>
+    <string name="mode_separate">개별 설정</string>
+    <string name="tab_sub_sim1">SIM 1</string>
+    <string name="tab_sub_sim2">SIM 2 / eSIM</string>
+    <string name="hint_mode_unified">현재 모드: SIM 1 및 SIM 2 / eSIM에 통합 설정 동시 적용</string>
+    <string name="hint_separate_sim1">개별 설정 중: SIM 1 (Slot 0)</string>
+    <string name="hint_separate_sim2">개별 설정 중: SIM 2 / eSIM (Slot 1)</string>
+
+    <string name="btn_experimental_title">🧪 실험적 기능</string>
+    <string name="btn_back">뒤로</string>
+    <string name="title_experimental">실험적 기능</string>
+    <string name="subtitle_experimental">고급 프로토콜 및 모뎀 저수준 최적화</string>
+    <string name="pref_5ga_keepalive_title">셀룰러 네트워크 및 5G+ 특성 자동 잠금 유지</string>
+    <string name="pref_5ga_keepalive_desc">SIM 2 / eSIM (Slot 1) 전환 시 기존 설정을 기반으로 3GPP 프로토콜 버전, 5G+, VoNR, DSDA, 강제 APN 편집을 자동 유지합니다</string>
+    <string name="status_enabled">[활성화됨]</string>
+    <string name="status_disabled_default">[비활성화됨 (기본값)]</string>
+    <string name="experimental_explain_title">기능 배경 및 작동 원리</string>
+    <string name="experimental_explain_content">【문제 배경】\n듀얼 SIM 슬롯 + eSIM 기기(예: Xiaomi 17 시리즈 글로벌 버전 등)에서 다이얼러에 *#*#7469542#*#*를 입력하여 숨겨진 디버그 메뉴를 활성화하면 「시스템 설정 -&gt; 개발자 옵션 -&gt; 셀룰러 네트워크 / 5G+ 특성 센터」에서 3GPP 프로토콜 버전, 5G-A, VoNR 고음질 통화, DSDA(듀얼 SIM 듀얼 액티브), 강제 APN 편집 등의 고급 매개변수를 슬롯별로 구성할 수 있습니다. 그러나 SIM 2 / eSIM (Slot 1) 간 전환 시 퀄컴 모뎀이 UICC 전원 리셋 및 재열거를 수행하여 휘발성 레지스터를 초기화합니다. 이로 인해 3GPP 프로토콜 버전이 기본값인 R16으로 강제 복원되고, 5G-A, 1024QAM(HOM), 슈퍼 업링크(SWUL), 풀 파워 모드, VoNR, DSDA, 강제 APN 편집 등 설정해 둔 스위치가 모두 초기화됩니다.\n\n【구현 원리】\n이 기능을 켜면 모듈이 전화 서비스 계층(com.android.phone)에서 SIM 2 / eSIM (Slot 1) 활성화 및 통신사 구성 로드 이벤트를 감지합니다. 모듈은 숨겨진 개발자 메뉴와 시스템 설정에서 구성된 사용자의 기본 설정을 지속적으로 기억하며, 슬롯 전환 직후 모뎀 상태 머신이 준비되는 밀리초 단위의 타이밍에 다단계 자가 치유 엔진이 퀄컴 모뎀 및 전화 프레임워크에 기존 설정을 자동으로 다시 주입합니다 (사용자의 기존 설정을 엄격히 존중: 이전에 설정한 3GPP 프로토콜 버전을 정밀하게 다시 적용하고, 켜져 있던 스위치는 다시 켜며, 꺼져 있던 항목은 꺼진 상태를 유지).\n\n【재부팅 불필요 안내】\nSIM 2 / eSIM (Slot 1) 전환 시 모뎀은 이미 무선 프로토콜 스택과 채널을 재구축하므로, 슬롯 초기화 시 모뎀에 직접 기존 설정을 업데이트하면 초기 접속(RRC Attach) 시 사전 설정된 매개변수로 기지국과 직접 협상되어 즉시 적용됩니다. 히든 메뉴에 진입하기 위해 코드를 다시 입력하거나 휴대폰을 재부팅할 필요가 없습니다.</string>
+    <string name="experimental_tip_active">실행 중: 전화 저수준 후킹이 준비되었습니다. SIM 2 / eSIM (Slot 1) 전환 시 기존 설정을 기반으로 모든 특성이 자동으로 유지됩니다.</string>
+    <string name="experimental_tip_inactive">비활성화됨: 시스템 기본 동작을 유지하며, SIM 2 / eSIM (Slot 1) 전환 시 모뎀 기본값에 따릅니다.</string>
+</resources>

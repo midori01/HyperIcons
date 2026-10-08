@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HyperIcons</string>
+    <string name="xposed_description">HyperOS status bar cellular data badge enhancer</string>
+
+    <string name="title_header">HyperIcons</string>
+    <string name="subtitle_header">HyperOS Status Bar Network Icon Customization</string>
+
+    <string name="sec_5g_ca_title">5G Carrier Aggregation Icon</string>
+    <string name="sec_5g_ca_desc">Badge style when connected to 5G Carrier Aggregation or 5G-A network</string>
+    <string name="opt_default">System Default</string>
+    <string name="opt_5ga">5GA</string>
+    <string name="opt_5g_plus">5G+</string>
+    <string name="opt_5g_plus_plus">5G++</string>
+    <string name="opt_5guwb">5GUWB</string>
+    <string name="opt_5ge">5Ge</string>
+    <string name="opt_5g_6rx">5G 6Rx</string>
+    <string name="opt_5g_plus_plus_6rx">5G++ 6Rx</string>
+    <string name="opt_5guwb_6rx">5GUWB 6Rx</string>
+
+    <string name="sec_5g_basic_title">Base 5G Display Mode</string>
+    <string name="sec_5g_basic_desc">Badge style when on single-carrier standard 5G</string>
+    <string name="opt_5g_default">System Default (5G)</string>
+    <string name="opt_5g_follow_ca">Follow 5G CA Icon</string>
+
+    <string name="sec_capsule_style_title">Icon Capsule Badge Style</string>
+    <string name="sec_capsule_style_desc">Enclose 5G/4G network icons in a 9.0dp rounded capsule badge. Dual-carrier CA icons pulse with breathing glow</string>
+    <string name="opt_capsule_default">System Default (Flat Text)</string>
+    <string name="opt_capsule_korean">Korean Capsule Badge (Active)</string>
+
+    <string name="sec_4g_title">4G / LTE Customization</string>
+    <string name="sec_4g_desc">Badge display style for 4G and LTE carrier aggregation</string>
+    <string name="opt_4g_default">System Default</string>
+    <string name="opt_4g_force_4g">Force 4G / 4G+</string>
+    <string name="opt_4g_force_lte">Force LTE / LTE+</string>
+    <string name="opt_4g_force_4g_lte">Force 4G LTE / 4G LTE+</string>
+    <string name="opt_4g_force_45g">Force 4.5G / 4.5G+</string>
+    <string name="opt_4g_force_ltea">Force LTE / LTE-A</string>
+
+    <string name="sec_always_show_rat_title">Data Icon When Connected to Wi-Fi</string>
+    <string name="sec_always_show_rat_desc">Control whether to display the mobile data type icon (RAT) when Wi-Fi is active</string>
+    <string name="opt_always_show_rat_default">System Default</string>
+    <string name="opt_always_show_rat_always">Always Show Data Icon</string>
+    <string name="opt_always_show_rat_wifi_hide">Hide Data Icon on Wi-Fi</string>
+
+    <string name="sec_volte_title">VoLTE / VoNR Icon Style</string>
+    <string name="sec_volte_desc">Switch between VoLTE / VoNR icon styles or hide completely</string>
+    <string name="opt_volte_default">System Default</string>
+    <string name="opt_volte_intl_solid">Solid Capsule</string>
+    <string name="opt_volte_intl_4g">VoLTE 4G</string>
+    <string name="opt_volte_intl_hollow">Hollow / No Frame</string>
+    <string name="opt_volte_intl_hd_voice">HD Voice</string>
+    <string name="opt_volte_china_hd">Classic Big HD</string>
+    <string name="opt_volte_china_hd_plus">Classic Big HD+</string>
+    <string name="opt_volte_intl_vo4g">Vo4G</string>
+    <string name="opt_volte_hide">Hide VoLTE</string>
+
+    <string name="sec_vowifi_title">VoWiFi / Wi-Fi Calling Icon</string>
+    <string name="sec_vowifi_desc">Switch VoWiFi icon style or hide completely</string>
+    <string name="opt_vowifi_default">System Default</string>
+    <string name="opt_vowifi_standard">Standard VoWiFi</string>
+    <string name="opt_vowifi_wifi">Wi-Fi Wave Handset</string>
+    <string name="opt_vowifi_call">SIM Slot Handset</string>
+    <string name="opt_vowifi_hide">Hide VoWiFi</string>
+
+    <string name="sec_roaming_title">International Roaming Icon (R)</string>
+    <string name="sec_roaming_desc">Control roaming indicator style or hide to save space</string>
+    <string name="opt_roaming_default">System Default</string>
+    <string name="opt_roaming_small">Compact Small R</string>
+    <string name="opt_roaming_hide">Hide Roaming Icon</string>
+
+    <string name="status_active_desc">Module Active · Direct Punch pipeline ready</string>
+    <string name="status_inactive_desc">Module Ready · Awaiting SystemUI load (Check scope in LSPosed)</string>
+
+    <string name="btn_refresh_text">Sync &amp; Refresh Status Bar</string>
+    <string name="btn_restart_sysui_text">Restart SystemUI</string>
+    <string name="tip_footer">Settings save automatically. Tap Refresh above for 0ms instant reload (no need to restart SystemUI, avoids lockscreen reload). Tap Restart only if needed.</string>
+
+    <string name="toast_refresh_success">Refreshed successfully</string>
+    <string name="toast_restart_sysui_requesting">Requesting Root to restart SystemUI…</string>
+    <string name="toast_restart_sysui_success">SystemUI restarted successfully</string>
+    <string name="toast_restart_sysui_failed">Failed to restart SystemUI. Please ensure Root access is granted.</string>
+
+    <string name="mode_unified">Unified Settings</string>
+    <string name="mode_separate">Independent Settings</string>
+    <string name="tab_sub_sim1">SIM 1</string>
+    <string name="tab_sub_sim2">SIM 2 / eSIM</string>
+    <string name="hint_mode_unified">Current mode: Unified settings apply to both SIM 1 &amp; SIM 2 / eSIM</string>
+    <string name="hint_separate_sim1">Currently configuring independently: SIM 1 (Slot 0)</string>
+    <string name="hint_separate_sim2">Currently configuring independently: SIM 2 / eSIM (Slot 1)</string>
+
+    <string name="btn_experimental_title">🧪 Experimental</string>
+    <string name="btn_back">Back</string>
+    <string name="title_experimental">Experimental Features</string>
+    <string name="subtitle_experimental">Advanced Protocol &amp; Modem Stability Enhancements</string>
+    <string name="pref_5ga_keepalive_title">Cellular &amp; 5G+ Feature Auto Keep-Alive</string>
+    <string name="pref_5ga_keepalive_desc">Preserve 3GPP protocol version, 5G+, VoNR, DSDA, and Force APN editing based on your original settings when switching SIM 2 / eSIM (Slot 1)</string>
+    <string name="status_enabled">[Enabled]</string>
+    <string name="status_disabled_default">[Disabled (Default)]</string>
+    <string name="experimental_explain_title">Feature Background &amp; Principles</string>
+    <string name="experimental_explain_content">【Background】\nOn devices with dual physical SIM slots + eSIM (such as Xiaomi 17 Series Global), entering the dialer code *#*#7469542#*#* unlocks hidden menus under Settings -&gt; Developer options -&gt; Cellular Network / 5G+ Feature Center to configure advanced modem parameters (including 3GPP protocol version, 5G-A, VoNR, DSDA, and Force APN editing). However, when switching between SIM 2 and eSIM (Slot 1), the Qualcomm modem power cycles the UICC and re-enumerates, resetting volatile registers. This forces the 3GPP protocol version back to default R16 and wipes out your customized toggles for 5G-A, HOM (1024QAM), SWUL (Super Uplink), Full Power Mode, VoNR, DSDA, and Force APN editing.\n\n【Mechanism】\nWhen this feature is enabled, the module hooks into the telephony service (com.android.phone) to detect SIM 2 / eSIM (Slot 1) activation and carrier configuration events. The module continuously remembers your preferences configured in the hidden developer menu and system settings. During the millisecond window following slot activation, a multi-phase self-healing engine automatically reapplies all your original configurations to the Qualcomm modem and telephony framework (faithfully respecting your original settings: previously chosen 3GPP protocol version is accurately restored, enabled toggles are re-enabled, and disabled toggles remain disabled).\n\n【No Reboot Required】\nBecause the modem resets its radio protocol stack during SIM 2 / eSIM (Slot 1) switching, reapplying your settings during slot initialization allows the device to negotiate with the network using your preferred parameters during initial RRC Attach. This eliminates the need to repeatedly re-enter the secret code to adjust developer options or reboot the device.</string>
+    <string name="experimental_tip_active">Active: Telephony hooks armed. SIM 2 / eSIM (Slot 1) transitions will preserve all features based on your original configurations.</string>
+    <string name="experimental_tip_inactive">Disabled: Stock behavior preserved. SIM 2 / eSIM (Slot 1) transitions will use system defaults.</string>
+</resources>

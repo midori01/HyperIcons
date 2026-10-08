@@ -1,0 +1,987 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- App Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="20dp"
+            android:paddingTop="12dp">
+
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_app_icon"
+                android:contentDescription="@string/app_name" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="14dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/title_header"
+                        android:textColor="@color/text_title"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_app_version"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="v5.3.2"
+                        android:textColor="@color/accent"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_tab_unselected"
+                        android:paddingStart="7dp"
+                        android:paddingEnd="7dp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/subtitle_header"
+                    android:textColor="@color/text_caption"
+                    android:textSize="13sp"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <!-- Top Right: Experimental Features Entry -->
+            <LinearLayout
+                android:id="@+id/btn_experimental"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_chip_experimental"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
+                android:layout_marginStart="8dp">
+
+                <TextView
+                    android:id="@+id/tv_btn_experimental"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/btn_experimental_title"
+                    android:textColor="@color/accent"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Status Banner -->
+        <LinearLayout
+            android:id="@+id/card_status_banner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="14dp"
+            android:layout_marginBottom="16dp">
+
+            <View
+                android:id="@+id/dot_status"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="10dp" />
+
+            <TextView
+                android:id="@+id/tv_status_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/status_active_desc"
+                android:textColor="@color/text_body"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- Two-Tier Mode and Slot Selector Card -->
+        <LinearLayout
+            android:id="@+id/card_mode_selector"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:animateLayoutChanges="true"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp">
+
+            <!-- Primary Tier: Mode Selector (Unified vs Independent) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_tab_container"
+                android:orientation="horizontal"
+                android:padding="3dp"
+                android:gravity="center">
+
+                <!-- Tab: Unified Settings -->
+                <TextView
+                    android:id="@+id/tab_mode_unified"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="@string/mode_unified"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_tab_selected"
+                    android:textColor="@color/btn_text"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <!-- Tab: Independent Settings -->
+                <TextView
+                    android:id="@+id/tab_mode_separate"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="@string/mode_separate"
+                    android:textSize="13sp"
+                    android:background="@drawable/bg_tab_unselected"
+                    android:textColor="@color/text_body"
+                    android:clickable="true"
+                    android:focusable="true" />
+            </LinearLayout>
+
+            <!-- Secondary Tier: Slot Sub-tabs (Visible ONLY when Independent mode is selected) -->
+            <LinearLayout
+                android:id="@+id/container_sub_tabs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="10dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:background="@drawable/bg_tab_container"
+                    android:orientation="horizontal"
+                    android:padding="3dp"
+                    android:gravity="center">
+
+                    <!-- Sub-Tab: SIM 1 -->
+                    <TextView
+                        android:id="@+id/tab_sub_sim1"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="@string/tab_sub_sim1"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_tab_selected"
+                        android:textColor="@color/btn_text"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <!-- Sub-Tab: SIM 2 / eSIM -->
+                    <TextView
+                        android:id="@+id/tab_sub_sim2"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="@string/tab_sub_sim2"
+                        android:textSize="13sp"
+                        android:background="@drawable/bg_tab_unselected"
+                        android:textColor="@color/text_body"
+                        android:clickable="true"
+                        android:focusable="true" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Explanatory Hint Banner -->
+            <TextView
+                android:id="@+id/tv_mode_hint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="2dp"
+                android:gravity="center"
+                android:textSize="12sp"
+                android:textColor="@color/text_caption"
+                android:text="@string/hint_mode_unified" />
+        </LinearLayout>
+
+        <!-- Card 1: Capsule Style -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/sec_capsule_style_title"
+                    android:textColor="@color/text_title"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/badge_capsule_style"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/accent"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_capsule_style_desc"
+                android:textColor="@color/text_caption"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp" />
+
+            <RadioGroup
+                android:id="@+id/rg_capsule_style"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:id="@+id/rb_capsule_default"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_capsule_default"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_capsule_korean"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_capsule_korean"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+            </RadioGroup>
+        </LinearLayout>
+
+        <!-- Card 2: 5G CA Icon -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/sec_5g_ca_title"
+                    android:textColor="@color/text_title"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/badge_5g_ca"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/accent"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_5g_ca_desc"
+                android:textColor="@color/text_caption"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp" />
+
+            <RadioGroup
+                android:id="@+id/rg_5g_ca"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:id="@+id/rb_ca_default"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_default"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_ca_5ga"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_5ga"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_ca_5g_plus"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_5g_plus"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_ca_5g_plus_plus"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_5g_plus_plus"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_ca_5guwb"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_5guwb"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_ca_5ge"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_5ge"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_ca_5g_6rx"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_5g_6rx"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_ca_5g_plus_plus_6rx"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_5g_plus_plus_6rx"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_ca_5guwb_6rx"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_5guwb_6rx"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+            </RadioGroup>
+        </LinearLayout>
+
+        <!-- Card 3: Basic 5G Mode -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/sec_5g_basic_title"
+                    android:textColor="@color/text_title"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/badge_5g_basic"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/accent"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_5g_basic_desc"
+                android:textColor="@color/text_caption"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp" />
+
+            <RadioGroup
+                android:id="@+id/rg_5g_basic"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:id="@+id/rb_basic_default"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_5g_default"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_basic_follow_ca"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_5g_follow_ca"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+            </RadioGroup>
+        </LinearLayout>
+
+        <!-- Card 4: 4G / LTE Mode -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/sec_4g_title"
+                    android:textColor="@color/text_title"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/badge_4g_rat"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/accent"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_4g_desc"
+                android:textColor="@color/text_caption"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp" />
+
+            <RadioGroup
+                android:id="@+id/rg_4g_rat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:id="@+id/rb_4g_default"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_4g_default"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_4g_force_4g"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_4g_force_4g"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_4g_force_lte"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_4g_force_lte"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_4g_force_4g_lte"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_4g_force_4g_lte"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_4g_force_45g"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_4g_force_45g"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_4g_force_ltea"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_4g_force_ltea"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+            </RadioGroup>
+        </LinearLayout>
+
+        <!-- Card 4: Data Icon When Connected to Wi-Fi -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/sec_always_show_rat_title"
+                    android:textColor="@color/text_title"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/badge_always_show_rat"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/accent"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_always_show_rat_desc"
+                android:textColor="@color/text_caption"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp" />
+
+            <RadioGroup
+                android:id="@+id/rg_always_show_rat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:id="@+id/rb_always_show_rat_default"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_always_show_rat_default"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_always_show_rat_always"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_always_show_rat_always"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_always_show_rat_wifi_hide"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_always_show_rat_wifi_hide"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+            </RadioGroup>
+        </LinearLayout>
+
+        <!-- Card 5: VoLTE / VoNR Icon Style -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/sec_volte_title"
+                    android:textColor="@color/text_title"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/badge_volte_style"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/accent"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_volte_desc"
+                android:textColor="@color/text_caption"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp" />
+
+            <RadioGroup
+                android:id="@+id/rg_volte_style"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:id="@+id/rb_volte_default"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_volte_default"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_volte_intl_solid"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_volte_intl_solid"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_volte_intl_4g"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_volte_intl_4g"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_volte_intl_hollow"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_volte_intl_hollow"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_volte_intl_hd_voice"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_volte_intl_hd_voice"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_volte_china_hd"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_volte_china_hd"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_volte_china_hd_plus"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_volte_china_hd_plus"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_volte_intl_vo4g"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_volte_intl_vo4g"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_volte_hide"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_volte_hide"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+            </RadioGroup>
+        </LinearLayout>
+
+        <!-- Card 6: VoWiFi / Wi-Fi Calling Icon Style -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/sec_vowifi_title"
+                    android:textColor="@color/text_title"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/badge_vowifi_style"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/accent"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_vowifi_desc"
+                android:textColor="@color/text_caption"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp" />
+
+            <RadioGroup
+                android:id="@+id/rg_vowifi_style"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:id="@+id/rb_vowifi_default"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_vowifi_default"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_vowifi_standard"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_vowifi_standard"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_vowifi_wifi"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_vowifi_wifi"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_vowifi_call"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_vowifi_call"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_vowifi_hide"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_vowifi_hide"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+            </RadioGroup>
+        </LinearLayout>
+
+        <!-- Card 7: International Roaming Indicator (R) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/sec_roaming_title"
+                    android:textColor="@color/text_title"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/badge_roaming_style"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/accent"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_roaming_desc"
+                android:textColor="@color/text_caption"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp" />
+
+            <RadioGroup
+                android:id="@+id/rg_roaming_style"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:id="@+id/rb_roaming_default"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_roaming_default"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_roaming_small"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_roaming_small"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_roaming_hide"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_roaming_hide"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+            </RadioGroup>
+        </LinearLayout>
+
+        <!-- Live Reload Button -->
+        <Button
+            android:id="@+id/btn_refresh"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_button"
+            android:text="@string/btn_refresh_text"
+            android:textColor="@color/btn_text"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:elevation="2dp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Restart SystemUI Button -->
+        <Button
+            android:id="@+id/btn_restart_sysui"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_button_secondary"
+            android:text="@string/btn_restart_sysui_text"
+            android:textColor="@color/btn_secondary_text"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:elevation="2dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Tip / Footer -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/tip_footer"
+            android:textColor="@color/text_caption"
+            android:textSize="12sp"
+            android:lineSpacingExtra="3dp"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="24dp" />
+    </LinearLayout>
+</ScrollView>
+

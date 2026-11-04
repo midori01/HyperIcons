@@ -17,8 +17,8 @@ import android.widget.Toast;
 import java.io.File;
 
 public class MainActivity extends Activity {
-    public static final String VERSION_NAME = "5.3.2";
-    public static final int VERSION_CODE = 29;
+    public static final String VERSION_NAME = "5.3.3";
+    public static final int VERSION_CODE = 30;
     public static final String PREF_NAME = "hyper_icons_config";
     public static final String ACTION_RELOAD = "com.midori.hypericons.ACTION_RELOAD";
 

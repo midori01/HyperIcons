@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/data/data/com.termux/files/usr/bin/env python3
 """
-HyperStatusIconMod Dual-Model Oracle Specification Test Engine (v5.3.2)
+HyperStatusIconMod Dual-Model Oracle Specification Test Engine (v5.3.3)
 ========================================================================
 This test engine implements a rigorous "Dual-Model Oracle Verification":
 1. StatusIconGroundTruthOracle:
@@ -470,7 +470,7 @@ class MainHookSystemUISimulator:
 # ==============================================================================
 def run_dual_model_verification():
     print("=" * 75)
-    print("HyperStatusIconMod Dual-Model Oracle Verification Engine (v5.3.2)")
+    print("HyperStatusIconMod Dual-Model Oracle Verification Engine (v5.3.3)")
     print("=" * 75)
     print("Comparing simulated MainHook SystemUI output against independent Oracle...")
 

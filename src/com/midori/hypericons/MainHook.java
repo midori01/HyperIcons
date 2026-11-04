@@ -25,6 +25,7 @@ import android.provider.Settings;
 import android.text.TextUtils;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -43,7 +44,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class MainHook implements IXposedHookLoadPackage {
     private static final String TAG = "HyperIconsHook";
-    public static final String VERSION = "5.3.2";
+    public static final String VERSION = "5.3.3";
     public static final String ACTION_RELOAD = "com.midori.hypericons.ACTION_RELOAD";
     public static final String PREF_PACKAGE = "com.midori.hypericons";
     public static final String PREF_FILE = "hyper_icons_config";
@@ -282,6 +283,25 @@ public class MainHook implements IXposedHookLoadPackage {
     private static final java.util.concurrent.ConcurrentHashMap<Integer, Boolean> sSubIdIs5G = new java.util.concurrent.ConcurrentHashMap<Integer, Boolean>();
     private static final java.util.concurrent.ConcurrentHashMap<Integer, Boolean> sSubIdIs5GCa = new java.util.concurrent.ConcurrentHashMap<Integer, Boolean>();
     private static final java.util.concurrent.ConcurrentHashMap<Integer, Integer> sSubIdRadioType = new java.util.concurrent.ConcurrentHashMap<Integer, Integer>();
+    private static final java.util.concurrent.ConcurrentHashMap<Integer, Boolean> sSubIdIsRoaming = new java.util.concurrent.ConcurrentHashMap<Integer, Boolean>();
+
+    private static boolean isSubIdRoaming(int subId, Context ctx) {
+        if (subId < 0) return false;
+        Boolean cached = sSubIdIsRoaming.get(subId);
+        if (cached != null) return cached.booleanValue();
+        if (ctx != null) {
+            try {
+                TelephonyManager tm = (TelephonyManager) ctx.getSystemService(Context.TELEPHONY_SERVICE);
+                if (tm != null) {
+                    TelephonyManager subTm = tm.createForSubscriptionId(subId);
+                    boolean roaming = subTm.isNetworkRoaming();
+                    sSubIdIsRoaming.put(subId, Boolean.valueOf(roaming));
+                    return roaming;
+                }
+            } catch (Throwable ignored) {}
+        }
+        return false;
+    }
     private static volatile boolean sNetworkCallbackRegistered = false;
     private static volatile Handler sMainHandler = null;
     private static final Runnable sReloadRunnable = new Runnable() {
@@ -1455,21 +1475,78 @@ public class MainHook implements IXposedHookLoadPackage {
 
                             int roamingViewId = parent.getResources().getIdentifier("mobile_roaming", "id", "com.android.systemui");
                             ImageView roamingView = roamingViewId != 0 ? (ImageView) parent.findViewById(roamingViewId) : null;
+                            if (roamingView == null && roamingViewId != 0) {
+                                if (parent.getParent() instanceof ViewGroup) {
+                                    roamingView = (ImageView) ((ViewGroup) parent.getParent()).findViewById(roamingViewId);
+                                }
+                                if (roamingView == null && parent.getRootView() != null) {
+                                    roamingView = (ImageView) parent.getRootView().findViewById(roamingViewId);
+                                }
+                            }
                             int smallRoamViewId = parent.getResources().getIdentifier("mobile_small_roam", "id", "com.android.systemui");
                             ImageView smallRoamView = smallRoamViewId != 0 ? (ImageView) parent.findViewById(smallRoamViewId) : null;
+                            if (smallRoamView == null && smallRoamViewId != 0) {
+                                if (parent.getParent() instanceof ViewGroup) {
+                                    smallRoamView = (ImageView) ((ViewGroup) parent.getParent()).findViewById(smallRoamViewId);
+                                }
+                                if (smallRoamView == null && parent.getRootView() != null) {
+                                    smallRoamView = (ImageView) parent.getRootView().findViewById(smallRoamViewId);
+                                }
+                            }
+
+                            int subId = getSubIdForView(mobileTypeView);
+                            boolean isRoaming = isSubIdRoaming(subId, parent.getContext());
+                            if (!isRoaming && roamingView != null && roamingView.getVisibility() == View.VISIBLE) {
+                                isRoaming = true;
+                                if (subId >= 0) sSubIdIsRoaming.put(subId, Boolean.TRUE);
+                            }
+
                             if ("hide".equals(cfg.roaming)) {
-                                if (roamingView != null) roamingView.setVisibility(View.GONE);
+                                if (roamingView != null) {
+                                    roamingView.setVisibility(View.GONE);
+                                    if (parent.getParent() instanceof ViewGroup) {
+                                        try {
+                                            XposedHelpers.callMethod(parent.getParent(), "setChildVisible", roamingView, false);
+                                        } catch (Throwable ignored) {}
+                                    }
+                                }
                                 if (smallRoamView != null) smallRoamView.setVisibility(View.GONE);
                             } else if ("small".equals(cfg.roaming)) {
-                                if (roamingView != null) roamingView.setVisibility(View.GONE);
-                                if (smallRoamView != null) {
-                                    initRoamingResourceIds(parent.getContext());
-                                    if (sResRoamSmall != 0) {
-                                        smallRoamView.setImageResource(sResRoamSmall);
+                                if (roamingView != null) {
+                                    roamingView.setVisibility(View.GONE);
+                                    if (parent.getParent() instanceof ViewGroup) {
+                                        try {
+                                            XposedHelpers.callMethod(parent.getParent(), "setChildVisible", roamingView, false);
+                                        } catch (Throwable ignored) {}
                                     }
-                                    smallRoamView.setVisibility(View.VISIBLE);
-                                    smallRoamView.invalidate();
-                                    smallRoamView.requestLayout();
+                                }
+                                if (smallRoamView != null) {
+                                    if (isRoaming) {
+                                        initRoamingResourceIds(parent.getContext());
+                                        if (sResRoamSmall != 0) {
+                                            smallRoamView.setImageResource(sResRoamSmall);
+                                        }
+                                        smallRoamView.setVisibility(View.VISIBLE);
+                                        smallRoamView.invalidate();
+                                        smallRoamView.requestLayout();
+                                    } else {
+                                        smallRoamView.setVisibility(View.GONE);
+                                    }
+                                }
+                            } else {
+                                if (isRoaming) {
+                                    if (roamingView != null) {
+                                        roamingView.setVisibility(View.VISIBLE);
+                                        if (parent.getParent() instanceof ViewGroup) {
+                                            try {
+                                                XposedHelpers.callMethod(parent.getParent(), "setChildVisible", roamingView, true);
+                                            } catch (Throwable ignored) {}
+                                        }
+                                    }
+                                    if (smallRoamView != null) smallRoamView.setVisibility(View.GONE);
+                                } else {
+                                    if (roamingView != null) roamingView.setVisibility(View.GONE);
+                                    if (smallRoamView != null) smallRoamView.setVisibility(View.GONE);
                                 }
                             }
 
@@ -2126,6 +2203,39 @@ public class MainHook implements IXposedHookLoadPackage {
         return hasSatellite && hasClassId;
     }
 
+    private static Class<?> findMobileGroupCollectorClass(ClassLoader cl) {
+        if (cl == null) return null;
+        Class<?> direct = XposedHelpers.findClassIfExists(
+            "com.android.systemui.statusbar.pipeline.mobile.ui.binder.MiuiMobileIconBinder$bind$1$1$11$1",
+            cl
+        );
+        if (direct != null && hasMobileGroupFields(direct)) {
+            return direct;
+        }
+        for (int i = 1; i <= 30; i++) {
+            String name = "com.android.systemui.statusbar.pipeline.mobile.ui.binder.MiuiMobileIconBinder$bind$1$1$" + i + "$1";
+            Class<?> candidate = XposedHelpers.findClassIfExists(name, cl);
+            if (candidate != null && hasMobileGroupFields(candidate)) {
+                XposedBridge.log(TAG + ": [v" + VERSION + "] Dynamically discovered mobileGroup collector class: " + name);
+                return candidate;
+            }
+        }
+        return direct;
+    }
+
+    private static boolean hasMobileGroupFields(Class<?> clz) {
+        if (clz == null) return false;
+        boolean hasGroup = false;
+        boolean hasClassId = false;
+        try {
+            for (java.lang.reflect.Field f : clz.getDeclaredFields()) {
+                if (f.getName().contains("mobileGroup") || f.getName().contains("MobileGroup") || "$mobileGroup".equals(f.getName())) hasGroup = true;
+                if (f.getName().contains("classId")) hasClassId = true;
+            }
+        } catch (Throwable ignored) {}
+        return hasGroup && hasClassId;
+    }
+
     private void hookMobileIconBinder(XC_LoadPackage.LoadPackageParam lpparam) {
         Class<?> binderClz = XposedHelpers.findClassIfExists(
             "com.android.systemui.statusbar.pipeline.mobile.ui.binder.MiuiMobileIconBinder",
@@ -2434,12 +2544,43 @@ public class MainHook implements IXposedHookLoadPackage {
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         try {
                             int classId = XposedHelpers.getIntField(param.thisObject, "$r8$classId");
-                            if (classId != 1 && classId != 2) return;
-
                             ImageView targetView = (ImageView) XposedHelpers.getObjectField(param.thisObject, "$satellite");
                             if (targetView == null) return;
 
                             Context ctx = targetView.getContext();
+                            int viewId = targetView.getId();
+                            int smallRoamId = ctx != null ? ctx.getResources().getIdentifier("mobile_small_roam", "id", "com.android.systemui") : 0;
+                            if ((smallRoamId != 0 && viewId == smallRoamId) || classId == 3) {
+                                int slotId = getSlotIdForView(targetView);
+                                int subId = getSubIdForView(targetView);
+                                IconConfig cfg = getConfigForSlot(slotId);
+
+                                boolean systemRoaming = Boolean.TRUE.equals(param.args[0]);
+                                if (subId >= 0 && systemRoaming) {
+                                    sSubIdIsRoaming.put(subId, Boolean.TRUE);
+                                }
+                                boolean isRoaming = isSubIdRoaming(subId, ctx) || systemRoaming;
+
+                                if ("hide".equals(cfg.roaming)) {
+                                    param.args[0] = Boolean.FALSE;
+                                    targetView.setVisibility(View.GONE);
+                                    return;
+                                } else if ("small".equals(cfg.roaming)) {
+                                    if (ctx != null) initRoamingResourceIds(ctx);
+                                    if (sResRoamSmall != 0) {
+                                        targetView.setImageResource(sResRoamSmall);
+                                    }
+                                    boolean show = isRoaming;
+                                    param.args[0] = Boolean.valueOf(show);
+                                    targetView.setVisibility(show ? View.VISIBLE : View.GONE);
+                                    return;
+                                } else {
+                                    return;
+                                }
+                            }
+
+                            if (classId != 1 && classId != 2) return;
+
                             if (!shouldShowRat(targetView, ctx)) {
                                 targetView.setVisibility(View.GONE);
                                 param.args[0] = Boolean.FALSE;
@@ -2473,6 +2614,169 @@ public class MainHook implements IXposedHookLoadPackage {
                             }
                         } catch (Throwable t) {
                             XposedBridge.log(TAG + ": emit collector hook error: " + t);
+                        }
+                    }
+                }
+            );
+        }
+
+        // 2b. MobileGroup roaming/vowifi visibility collector hook
+        Class<?> groupCollectorClz = findMobileGroupCollectorClass(lpparam.classLoader);
+        if (groupCollectorClz != null) {
+            XposedBridge.log(TAG + ": [v" + VERSION + "] Hooking groupCollector on " + groupCollectorClz.getName());
+            XposedHelpers.findAndHookMethod(
+                groupCollectorClz,
+                "emit",
+                Object.class,
+                "kotlin.coroutines.Continuation",
+                new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        try {
+                            ImageView targetView = (ImageView) XposedHelpers.getObjectField(param.thisObject, "$voWifi");
+                            if (targetView == null) return;
+                            Context ctx = targetView.getContext();
+                            if (ctx == null) return;
+
+                            int roamingId = ctx.getResources().getIdentifier("mobile_roaming", "id", "com.android.systemui");
+                            if (roamingId != 0 && targetView.getId() == roamingId) {
+                                int slotId = getSlotIdForView(targetView);
+                                int subId = getSubIdForView(targetView);
+                                IconConfig cfg = getConfigForSlot(slotId);
+
+                                boolean isRoam = false;
+                                if (param.args[0] instanceof Boolean) {
+                                    isRoam = ((Boolean) param.args[0]).booleanValue();
+                                } else if (param.args[0] != null) {
+                                    try {
+                                        Object sec = XposedHelpers.callMethod(param.args[0], "getSecond");
+                                        if (sec instanceof Boolean) isRoam = ((Boolean) sec).booleanValue();
+                                    } catch (Throwable ignored) {}
+                                }
+                                if (isRoam && subId >= 0) {
+                                    sSubIdIsRoaming.put(subId, Boolean.TRUE);
+                                }
+
+                                if ("hide".equals(cfg.roaming) || "small".equals(cfg.roaming)) {
+                                    if (param.args[0] instanceof Boolean) {
+                                        param.args[0] = Boolean.FALSE;
+                                    } else if (param.args[0] != null) {
+                                        try {
+                                            Class<?> pClz = param.args[0].getClass();
+                                            param.args[0] = XposedHelpers.newInstance(pClz, Boolean.FALSE, Boolean.FALSE);
+                                        } catch (Throwable ignored) {}
+                                    }
+                                    targetView.setVisibility(View.GONE);
+                                }
+                            }
+
+                            int vowifiId = ctx.getResources().getIdentifier("mobile_vowifi", "id", "com.android.systemui");
+                            if (vowifiId != 0 && targetView.getId() == vowifiId) {
+                                int slotId = getSlotIdForView(targetView);
+                                IconConfig cfg = getConfigForSlot(slotId);
+                                if ("hide".equals(cfg.vowifi)) {
+                                    if (param.args[0] instanceof Boolean) {
+                                        param.args[0] = Boolean.FALSE;
+                                    } else if (param.args[0] != null) {
+                                        try {
+                                            Class<?> pClz = param.args[0].getClass();
+                                            param.args[0] = XposedHelpers.newInstance(pClz, Boolean.FALSE, Boolean.FALSE);
+                                        } catch (Throwable ignored) {}
+                                    }
+                                    targetView.setVisibility(View.GONE);
+                                }
+                            }
+                        } catch (Throwable t) {
+                            XposedBridge.log(TAG + ": groupCollector emit before hook error: " + t);
+                        }
+                    }
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        try {
+                            ImageView targetView = (ImageView) XposedHelpers.getObjectField(param.thisObject, "$voWifi");
+                            if (targetView == null) return;
+                            Context ctx = targetView.getContext();
+                            if (ctx == null) return;
+
+                            int roamingId = ctx.getResources().getIdentifier("mobile_roaming", "id", "com.android.systemui");
+                            if (roamingId != 0 && targetView.getId() == roamingId) {
+                                int slotId = getSlotIdForView(targetView);
+                                IconConfig cfg = getConfigForSlot(slotId);
+                                if ("hide".equals(cfg.roaming) || "small".equals(cfg.roaming)) {
+                                    targetView.setVisibility(View.GONE);
+                                    Object group = XposedHelpers.getObjectField(param.thisObject, "$mobileGroup");
+                                    if (group != null) {
+                                        XposedHelpers.callMethod(group, "setChildVisible", targetView, false);
+                                    }
+                                }
+                            }
+
+                            int vowifiId = ctx.getResources().getIdentifier("mobile_vowifi", "id", "com.android.systemui");
+                            if (vowifiId != 0 && targetView.getId() == vowifiId) {
+                                int slotId = getSlotIdForView(targetView);
+                                IconConfig cfg = getConfigForSlot(slotId);
+                                if ("hide".equals(cfg.vowifi)) {
+                                    targetView.setVisibility(View.GONE);
+                                    Object group = XposedHelpers.getObjectField(param.thisObject, "$mobileGroup");
+                                    if (group != null) {
+                                        XposedHelpers.callMethod(group, "setChildVisible", targetView, false);
+                                    }
+                                }
+                            }
+                        } catch (Throwable t) {
+                            XposedBridge.log(TAG + ": groupCollector emit after hook error: " + t);
+                        }
+                    }
+                }
+            );
+        }
+
+        // 2c. MobileSignalAnimatorContainer child visibility enforcement hook
+        Class<?> animatorContainerClz = XposedHelpers.findClassIfExists(
+            "com.android.systemui.statusbar.views.MobileSignalAnimatorContainer",
+            lpparam.classLoader
+        );
+        if (animatorContainerClz != null) {
+            XposedHelpers.findAndHookMethod(
+                animatorContainerClz,
+                "setChildVisible",
+                View.class,
+                boolean.class,
+                new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        try {
+                            View child = (View) param.args[0];
+                            if (child == null) return;
+                            Context ctx = child.getContext();
+                            if (ctx == null) return;
+
+                            int roamingId = ctx.getResources().getIdentifier("mobile_roaming", "id", "com.android.systemui");
+                            if (roamingId != 0 && child.getId() == roamingId) {
+                                int slotId = getSlotIdForView(child);
+                                int subId = getSubIdForView(child);
+                                boolean visible = Boolean.TRUE.equals(param.args[1]);
+                                if (visible && subId >= 0) {
+                                    sSubIdIsRoaming.put(subId, Boolean.TRUE);
+                                }
+                                IconConfig cfg = getConfigForSlot(slotId);
+                                if ("hide".equals(cfg.roaming) || "small".equals(cfg.roaming)) {
+                                    param.args[1] = Boolean.FALSE;
+                                    child.setVisibility(View.GONE);
+                                }
+                            }
+
+                            int vowifiId = ctx.getResources().getIdentifier("mobile_vowifi", "id", "com.android.systemui");
+                            if (vowifiId != 0 && child.getId() == vowifiId) {
+                                int slotId = getSlotIdForView(child);
+                                IconConfig cfg = getConfigForSlot(slotId);
+                                if ("hide".equals(cfg.vowifi)) {
+                                    param.args[1] = Boolean.FALSE;
+                                    child.setVisibility(View.GONE);
+                                }
+                            }
+                        } catch (Throwable t) {
+                            XposedBridge.log(TAG + ": setChildVisible before hook error: " + t);
                         }
                     }
                 }

@@ -21,8 +21,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.PersistableBundle;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -44,7 +46,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class MainHook implements IXposedHookLoadPackage {
     private static final String TAG = "HyperIconsHook";
-    public static final String VERSION = "5.3.3";
+    public static final String VERSION = "5.3.4";
     public static final String ACTION_RELOAD = "com.midori.hypericons.ACTION_RELOAD";
     public static final String PREF_PACKAGE = "com.midori.hypericons";
     public static final String PREF_FILE = "hyper_icons_config";
@@ -65,6 +67,7 @@ public class MainHook implements IXposedHookLoadPackage {
     public static final String KEY_VOLTE_STYLE = "pref_volte_style";
     public static final String KEY_VOWIFI_STYLE = "pref_vowifi_style";
     public static final String KEY_ROAMING_STYLE = "pref_roaming_style";
+    public static final String KEY_VONR_VISIBILITY = "pref_vonr_visibility";
 
     // SIM 1 (Slot 0) Keys
     public static final String KEY_SIM1_5G_CA = "pref_sim1_5g_ca";
@@ -75,6 +78,7 @@ public class MainHook implements IXposedHookLoadPackage {
     public static final String KEY_SIM1_VOLTE_STYLE = "pref_sim1_volte_style";
     public static final String KEY_SIM1_VOWIFI_STYLE = "pref_sim1_vowifi_style";
     public static final String KEY_SIM1_ROAMING_STYLE = "pref_sim1_roaming_style";
+    public static final String KEY_SIM1_VONR_VISIBILITY = "pref_sim1_vonr_visibility";
 
     // SIM 2 / eSIM (Slot 1) Keys
     public static final String KEY_SIM2_5G_CA = "pref_sim2_5g_ca";
@@ -85,6 +89,7 @@ public class MainHook implements IXposedHookLoadPackage {
     public static final String KEY_SIM2_VOLTE_STYLE = "pref_sim2_volte_style";
     public static final String KEY_SIM2_VOWIFI_STYLE = "pref_sim2_vowifi_style";
     public static final String KEY_SIM2_ROAMING_STYLE = "pref_sim2_roaming_style";
+    public static final String KEY_SIM2_VONR_VISIBILITY = "pref_sim2_vonr_visibility";
 
     private static volatile String sPrefSimMode = "both";
     private static volatile String sPrefTargetTab = "sim1";
@@ -98,6 +103,7 @@ public class MainHook implements IXposedHookLoadPackage {
     private static volatile String sPrefVolteStyle = "default";
     private static volatile String sPrefVowifiStyle = "default";
     private static volatile String sPrefRoamingStyle = "default";
+    private static volatile String sPrefVonrVisibility = "default";
 
     // SIM 1 (Slot 0) preferences
     private static volatile String sPrefSim15gCa = "default";
@@ -108,6 +114,7 @@ public class MainHook implements IXposedHookLoadPackage {
     private static volatile String sPrefSim1VolteStyle = "default";
     private static volatile String sPrefSim1VowifiStyle = "default";
     private static volatile String sPrefSim1RoamingStyle = "default";
+    private static volatile String sPrefSim1VonrVisibility = "default";
 
     // SIM 2 / eSIM (Slot 1) preferences
     private static volatile String sPrefSim25gCa = "default";
@@ -118,6 +125,7 @@ public class MainHook implements IXposedHookLoadPackage {
     private static volatile String sPrefSim2VolteStyle = "default";
     private static volatile String sPrefSim2VowifiStyle = "default";
     private static volatile String sPrefSim2RoamingStyle = "default";
+    private static volatile String sPrefSim2VonrVisibility = "default";
 
     public static class IconConfig {
         public String ca = "default";
@@ -128,6 +136,7 @@ public class MainHook implements IXposedHookLoadPackage {
         public String volte = "default";
         public String vowifi = "default";
         public String roaming = "default";
+        public String vonrVisibility = "default";
     }
 
     public static IconConfig getConfigForSlot(int slotId) {
@@ -142,6 +151,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 cfg.volte = sPrefSim1VolteStyle;
                 cfg.vowifi = sPrefSim1VowifiStyle;
                 cfg.roaming = sPrefSim1RoamingStyle;
+                cfg.vonrVisibility = sPrefSim1VonrVisibility;
                 return cfg;
             } else if (slotId == 1) {
                 cfg.ca = sPrefSim25gCa;
@@ -152,6 +162,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 cfg.volte = sPrefSim2VolteStyle;
                 cfg.vowifi = sPrefSim2VowifiStyle;
                 cfg.roaming = sPrefSim2RoamingStyle;
+                cfg.vonrVisibility = sPrefSim2VonrVisibility;
                 return cfg;
             }
         }
@@ -163,6 +174,7 @@ public class MainHook implements IXposedHookLoadPackage {
         cfg.volte = sPrefVolteStyle;
         cfg.vowifi = sPrefVowifiStyle;
         cfg.roaming = sPrefRoamingStyle;
+        cfg.vonrVisibility = sPrefVonrVisibility;
         return cfg;
     }
 
@@ -327,6 +339,9 @@ public class MainHook implements IXposedHookLoadPackage {
 
     private static volatile Context sContext = null;
     private static volatile Object sPolicyInstance = null;
+    private static final java.util.List<WeakReference<Object>> sMobileIconInteractors =
+            java.util.Collections.synchronizedList(new java.util.ArrayList<WeakReference<Object>>());
+    private static final ThreadLocal<Boolean> sVonrStockRead = new ThreadLocal<Boolean>();
     private static volatile boolean sReceiverRegistered = false;
     private static volatile ContentObserver sContentObserver = null;
     private static volatile boolean sDataSwitchListenerRegistered = false;
@@ -1016,6 +1031,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 sPrefVolteStyle = bundle.getString(KEY_VOLTE_STYLE, "default");
                 sPrefVowifiStyle = bundle.getString(KEY_VOWIFI_STYLE, "default");
                 sPrefRoamingStyle = bundle.getString(KEY_ROAMING_STYLE, "default");
+                sPrefVonrVisibility = bundle.getString(KEY_VONR_VISIBILITY, "default");
 
                 sPrefSim15gCa = bundle.getString(KEY_SIM1_5G_CA, sPref5gCa);
                 sPrefSim15gBasic = bundle.getString(KEY_SIM1_5G_BASIC, sPref5gBasic);
@@ -1025,6 +1041,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 sPrefSim1VolteStyle = bundle.getString(KEY_SIM1_VOLTE_STYLE, sPrefVolteStyle);
                 sPrefSim1VowifiStyle = bundle.getString(KEY_SIM1_VOWIFI_STYLE, sPrefVowifiStyle);
                 sPrefSim1RoamingStyle = bundle.getString(KEY_SIM1_ROAMING_STYLE, sPrefRoamingStyle);
+                sPrefSim1VonrVisibility = bundle.getString(KEY_SIM1_VONR_VISIBILITY, sPrefVonrVisibility);
 
                 sPrefSim25gCa = bundle.getString(KEY_SIM2_5G_CA, sPref5gCa);
                 sPrefSim25gBasic = bundle.getString(KEY_SIM2_5G_BASIC, sPref5gBasic);
@@ -1034,6 +1051,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 sPrefSim2VolteStyle = bundle.getString(KEY_SIM2_VOLTE_STYLE, sPrefVolteStyle);
                 sPrefSim2VowifiStyle = bundle.getString(KEY_SIM2_VOWIFI_STYLE, sPrefVowifiStyle);
                 sPrefSim2RoamingStyle = bundle.getString(KEY_SIM2_ROAMING_STYLE, sPrefRoamingStyle);
+                sPrefSim2VonrVisibility = bundle.getString(KEY_SIM2_VONR_VISIBILITY, sPrefVonrVisibility);
 
                 sConfigLoaded = true;
                 XposedBridge.log(TAG + ": [v" + VERSION + "] Config loaded from Provider -> Mode: " + sPrefSimMode + ", Global: [CA=" + sPref5gCa + ", Basic=" + sPref5gBasic + ", Cap=" + sPrefCapsuleStyle + ", 4G=" + sPref4gRat + ", RAT=" + sPrefAlwaysShowRat + ", VoLTE=" + sPrefVolteStyle + ", VoWiFi=" + sPrefVowifiStyle + ", Roam=" + sPrefRoamingStyle + "], SIM1: [CA=" + sPrefSim15gCa + "], SIM2: [CA=" + sPrefSim25gCa + "]");
@@ -1058,6 +1076,7 @@ public class MainHook implements IXposedHookLoadPackage {
             if (intent.hasExtra(KEY_VOLTE_STYLE)) sPrefVolteStyle = intent.getStringExtra(KEY_VOLTE_STYLE);
             if (intent.hasExtra(KEY_VOWIFI_STYLE)) sPrefVowifiStyle = intent.getStringExtra(KEY_VOWIFI_STYLE);
             if (intent.hasExtra(KEY_ROAMING_STYLE)) sPrefRoamingStyle = intent.getStringExtra(KEY_ROAMING_STYLE);
+            if (intent.hasExtra(KEY_VONR_VISIBILITY)) sPrefVonrVisibility = intent.getStringExtra(KEY_VONR_VISIBILITY);
 
             if (intent.hasExtra(KEY_SIM1_5G_CA)) sPrefSim15gCa = intent.getStringExtra(KEY_SIM1_5G_CA);
             if (intent.hasExtra(KEY_SIM1_5G_BASIC)) sPrefSim15gBasic = intent.getStringExtra(KEY_SIM1_5G_BASIC);
@@ -1067,6 +1086,7 @@ public class MainHook implements IXposedHookLoadPackage {
             if (intent.hasExtra(KEY_SIM1_VOLTE_STYLE)) sPrefSim1VolteStyle = intent.getStringExtra(KEY_SIM1_VOLTE_STYLE);
             if (intent.hasExtra(KEY_SIM1_VOWIFI_STYLE)) sPrefSim1VowifiStyle = intent.getStringExtra(KEY_SIM1_VOWIFI_STYLE);
             if (intent.hasExtra(KEY_SIM1_ROAMING_STYLE)) sPrefSim1RoamingStyle = intent.getStringExtra(KEY_SIM1_ROAMING_STYLE);
+            if (intent.hasExtra(KEY_SIM1_VONR_VISIBILITY)) sPrefSim1VonrVisibility = intent.getStringExtra(KEY_SIM1_VONR_VISIBILITY);
 
             if (intent.hasExtra(KEY_SIM2_5G_CA)) sPrefSim25gCa = intent.getStringExtra(KEY_SIM2_5G_CA);
             if (intent.hasExtra(KEY_SIM2_5G_BASIC)) sPrefSim25gBasic = intent.getStringExtra(KEY_SIM2_5G_BASIC);
@@ -1076,6 +1096,7 @@ public class MainHook implements IXposedHookLoadPackage {
             if (intent.hasExtra(KEY_SIM2_VOLTE_STYLE)) sPrefSim2VolteStyle = intent.getStringExtra(KEY_SIM2_VOLTE_STYLE);
             if (intent.hasExtra(KEY_SIM2_VOWIFI_STYLE)) sPrefSim2VowifiStyle = intent.getStringExtra(KEY_SIM2_VOWIFI_STYLE);
             if (intent.hasExtra(KEY_SIM2_ROAMING_STYLE)) sPrefSim2RoamingStyle = intent.getStringExtra(KEY_SIM2_ROAMING_STYLE);
+            if (intent.hasExtra(KEY_SIM2_VONR_VISIBILITY)) sPrefSim2VonrVisibility = intent.getStringExtra(KEY_SIM2_VONR_VISIBILITY);
 
             sConfigLoaded = true;
             XposedBridge.log(TAG + ": [v" + VERSION + "] Config updated via Intent -> Mode: " + sPrefSimMode + ", Global CA: " + sPref5gCa + ", SIM1 CA: " + sPrefSim15gCa + ", SIM2 CA: " + sPrefSim25gCa);
@@ -1130,6 +1151,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 sPrefVolteStyle = prefs.getString(KEY_VOLTE_STYLE, "default");
                 sPrefVowifiStyle = prefs.getString(KEY_VOWIFI_STYLE, "default");
                 sPrefRoamingStyle = prefs.getString(KEY_ROAMING_STYLE, "default");
+                sPrefVonrVisibility = prefs.getString(KEY_VONR_VISIBILITY, "default");
 
                 sPrefSim15gCa = prefs.getString(KEY_SIM1_5G_CA, sPref5gCa);
                 sPrefSim15gBasic = prefs.getString(KEY_SIM1_5G_BASIC, sPref5gBasic);
@@ -1139,6 +1161,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 sPrefSim1VolteStyle = prefs.getString(KEY_SIM1_VOLTE_STYLE, sPrefVolteStyle);
                 sPrefSim1VowifiStyle = prefs.getString(KEY_SIM1_VOWIFI_STYLE, sPrefVowifiStyle);
                 sPrefSim1RoamingStyle = prefs.getString(KEY_SIM1_ROAMING_STYLE, sPrefRoamingStyle);
+                sPrefSim1VonrVisibility = prefs.getString(KEY_SIM1_VONR_VISIBILITY, sPrefVonrVisibility);
 
                 sPrefSim25gCa = prefs.getString(KEY_SIM2_5G_CA, sPref5gCa);
                 sPrefSim25gBasic = prefs.getString(KEY_SIM2_5G_BASIC, sPref5gBasic);
@@ -1148,6 +1171,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 sPrefSim2VolteStyle = prefs.getString(KEY_SIM2_VOLTE_STYLE, sPrefVolteStyle);
                 sPrefSim2VowifiStyle = prefs.getString(KEY_SIM2_VOWIFI_STYLE, sPrefVowifiStyle);
                 sPrefSim2RoamingStyle = prefs.getString(KEY_SIM2_ROAMING_STYLE, sPrefRoamingStyle);
+                sPrefSim2VonrVisibility = prefs.getString(KEY_SIM2_VONR_VISIBILITY, sPrefVonrVisibility);
 
                 sConfigLoaded = true;
                 XposedBridge.log(TAG + ": [v" + VERSION + "] Config loaded from XSharedPreferences (" + source + ") -> Mode: " + sPrefSimMode + ", Global CA: " + sPref5gCa + ", SIM1 CA: " + sPrefSim15gCa + ", SIM2 CA: " + sPrefSim25gCa);
@@ -1395,6 +1419,89 @@ public class MainHook implements IXposedHookLoadPackage {
         syncViewVisibility(mobileTypeView, special5gView, text, null);
     }
 
+    /**
+     * Immediately push the VoNR carrier-config override into every live
+     * MiuiMobileIconInteractorImpl. The interactor recomputes its showVonr
+     * state from this flow, so the status bar updates without a reboot or a
+     * CARRIER_CONFIG_CHANGED round trip through the phone process.
+     */
+    private static void refreshVonrVisibilityOnInteractors() {
+        synchronized (sMobileIconInteractors) {
+            for (int i = sMobileIconInteractors.size() - 1; i >= 0; i--) {
+                Object interactor = sMobileIconInteractors.get(i).get();
+                if (interactor == null) {
+                    sMobileIconInteractors.remove(i);
+                    continue;
+                }
+                try {
+                    int subId = XposedHelpers.getIntField(interactor, "subId");
+                    int slotId = getSlotIdForSubId(subId);
+                    IconConfig cfg = getConfigForSlot(slotId);
+
+                    Boolean desired;
+                    if ("show".equals(cfg.vonrVisibility)) {
+                        desired = Boolean.TRUE;
+                    } else if ("hide".equals(cfg.vonrVisibility)) {
+                        desired = Boolean.FALSE;
+                    } else {
+                        desired = readStockVonrCarrierFlag(subId);
+                    }
+                    if (desired == null) continue;
+
+                    Object readonlyFlow = XposedHelpers.getObjectField(interactor, "carrierConfigShowVonr");
+                    Object stateFlow = null;
+                    try {
+                        stateFlow = XposedHelpers.getObjectField(readonlyFlow, "$$delegate_0");
+                    } catch (Throwable ignored) {}
+                    if (stateFlow == null) {
+                        for (java.lang.reflect.Field f : readonlyFlow.getClass().getDeclaredFields()) {
+                            String fieldName = f.getName().toLowerCase();
+                            String fieldType = f.getType().getName();
+                            if (fieldName.contains("delegate") || fieldType.contains("StateFlow")) {
+                                f.setAccessible(true);
+                                stateFlow = f.get(readonlyFlow);
+                                break;
+                            }
+                        }
+                    }
+                    if (stateFlow == null) {
+                        XposedBridge.log(TAG + ": VoNR state flow delegate not found on " + readonlyFlow.getClass().getName());
+                        continue;
+                    }
+
+                    Object current = XposedHelpers.callMethod(stateFlow, "getValue");
+                    if (desired.equals(current)) continue;
+
+                    XposedHelpers.callMethod(stateFlow, "setValue", desired);
+                    XposedBridge.log(TAG + ": [v" + VERSION + "] [VoNR] Pushed carrierConfigShowVonr="
+                            + desired + " for subId=" + subId + " (slot=" + slotId + ")");
+                } catch (Throwable t) {
+                    XposedBridge.log(TAG + ": refreshVonrVisibilityOnInteractors failed: " + t);
+                }
+            }
+        }
+    }
+
+    /** Read the unmodified carrier value by temporarily bypassing our hook. */
+    private static Boolean readStockVonrCarrierFlag(int subId) {
+        Context ctx = sContext;
+        if (ctx == null) return null;
+        try {
+            CarrierConfigManager ccm = (CarrierConfigManager) ctx.getSystemService(Context.CARRIER_CONFIG_SERVICE);
+            if (ccm == null) return null;
+            sVonrStockRead.set(Boolean.TRUE);
+            try {
+                PersistableBundle bundle = ccm.getConfigForSubId(subId);
+                if (bundle == null) return null;
+                return Boolean.valueOf(bundle.getBoolean("config_show_vonr_icon_in_statusbar", false));
+            } finally {
+                sVonrStockRead.remove();
+            }
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
     private static void triggerStatusReload() {
         Handler handler = getMainHandler();
         if (handler != null) {
@@ -1419,6 +1526,10 @@ public class MainHook implements IXposedHookLoadPackage {
                 XposedBridge.log(TAG + ": [v" + VERSION + "] Triggered updateMiuiOperatorConfig on slots -1, 0, 1");
             } catch (Throwable ignored) {}
         }
+
+        // Push the VoNR carrier-config value into the live interactor flows so the
+        // status bar re-evaluates immediately, without waiting for a broadcast.
+        refreshVonrVisibilityOnInteractors();
 
         // Live Direct Punch for tracked views on UI thread
         Handler handler = getMainHandler();
@@ -1661,6 +1772,68 @@ public class MainHook implements IXposedHookLoadPackage {
         hookSpecial5gViewModel(lpparam);
         hookVolteViewModel(lpparam);
         hookMobileIconBinder(lpparam);
+        hookCarrierConfigVonr(lpparam);
+    }
+
+    /**
+     * Override config_show_vonr_icon_in_statusbar inside SystemUI only.
+     *
+     * SystemUI reads the CarrierConfig bundle via CarrierConfigManager.getConfigForSubId(subId)
+     * on every CARRIER_CONFIG_CHANGED emission. Returning a modified copy keeps the stock
+     * cached bundle untouched and applies Default/Show/Hide without rebooting.
+     */
+    private void hookCarrierConfigVonr(XC_LoadPackage.LoadPackageParam lpparam) {
+        try {
+            Class<?> ccmClz = XposedHelpers.findClassIfExists(
+                    "android.telephony.CarrierConfigManager", lpparam.classLoader);
+            if (ccmClz == null) {
+                XposedBridge.log(TAG + ": CarrierConfigManager not found, VoNR override inactive");
+                return;
+            }
+
+            XC_MethodHook overrideHook = new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    try {
+                        if (Boolean.TRUE.equals(sVonrStockRead.get())) return;
+                        Object result = param.getResult();
+                        if (!(result instanceof PersistableBundle)) return;
+
+                        int subId = -1;
+                        if (param.args.length > 0 && param.args[0] instanceof Integer) {
+                            subId = ((Integer) param.args[0]).intValue();
+                        }
+                        int slotId = getSlotIdForSubId(subId);
+                        IconConfig cfg = getConfigForSlot(slotId);
+                        if (cfg.vonrVisibility == null || "default".equals(cfg.vonrVisibility)) {
+                            return;
+                        }
+
+                        boolean show = "show".equals(cfg.vonrVisibility);
+                        PersistableBundle copy = new PersistableBundle((PersistableBundle) result);
+                        copy.putBoolean("config_show_vonr_icon_in_statusbar", show);
+                        param.setResult(copy);
+                    } catch (Throwable t) {
+                        XposedBridge.log(TAG + ": VoNR carrier-config override failed: " + t);
+                    }
+                }
+            };
+
+            try {
+                XposedHelpers.findAndHookMethod(ccmClz, "getConfigForSubId", int.class, overrideHook);
+            } catch (Throwable t) {
+                XposedBridge.log(TAG + ": Failed to hook getConfigForSubId(int): " + t);
+            }
+            // Newer frameworks also expose a key-filtered overload; hook it defensively.
+            try {
+                XposedHelpers.findAndHookMethod(ccmClz, "getConfigForSubId",
+                        int.class, String[].class, overrideHook);
+            } catch (Throwable ignored) {}
+
+            XposedBridge.log(TAG + ": [v" + VERSION + "] CarrierConfig VoNR override hook installed");
+        } catch (Throwable t) {
+            XposedBridge.log(TAG + ": hookCarrierConfigVonr error: " + t);
+        }
     }
 
     private void hookSystemUIApplication(XC_LoadPackage.LoadPackageParam lpparam) {
@@ -1894,6 +2067,23 @@ public class MainHook implements IXposedHookLoadPackage {
         if (interactorClz == null) {
             XposedBridge.log(TAG + ": MiuiMobileIconInteractorImpl not found");
             return;
+        }
+
+        // Track live interactors so the VoNR preference can be pushed instantly.
+        try {
+            XposedBridge.hookAllConstructors(interactorClz, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    synchronized (sMobileIconInteractors) {
+                        sMobileIconInteractors.add(new WeakReference<Object>(param.thisObject));
+                        while (sMobileIconInteractors.size() > 8) {
+                            sMobileIconInteractors.remove(0);
+                        }
+                    }
+                }
+            });
+        } catch (Throwable t) {
+            XposedBridge.log(TAG + ": Failed to hook MiuiMobileIconInteractorImpl constructor: " + t);
         }
 
         XposedHelpers.findAndHookMethod(interactorClz, "getMobileTypeName", int.class, new XC_MethodHook() {

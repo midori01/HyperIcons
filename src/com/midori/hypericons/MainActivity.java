@@ -17,8 +17,8 @@ import android.widget.Toast;
 import java.io.File;
 
 public class MainActivity extends Activity {
-    public static final String VERSION_NAME = "5.3.3";
-    public static final int VERSION_CODE = 30;
+    public static final String VERSION_NAME = "5.3.4";
+    public static final int VERSION_CODE = 31;
     public static final String PREF_NAME = "hyper_icons_config";
     public static final String ACTION_RELOAD = "com.midori.hypericons.ACTION_RELOAD";
 
@@ -39,6 +39,7 @@ public class MainActivity extends Activity {
     public static final String KEY_4G_RAT = "pref_4g_rat";
     public static final String KEY_ALWAYS_SHOW_RAT = "pref_always_show_rat";
     public static final String KEY_VOLTE_STYLE = "pref_volte_style";
+    public static final String KEY_VONR_VISIBILITY = "pref_vonr_visibility";
     public static final String KEY_VOWIFI_STYLE = "pref_vowifi_style";
     public static final String KEY_ROAMING_STYLE = "pref_roaming_style";
 
@@ -49,6 +50,7 @@ public class MainActivity extends Activity {
     public static final String KEY_SIM1_4G_RAT = "pref_sim1_4g_rat";
     public static final String KEY_SIM1_ALWAYS_SHOW_RAT = "pref_sim1_always_show_rat";
     public static final String KEY_SIM1_VOLTE_STYLE = "pref_sim1_volte_style";
+    public static final String KEY_SIM1_VONR_VISIBILITY = "pref_sim1_vonr_visibility";
     public static final String KEY_SIM1_VOWIFI_STYLE = "pref_sim1_vowifi_style";
     public static final String KEY_SIM1_ROAMING_STYLE = "pref_sim1_roaming_style";
 
@@ -59,6 +61,7 @@ public class MainActivity extends Activity {
     public static final String KEY_SIM2_4G_RAT = "pref_sim2_4g_rat";
     public static final String KEY_SIM2_ALWAYS_SHOW_RAT = "pref_sim2_always_show_rat";
     public static final String KEY_SIM2_VOLTE_STYLE = "pref_sim2_volte_style";
+    public static final String KEY_SIM2_VONR_VISIBILITY = "pref_sim2_vonr_visibility";
     public static final String KEY_SIM2_VOWIFI_STYLE = "pref_sim2_vowifi_style";
     public static final String KEY_SIM2_ROAMING_STYLE = "pref_sim2_roaming_style";
 
@@ -99,6 +102,10 @@ public class MainActivity extends Activity {
     public static final String VAL_VOLTE_INTL_VO4G = "intl_vo4g";
     public static final String VAL_VOLTE_HIDE = "hide";
 
+    public static final String VAL_VONR_VISIBILITY_DEFAULT = "default";
+    public static final String VAL_VONR_VISIBILITY_SHOW = "show";
+    public static final String VAL_VONR_VISIBILITY_HIDE = "hide";
+
     public static final String VAL_VOWIFI_STANDARD = "vowifi_standard";
     public static final String VAL_VOWIFI_WIFI = "vowifi_wifi";
     public static final String VAL_VOWIFI_CALL = "vowifi_call";
@@ -114,6 +121,7 @@ public class MainActivity extends Activity {
     private RadioGroup mRg4gRat;
     private RadioGroup mRgAlwaysShowRat;
     private RadioGroup mRgVolteStyle;
+    private RadioGroup mRgVonrVisibility;
     private RadioGroup mRgVowifiStyle;
     private RadioGroup mRgRoamingStyle;
     private Button mBtnRefresh;
@@ -135,6 +143,7 @@ public class MainActivity extends Activity {
     private TextView mBadge4gRat;
     private TextView mBadgeAlwaysShowRat;
     private TextView mBadgeVolteStyle;
+    private TextView mBadgeVonrVisibility;
     private TextView mBadgeVowifiStyle;
     private TextView mBadgeRoamingStyle;
 
@@ -158,6 +167,7 @@ public class MainActivity extends Activity {
         mBadge4gRat = findViewById(R.id.badge_4g_rat);
         mBadgeAlwaysShowRat = findViewById(R.id.badge_always_show_rat);
         mBadgeVolteStyle = findViewById(R.id.badge_volte_style);
+        mBadgeVonrVisibility = findViewById(R.id.badge_vonr_visibility);
         mBadgeVowifiStyle = findViewById(R.id.badge_vowifi_style);
         mBadgeRoamingStyle = findViewById(R.id.badge_roaming_style);
 
@@ -174,6 +184,7 @@ public class MainActivity extends Activity {
         mRg4gRat = findViewById(R.id.rg_4g_rat);
         mRgAlwaysShowRat = findViewById(R.id.rg_always_show_rat);
         mRgVolteStyle = findViewById(R.id.rg_volte_style);
+        mRgVonrVisibility = findViewById(R.id.rg_vonr_visibility);
         mRgVowifiStyle = findViewById(R.id.rg_vowifi_style);
         mRgRoamingStyle = findViewById(R.id.rg_roaming_style);
         mBtnRefresh = findViewById(R.id.btn_refresh);
@@ -284,6 +295,7 @@ public class MainActivity extends Activity {
         if (KEY_4G_RAT.equals(baseKey)) return KEY_SIM1_4G_RAT;
         if (KEY_ALWAYS_SHOW_RAT.equals(baseKey)) return KEY_SIM1_ALWAYS_SHOW_RAT;
         if (KEY_VOLTE_STYLE.equals(baseKey)) return KEY_SIM1_VOLTE_STYLE;
+        if (KEY_VONR_VISIBILITY.equals(baseKey)) return KEY_SIM1_VONR_VISIBILITY;
         if (KEY_VOWIFI_STYLE.equals(baseKey)) return KEY_SIM1_VOWIFI_STYLE;
         if (KEY_ROAMING_STYLE.equals(baseKey)) return KEY_SIM1_ROAMING_STYLE;
         return baseKey;
@@ -296,6 +308,7 @@ public class MainActivity extends Activity {
         if (KEY_4G_RAT.equals(baseKey)) return KEY_SIM2_4G_RAT;
         if (KEY_ALWAYS_SHOW_RAT.equals(baseKey)) return KEY_SIM2_ALWAYS_SHOW_RAT;
         if (KEY_VOLTE_STYLE.equals(baseKey)) return KEY_SIM2_VOLTE_STYLE;
+        if (KEY_VONR_VISIBILITY.equals(baseKey)) return KEY_SIM2_VONR_VISIBILITY;
         if (KEY_VOWIFI_STYLE.equals(baseKey)) return KEY_SIM2_VOWIFI_STYLE;
         if (KEY_ROAMING_STYLE.equals(baseKey)) return KEY_SIM2_ROAMING_STYLE;
         return baseKey;
@@ -454,6 +467,15 @@ public class MainActivity extends Activity {
             mRgVolteStyle.check(R.id.rb_volte_default);
         }
 
+        String vonrVisVal = getEffectiveConfigValue(KEY_VONR_VISIBILITY);
+        if (VAL_VONR_VISIBILITY_SHOW.equals(vonrVisVal)) {
+            mRgVonrVisibility.check(R.id.rb_vonr_visibility_show);
+        } else if (VAL_VONR_VISIBILITY_HIDE.equals(vonrVisVal)) {
+            mRgVonrVisibility.check(R.id.rb_vonr_visibility_hide);
+        } else {
+            mRgVonrVisibility.check(R.id.rb_vonr_visibility_default);
+        }
+
         String vowifiVal = getEffectiveConfigValue(KEY_VOWIFI_STYLE);
         if (VAL_VOWIFI_STANDARD.equals(vowifiVal)) {
             mRgVowifiStyle.check(R.id.rb_vowifi_standard);
@@ -589,6 +611,18 @@ public class MainActivity extends Activity {
             }
         });
 
+        mRgVonrVisibility.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                if (mIsInitializing) return;
+                String val = VAL_VONR_VISIBILITY_DEFAULT;
+                if (checkedId == R.id.rb_vonr_visibility_show) val = VAL_VONR_VISIBILITY_SHOW;
+                else if (checkedId == R.id.rb_vonr_visibility_hide) val = VAL_VONR_VISIBILITY_HIDE;
+
+                saveConfigValue(KEY_VONR_VISIBILITY, val);
+            }
+        });
+
         mRgVowifiStyle.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
@@ -667,6 +701,7 @@ public class MainActivity extends Activity {
         String ratVal = mPrefs.getString(KEY_4G_RAT, VAL_DEFAULT);
         String alwaysRatVal = mPrefs.getString(KEY_ALWAYS_SHOW_RAT, VAL_DEFAULT);
         String volteVal = mPrefs.getString(KEY_VOLTE_STYLE, VAL_DEFAULT);
+        String vonrVisVal = mPrefs.getString(KEY_VONR_VISIBILITY, VAL_DEFAULT);
         String vowifiVal = mPrefs.getString(KEY_VOWIFI_STYLE, VAL_DEFAULT);
         String roamingVal = mPrefs.getString(KEY_ROAMING_STYLE, VAL_DEFAULT);
 
@@ -685,6 +720,7 @@ public class MainActivity extends Activity {
         intent.putExtra(KEY_4G_RAT, ratVal);
         intent.putExtra(KEY_ALWAYS_SHOW_RAT, alwaysRatVal);
         intent.putExtra(KEY_VOLTE_STYLE, volteVal);
+        intent.putExtra(KEY_VONR_VISIBILITY, vonrVisVal);
         intent.putExtra(KEY_VOWIFI_STYLE, vowifiVal);
         intent.putExtra(KEY_ROAMING_STYLE, roamingVal);
 
@@ -695,6 +731,7 @@ public class MainActivity extends Activity {
         intent.putExtra(KEY_SIM1_4G_RAT, mPrefs.getString(KEY_SIM1_4G_RAT, ratVal));
         intent.putExtra(KEY_SIM1_ALWAYS_SHOW_RAT, mPrefs.getString(KEY_SIM1_ALWAYS_SHOW_RAT, alwaysRatVal));
         intent.putExtra(KEY_SIM1_VOLTE_STYLE, mPrefs.getString(KEY_SIM1_VOLTE_STYLE, volteVal));
+        intent.putExtra(KEY_SIM1_VONR_VISIBILITY, mPrefs.getString(KEY_SIM1_VONR_VISIBILITY, vonrVisVal));
         intent.putExtra(KEY_SIM1_VOWIFI_STYLE, mPrefs.getString(KEY_SIM1_VOWIFI_STYLE, vowifiVal));
         intent.putExtra(KEY_SIM1_ROAMING_STYLE, mPrefs.getString(KEY_SIM1_ROAMING_STYLE, roamingVal));
 
@@ -705,6 +742,7 @@ public class MainActivity extends Activity {
         intent.putExtra(KEY_SIM2_4G_RAT, mPrefs.getString(KEY_SIM2_4G_RAT, ratVal));
         intent.putExtra(KEY_SIM2_ALWAYS_SHOW_RAT, mPrefs.getString(KEY_SIM2_ALWAYS_SHOW_RAT, alwaysRatVal));
         intent.putExtra(KEY_SIM2_VOLTE_STYLE, mPrefs.getString(KEY_SIM2_VOLTE_STYLE, volteVal));
+        intent.putExtra(KEY_SIM2_VONR_VISIBILITY, mPrefs.getString(KEY_SIM2_VONR_VISIBILITY, vonrVisVal));
         intent.putExtra(KEY_SIM2_VOWIFI_STYLE, mPrefs.getString(KEY_SIM2_VOWIFI_STYLE, vowifiVal));
         intent.putExtra(KEY_SIM2_ROAMING_STYLE, mPrefs.getString(KEY_SIM2_ROAMING_STYLE, roamingVal));
 
@@ -850,6 +888,14 @@ public class MainActivity extends Activity {
             else if (VAL_VOLTE_INTL_VO4G.equals(volteVal)) text = "Vo4G";
             else if (VAL_VOLTE_HIDE.equals(volteVal)) text = getString(R.string.opt_volte_hide);
             mBadgeVolteStyle.setText("[" + text + "]");
+        }
+
+        String vonrVisVal = getEffectiveConfigValue(KEY_VONR_VISIBILITY);
+        if (mBadgeVonrVisibility != null) {
+            String text = getString(R.string.opt_vonr_visibility_default);
+            if (VAL_VONR_VISIBILITY_SHOW.equals(vonrVisVal)) text = getString(R.string.opt_vonr_visibility_show);
+            else if (VAL_VONR_VISIBILITY_HIDE.equals(vonrVisVal)) text = getString(R.string.opt_vonr_visibility_hide);
+            mBadgeVonrVisibility.setText("[" + text + "]");
         }
 
         String vowifiVal = getEffectiveConfigValue(KEY_VOWIFI_STYLE);

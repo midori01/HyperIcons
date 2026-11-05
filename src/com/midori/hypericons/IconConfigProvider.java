@@ -48,6 +48,7 @@ public class IconConfigProvider extends ContentProvider {
             bundle.putString(MainActivity.KEY_VOLTE_STYLE, prefs.getString(MainActivity.KEY_VOLTE_STYLE, MainActivity.VAL_DEFAULT));
             bundle.putString(MainActivity.KEY_VOWIFI_STYLE, prefs.getString(MainActivity.KEY_VOWIFI_STYLE, MainActivity.VAL_DEFAULT));
             bundle.putString(MainActivity.KEY_ROAMING_STYLE, prefs.getString(MainActivity.KEY_ROAMING_STYLE, MainActivity.VAL_DEFAULT));
+            bundle.putString(MainActivity.KEY_VONR_VISIBILITY, prefs.getString(MainActivity.KEY_VONR_VISIBILITY, MainActivity.VAL_DEFAULT));
 
             // SIM 1 (Slot 0) config
             bundle.putString(MainActivity.KEY_SIM1_5G_CA, prefs.getString(MainActivity.KEY_SIM1_5G_CA, prefs.getString(MainActivity.KEY_5G_CA, MainActivity.VAL_DEFAULT)));
@@ -58,6 +59,7 @@ public class IconConfigProvider extends ContentProvider {
             bundle.putString(MainActivity.KEY_SIM1_VOLTE_STYLE, prefs.getString(MainActivity.KEY_SIM1_VOLTE_STYLE, prefs.getString(MainActivity.KEY_VOLTE_STYLE, MainActivity.VAL_DEFAULT)));
             bundle.putString(MainActivity.KEY_SIM1_VOWIFI_STYLE, prefs.getString(MainActivity.KEY_SIM1_VOWIFI_STYLE, prefs.getString(MainActivity.KEY_VOWIFI_STYLE, MainActivity.VAL_DEFAULT)));
             bundle.putString(MainActivity.KEY_SIM1_ROAMING_STYLE, prefs.getString(MainActivity.KEY_SIM1_ROAMING_STYLE, prefs.getString(MainActivity.KEY_ROAMING_STYLE, MainActivity.VAL_DEFAULT)));
+            bundle.putString(MainActivity.KEY_SIM1_VONR_VISIBILITY, prefs.getString(MainActivity.KEY_SIM1_VONR_VISIBILITY, prefs.getString(MainActivity.KEY_VONR_VISIBILITY, MainActivity.VAL_DEFAULT)));
 
             // SIM 2 / eSIM (Slot 1) config
             bundle.putString(MainActivity.KEY_SIM2_5G_CA, prefs.getString(MainActivity.KEY_SIM2_5G_CA, prefs.getString(MainActivity.KEY_5G_CA, MainActivity.VAL_DEFAULT)));
@@ -68,6 +70,7 @@ public class IconConfigProvider extends ContentProvider {
             bundle.putString(MainActivity.KEY_SIM2_VOLTE_STYLE, prefs.getString(MainActivity.KEY_SIM2_VOLTE_STYLE, prefs.getString(MainActivity.KEY_VOLTE_STYLE, MainActivity.VAL_DEFAULT)));
             bundle.putString(MainActivity.KEY_SIM2_VOWIFI_STYLE, prefs.getString(MainActivity.KEY_SIM2_VOWIFI_STYLE, prefs.getString(MainActivity.KEY_VOWIFI_STYLE, MainActivity.VAL_DEFAULT)));
             bundle.putString(MainActivity.KEY_SIM2_ROAMING_STYLE, prefs.getString(MainActivity.KEY_SIM2_ROAMING_STYLE, prefs.getString(MainActivity.KEY_ROAMING_STYLE, MainActivity.VAL_DEFAULT)));
+            bundle.putString(MainActivity.KEY_SIM2_VONR_VISIBILITY, prefs.getString(MainActivity.KEY_SIM2_VONR_VISIBILITY, prefs.getString(MainActivity.KEY_VONR_VISIBILITY, MainActivity.VAL_DEFAULT)));
 
             // Experimental: 5G+ Feature Center keep-alive
             bundle.putBoolean(MainActivity.KEY_ENABLE_5GA_KEEPALIVE, prefs.getBoolean(MainActivity.KEY_ENABLE_5GA_KEEPALIVE, false));
@@ -80,12 +83,15 @@ public class IconConfigProvider extends ContentProvider {
                 MainActivity.KEY_5G_CA, MainActivity.KEY_5G_BASIC, MainActivity.KEY_CAPSULE_STYLE,
                 MainActivity.KEY_4G_RAT, MainActivity.KEY_ALWAYS_SHOW_RAT, MainActivity.KEY_VOLTE_STYLE,
                 MainActivity.KEY_VOWIFI_STYLE, MainActivity.KEY_ROAMING_STYLE,
+                MainActivity.KEY_VONR_VISIBILITY,
                 MainActivity.KEY_SIM1_5G_CA, MainActivity.KEY_SIM1_5G_BASIC, MainActivity.KEY_SIM1_CAPSULE_STYLE,
                 MainActivity.KEY_SIM1_4G_RAT, MainActivity.KEY_SIM1_ALWAYS_SHOW_RAT, MainActivity.KEY_SIM1_VOLTE_STYLE,
                 MainActivity.KEY_SIM1_VOWIFI_STYLE, MainActivity.KEY_SIM1_ROAMING_STYLE,
+                MainActivity.KEY_SIM1_VONR_VISIBILITY,
                 MainActivity.KEY_SIM2_5G_CA, MainActivity.KEY_SIM2_5G_BASIC, MainActivity.KEY_SIM2_CAPSULE_STYLE,
                 MainActivity.KEY_SIM2_4G_RAT, MainActivity.KEY_SIM2_ALWAYS_SHOW_RAT, MainActivity.KEY_SIM2_VOLTE_STYLE,
-                MainActivity.KEY_SIM2_VOWIFI_STYLE, MainActivity.KEY_SIM2_ROAMING_STYLE
+                MainActivity.KEY_SIM2_VOWIFI_STYLE, MainActivity.KEY_SIM2_ROAMING_STYLE,
+                MainActivity.KEY_SIM2_VONR_VISIBILITY
             };
             for (String key : keys) {
                 if (extras.containsKey(key)) {

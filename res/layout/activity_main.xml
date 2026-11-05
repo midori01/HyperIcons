@@ -52,7 +52,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        android:text="v5.3.3"
+                        android:text="v5.3.4"
                         android:textColor="@color/accent"
                         android:textSize="11sp"
                         android:textStyle="bold"
@@ -775,6 +775,79 @@
                     android:layout_width="match_parent"
                     android:layout_height="40dp"
                     android:text="@string/opt_volte_hide"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+            </RadioGroup>
+        </LinearLayout>
+
+        <!-- Card: VoNR Icon Visibility -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/sec_vonr_visibility_title"
+                    android:textColor="@color/text_title"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/badge_vonr_visibility"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/accent"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_vonr_visibility_desc"
+                android:textColor="@color/text_caption"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp" />
+
+            <RadioGroup
+                android:id="@+id/rg_vonr_visibility"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:id="@+id/rb_vonr_visibility_default"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_vonr_visibility_default"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_vonr_visibility_show"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_vonr_visibility_show"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_vonr_visibility_hide"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_vonr_visibility_hide"
                     android:textColor="@color/text_body"
                     android:textSize="14sp" />
             </RadioGroup>

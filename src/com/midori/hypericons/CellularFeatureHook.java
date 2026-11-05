@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.ContentObserver;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -262,7 +263,7 @@ public class CellularFeatureHook {
             filter.addAction("android.telephony.action.CARRIER_CONFIG_CHANGED");
             filter.addAction("android.intent.action.SIM_STATE_CHANGED");
             filter.addAction(ACTION_RELOAD);
-            context.registerReceiver(new BroadcastReceiver() {
+            BroadcastReceiver reloadReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context ctx, Intent intent) {
                     if (intent == null) return;
@@ -270,6 +271,7 @@ public class CellularFeatureHook {
 
                     if (ACTION_RELOAD.equals(action)) {
                         invalidateFeatureEnabledCache();
+                        maybeReloadCarrierConfig(intent, cl);
                         boolean enabled = isFeatureEnabled(cl);
                         XposedBridge.log(TAG + ": ACTION_RELOAD received, 5G+ keepalive enabled=" + enabled);
                         if (enabled) {
@@ -296,10 +298,88 @@ public class CellularFeatureHook {
                         scheduleRestoreMultiPhase(cl, 1);
                     }
                 }
-            }, filter);
+            };
+            if (Build.VERSION.SDK_INT >= 33) {
+                context.registerReceiver(reloadReceiver, filter, Context.RECEIVER_EXPORTED);
+            } else {
+                context.registerReceiver(reloadReceiver, filter);
+            }
             XposedBridge.log(TAG + ": BroadcastReceiver registered for CARRIER_CONFIG_CHANGED, SIM_STATE_CHANGED & ACTION_RELOAD");
         } catch (Throwable t) {
             XposedBridge.log(TAG + ": registerSimReceiver error: " + t);
+        }
+    }
+
+    // --- VoNR carrier-config override support ---------------------------------
+
+    private static volatile String sLastVonrVis = null;
+    private static volatile String sLastSim1VonrVis = null;
+    private static volatile String sLastSim2VonrVis = null;
+
+    /**
+     * Only ask TeleService to rebuild CarrierConfig when the VoNR visibility
+     * preference actually changed. updateConfigForPhoneId() makes the phone
+     * process broadcast CARRIER_CONFIG_CHANGED, which makes SystemUI re-read
+     * getConfigForSubId() and re-evaluate the VoNR icon immediately.
+     */
+    private static void maybeReloadCarrierConfig(Intent intent, final ClassLoader cl) {
+        try {
+            String g = intent.getStringExtra(MainHook.KEY_VONR_VISIBILITY);
+            String s1 = intent.getStringExtra(MainHook.KEY_SIM1_VONR_VISIBILITY);
+            String s2 = intent.getStringExtra(MainHook.KEY_SIM2_VONR_VISIBILITY);
+            if (g == null && s1 == null && s2 == null) return;
+            if (g == null) g = "default";
+            if (s1 == null) s1 = g;
+            if (s2 == null) s2 = g;
+
+            if (g.equals(sLastVonrVis) && s1.equals(sLastSim1VonrVis) && s2.equals(sLastSim2VonrVis)) {
+                return;
+            }
+            sLastVonrVis = g;
+            sLastSim1VonrVis = s1;
+            sLastSim2VonrVis = s2;
+
+            Handler h = getHandler();
+            Runnable r = new Runnable() {
+                @Override
+                public void run() {
+                    reloadCarrierConfigForAllSlots(cl);
+                }
+            };
+            // Small delay so SystemUI has consumed the same ACTION_RELOAD first.
+            if (h != null) h.postDelayed(r, 400); else r.run();
+        } catch (Throwable t) {
+            XposedBridge.log(TAG + ": maybeReloadCarrierConfig error: " + t);
+        }
+    }
+
+    private static void reloadCarrierConfigForAllSlots(ClassLoader cl) {
+        try {
+            Class<?> clz = XposedHelpers.findClassIfExists("com.android.phone.CarrierConfigLoader", cl);
+            if (clz == null) {
+                XposedBridge.log(TAG + ": CarrierConfigLoader not found, cannot reload");
+                return;
+            }
+            Object instance = XposedHelpers.getStaticObjectField(clz, "sInstance");
+            if (instance == null) {
+                XposedBridge.log(TAG + ": CarrierConfigLoader.sInstance is null, reload skipped");
+                return;
+            }
+            int numPhones = 2;
+            try {
+                numPhones = XposedHelpers.getIntField(instance, "mNumPhones");
+            } catch (Throwable ignored) {}
+            for (int slot = 0; slot < numPhones; slot++) {
+                final int s = slot;
+                try {
+                    XposedHelpers.callMethod(instance, "updateConfigForPhoneId", Integer.valueOf(s));
+                } catch (Throwable t) {
+                    XposedBridge.log(TAG + ": updateConfigForPhoneId(" + s + ") failed: " + t);
+                }
+            }
+            XposedBridge.log(TAG + ": [VoNR] Requested CarrierConfig reload for " + numPhones + " slot(s)");
+        } catch (Throwable t) {
+            XposedBridge.log(TAG + ": reloadCarrierConfigForAllSlots error: " + t);
         }
     }
 

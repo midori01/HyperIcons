@@ -1,6 +1,6 @@
 # HyperIcons
 
-[![Version](https://img.shields.io/badge/version-v5.3.3%20(Build%2030)-blue.svg)](https://github.com/midori01/HyperIcons/releases)
+[![Version](https://img.shields.io/badge/version-v5.3.4%20(Build%2031)-blue.svg)](https://github.com/midori01/HyperIcons/releases)
 [![Target OS](https://img.shields.io/badge/HyperOS-4.0%20Global-orange.svg)](#)
 [![Android](https://img.shields.io/badge/Android-17%20(API%2037)-green.svg)](#)
 [![Framework](https://img.shields.io/badge/Framework-LSPosed-purple.svg)](#)
@@ -50,6 +50,7 @@ Forces specific cellular network radio access technology badges and carrier aggr
 - **China Super Wideband HD+**: Super wideband EVS HD+ indicator (`stat_sys_carrier_signal_hd_plus`).
 - **International Vo4G**: Compact Vo4G glyph.
 - **Hide Completely**: Completely suppresses VoLTE / VoNR indicators from the status bar.
+- **VoNR Icon Visibility**: Separate System Default / Always Show / Hide override for the VoNR icon, applied globally or per SIM. It overrides `config_show_vonr_icon_in_statusbar` inside SystemUI only; carrier configuration files stay untouched.
 
 ### 5) VoWiFi (Wi-Fi Calling) Indicators
 - **Default**: System default style.

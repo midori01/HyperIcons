@@ -69,6 +69,12 @@
     <string name="opt_roaming_small">Compact Small R</string>
     <string name="opt_roaming_hide">Hide Roaming Icon</string>
 
+    <string name="sec_vonr_visibility_title">VoNR Icon Visibility</string>
+    <string name="sec_vonr_visibility_desc">Force enable or disable VoNR icon visibility</string>
+    <string name="opt_vonr_visibility_default">System Default (Carrier Policy)</string>
+    <string name="opt_vonr_visibility_show">Always Show VoNR Icon</string>
+    <string name="opt_vonr_visibility_hide">Hide VoNR Icon</string>
+
     <string name="status_active_desc">Module Active · Direct Punch pipeline ready</string>
     <string name="status_inactive_desc">Module Ready · Awaiting SystemUI load (Check scope in LSPosed)</string>
 

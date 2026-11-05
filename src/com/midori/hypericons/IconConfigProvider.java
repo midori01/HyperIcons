@@ -49,6 +49,7 @@ public class IconConfigProvider extends ContentProvider {
             bundle.putString(MainActivity.KEY_VOWIFI_STYLE, prefs.getString(MainActivity.KEY_VOWIFI_STYLE, MainActivity.VAL_DEFAULT));
             bundle.putString(MainActivity.KEY_ROAMING_STYLE, prefs.getString(MainActivity.KEY_ROAMING_STYLE, MainActivity.VAL_DEFAULT));
             bundle.putString(MainActivity.KEY_VONR_VISIBILITY, prefs.getString(MainActivity.KEY_VONR_VISIBILITY, MainActivity.VAL_DEFAULT));
+            bundle.putString(MainActivity.KEY_WIFI_VOLTE_VISIBILITY, prefs.getString(MainActivity.KEY_WIFI_VOLTE_VISIBILITY, MainActivity.VAL_DEFAULT));
 
             // SIM 1 (Slot 0) config
             bundle.putString(MainActivity.KEY_SIM1_5G_CA, prefs.getString(MainActivity.KEY_SIM1_5G_CA, prefs.getString(MainActivity.KEY_5G_CA, MainActivity.VAL_DEFAULT)));
@@ -84,6 +85,7 @@ public class IconConfigProvider extends ContentProvider {
                 MainActivity.KEY_4G_RAT, MainActivity.KEY_ALWAYS_SHOW_RAT, MainActivity.KEY_VOLTE_STYLE,
                 MainActivity.KEY_VOWIFI_STYLE, MainActivity.KEY_ROAMING_STYLE,
                 MainActivity.KEY_VONR_VISIBILITY,
+                MainActivity.KEY_WIFI_VOLTE_VISIBILITY,
                 MainActivity.KEY_SIM1_5G_CA, MainActivity.KEY_SIM1_5G_BASIC, MainActivity.KEY_SIM1_CAPSULE_STYLE,
                 MainActivity.KEY_SIM1_4G_RAT, MainActivity.KEY_SIM1_ALWAYS_SHOW_RAT, MainActivity.KEY_SIM1_VOLTE_STYLE,
                 MainActivity.KEY_SIM1_VOWIFI_STYLE, MainActivity.KEY_SIM1_ROAMING_STYLE,

@@ -75,6 +75,12 @@
     <string name="opt_vonr_visibility_show">Always Show VoNR Icon</string>
     <string name="opt_vonr_visibility_hide">Hide VoNR Icon</string>
 
+    <string name="sec_wifi_volte_title">VoLTE / VoNR on Wi-Fi</string>
+    <string name="sec_wifi_volte_desc">Control whether VoLTE / VoNR icons stay visible while connected to Wi-Fi. Applies to all SIM cards</string>
+    <string name="opt_wifi_volte_default">System Default</string>
+    <string name="opt_wifi_volte_show">Keep Visible on Wi-Fi</string>
+    <string name="opt_wifi_volte_hide">Hide on Wi-Fi</string>
+
     <string name="status_active_desc">Module Active · Direct Punch pipeline ready</string>
     <string name="status_inactive_desc">Module Ready · Awaiting SystemUI load (Check scope in LSPosed)</string>
 

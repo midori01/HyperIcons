@@ -42,6 +42,7 @@ public class MainActivity extends Activity {
     public static final String KEY_VONR_VISIBILITY = "pref_vonr_visibility";
     public static final String KEY_VOWIFI_STYLE = "pref_vowifi_style";
     public static final String KEY_ROAMING_STYLE = "pref_roaming_style";
+    public static final String KEY_WIFI_VOLTE_VISIBILITY = "pref_wifi_volte_visibility";
 
     // SIM 1 (Slot 0) keys
     public static final String KEY_SIM1_5G_CA = "pref_sim1_5g_ca";
@@ -114,6 +115,10 @@ public class MainActivity extends Activity {
     public static final String VAL_ROAMING_SMALL = "small";
     public static final String VAL_ROAMING_HIDE = "hide";
 
+    public static final String VAL_WIFI_VOLTE_DEFAULT = "default";
+    public static final String VAL_WIFI_VOLTE_SHOW = "show";
+    public static final String VAL_WIFI_VOLTE_HIDE = "hide";
+
     private SharedPreferences mPrefs;
     private RadioGroup mRgCapsuleStyle;
     private RadioGroup mRg5gCa;
@@ -124,6 +129,7 @@ public class MainActivity extends Activity {
     private RadioGroup mRgVonrVisibility;
     private RadioGroup mRgVowifiStyle;
     private RadioGroup mRgRoamingStyle;
+    private RadioGroup mRgWifiVolte;
     private Button mBtnRefresh;
     private Button mBtnRestartSysui;
 
@@ -146,6 +152,7 @@ public class MainActivity extends Activity {
     private TextView mBadgeVonrVisibility;
     private TextView mBadgeVowifiStyle;
     private TextView mBadgeRoamingStyle;
+    private TextView mBadgeWifiVolte;
 
     private String mCurrentSimMode = VAL_SIM_MODE_BOTH;
     private String mCurrentSubSlot = TAB_SIM1;
@@ -170,6 +177,7 @@ public class MainActivity extends Activity {
         mBadgeVonrVisibility = findViewById(R.id.badge_vonr_visibility);
         mBadgeVowifiStyle = findViewById(R.id.badge_vowifi_style);
         mBadgeRoamingStyle = findViewById(R.id.badge_roaming_style);
+        mBadgeWifiVolte = findViewById(R.id.badge_wifi_volte);
 
         mTabModeUnified = findViewById(R.id.tab_mode_unified);
         mTabModeSeparate = findViewById(R.id.tab_mode_separate);
@@ -187,6 +195,7 @@ public class MainActivity extends Activity {
         mRgVonrVisibility = findViewById(R.id.rg_vonr_visibility);
         mRgVowifiStyle = findViewById(R.id.rg_vowifi_style);
         mRgRoamingStyle = findViewById(R.id.rg_roaming_style);
+        mRgWifiVolte = findViewById(R.id.rg_wifi_volte);
         mBtnRefresh = findViewById(R.id.btn_refresh);
         mBtnRestartSysui = findViewById(R.id.btn_restart_sysui);
 
@@ -476,6 +485,15 @@ public class MainActivity extends Activity {
             mRgVonrVisibility.check(R.id.rb_vonr_visibility_default);
         }
 
+        String wifiVolteVal = mPrefs.getString(KEY_WIFI_VOLTE_VISIBILITY, VAL_WIFI_VOLTE_DEFAULT);
+        if (VAL_WIFI_VOLTE_SHOW.equals(wifiVolteVal)) {
+            mRgWifiVolte.check(R.id.rb_wifi_volte_show);
+        } else if (VAL_WIFI_VOLTE_HIDE.equals(wifiVolteVal)) {
+            mRgWifiVolte.check(R.id.rb_wifi_volte_hide);
+        } else {
+            mRgWifiVolte.check(R.id.rb_wifi_volte_default);
+        }
+
         String vowifiVal = getEffectiveConfigValue(KEY_VOWIFI_STYLE);
         if (VAL_VOWIFI_STANDARD.equals(vowifiVal)) {
             mRgVowifiStyle.check(R.id.rb_vowifi_standard);
@@ -623,6 +641,23 @@ public class MainActivity extends Activity {
             }
         });
 
+        mRgWifiVolte.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                if (mIsInitializing) return;
+                String val = VAL_WIFI_VOLTE_DEFAULT;
+                if (checkedId == R.id.rb_wifi_volte_show) val = VAL_WIFI_VOLTE_SHOW;
+                else if (checkedId == R.id.rb_wifi_volte_hide) val = VAL_WIFI_VOLTE_HIDE;
+
+                SharedPreferences.Editor editor = mPrefs.edit();
+                editor.putString(KEY_WIFI_VOLTE_VISIBILITY, val);
+                editor.commit();
+                fixFilePermissions();
+                updateBadges();
+                sendReloadBroadcast(false);
+            }
+        });
+
         mRgVowifiStyle.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
@@ -723,6 +758,8 @@ public class MainActivity extends Activity {
         intent.putExtra(KEY_VONR_VISIBILITY, vonrVisVal);
         intent.putExtra(KEY_VOWIFI_STYLE, vowifiVal);
         intent.putExtra(KEY_ROAMING_STYLE, roamingVal);
+        intent.putExtra(KEY_WIFI_VOLTE_VISIBILITY,
+                mPrefs.getString(KEY_WIFI_VOLTE_VISIBILITY, VAL_WIFI_VOLTE_DEFAULT));
 
         // Put SIM 1 keys
         intent.putExtra(KEY_SIM1_CAPSULE_STYLE, mPrefs.getString(KEY_SIM1_CAPSULE_STYLE, capsuleVal));
@@ -914,6 +951,14 @@ public class MainActivity extends Activity {
             if (VAL_ROAMING_SMALL.equals(roamingVal)) text = getString(R.string.opt_roaming_small);
             else if (VAL_ROAMING_HIDE.equals(roamingVal)) text = getString(R.string.opt_roaming_hide);
             mBadgeRoamingStyle.setText("[" + text + "]");
+        }
+
+        String wifiVolteVal = mPrefs.getString(KEY_WIFI_VOLTE_VISIBILITY, VAL_WIFI_VOLTE_DEFAULT);
+        if (mBadgeWifiVolte != null) {
+            String text = getString(R.string.opt_wifi_volte_default);
+            if (VAL_WIFI_VOLTE_SHOW.equals(wifiVolteVal)) text = getString(R.string.opt_wifi_volte_show);
+            else if (VAL_WIFI_VOLTE_HIDE.equals(wifiVolteVal)) text = getString(R.string.opt_wifi_volte_hide);
+            mBadgeWifiVolte.setText("[" + text + "]");
         }
     }
 }

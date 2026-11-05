@@ -68,6 +68,7 @@ public class MainHook implements IXposedHookLoadPackage {
     public static final String KEY_VOWIFI_STYLE = "pref_vowifi_style";
     public static final String KEY_ROAMING_STYLE = "pref_roaming_style";
     public static final String KEY_VONR_VISIBILITY = "pref_vonr_visibility";
+    public static final String KEY_WIFI_VOLTE_VISIBILITY = "pref_wifi_volte_visibility";
 
     // SIM 1 (Slot 0) Keys
     public static final String KEY_SIM1_5G_CA = "pref_sim1_5g_ca";
@@ -104,6 +105,7 @@ public class MainHook implements IXposedHookLoadPackage {
     private static volatile String sPrefVowifiStyle = "default";
     private static volatile String sPrefRoamingStyle = "default";
     private static volatile String sPrefVonrVisibility = "default";
+    private static volatile String sPrefWifiVolteVisibility = "default";
 
     // SIM 1 (Slot 0) preferences
     private static volatile String sPrefSim15gCa = "default";
@@ -341,6 +343,8 @@ public class MainHook implements IXposedHookLoadPackage {
     private static volatile Object sPolicyInstance = null;
     private static final java.util.List<WeakReference<Object>> sMobileIconInteractors =
             java.util.Collections.synchronizedList(new java.util.ArrayList<WeakReference<Object>>());
+    private static final java.util.Map<Object, Integer> sCellularIconVmSubIds =
+            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<Object, Integer>());
     private static final ThreadLocal<Boolean> sVonrStockRead = new ThreadLocal<Boolean>();
     private static volatile boolean sReceiverRegistered = false;
     private static volatile ContentObserver sContentObserver = null;
@@ -1032,6 +1036,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 sPrefVowifiStyle = bundle.getString(KEY_VOWIFI_STYLE, "default");
                 sPrefRoamingStyle = bundle.getString(KEY_ROAMING_STYLE, "default");
                 sPrefVonrVisibility = bundle.getString(KEY_VONR_VISIBILITY, "default");
+                sPrefWifiVolteVisibility = bundle.getString(KEY_WIFI_VOLTE_VISIBILITY, "default");
 
                 sPrefSim15gCa = bundle.getString(KEY_SIM1_5G_CA, sPref5gCa);
                 sPrefSim15gBasic = bundle.getString(KEY_SIM1_5G_BASIC, sPref5gBasic);
@@ -1054,7 +1059,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 sPrefSim2VonrVisibility = bundle.getString(KEY_SIM2_VONR_VISIBILITY, sPrefVonrVisibility);
 
                 sConfigLoaded = true;
-                XposedBridge.log(TAG + ": [v" + VERSION + "] Config loaded from Provider -> Mode: " + sPrefSimMode + ", Global: [CA=" + sPref5gCa + ", Basic=" + sPref5gBasic + ", Cap=" + sPrefCapsuleStyle + ", 4G=" + sPref4gRat + ", RAT=" + sPrefAlwaysShowRat + ", VoLTE=" + sPrefVolteStyle + ", VoWiFi=" + sPrefVowifiStyle + ", Roam=" + sPrefRoamingStyle + "], SIM1: [CA=" + sPrefSim15gCa + "], SIM2: [CA=" + sPrefSim25gCa + "]");
+                XposedBridge.log(TAG + ": [v" + VERSION + "] Config loaded from Provider -> Mode: " + sPrefSimMode + ", Global: [CA=" + sPref5gCa + ", Basic=" + sPref5gBasic + ", Cap=" + sPrefCapsuleStyle + ", 4G=" + sPref4gRat + ", RAT=" + sPrefAlwaysShowRat + ", VoLTE=" + sPrefVolteStyle + ", VoWiFi=" + sPrefVowifiStyle + ", Roam=" + sPrefRoamingStyle + ", VoNR=" + sPrefVonrVisibility + ", WiFiVoLTE=" + sPrefWifiVolteVisibility + "], SIM1: [CA=" + sPrefSim15gCa + "], SIM2: [CA=" + sPrefSim25gCa + "]");
                 return true;
             }
         } catch (Throwable t) {
@@ -1077,6 +1082,7 @@ public class MainHook implements IXposedHookLoadPackage {
             if (intent.hasExtra(KEY_VOWIFI_STYLE)) sPrefVowifiStyle = intent.getStringExtra(KEY_VOWIFI_STYLE);
             if (intent.hasExtra(KEY_ROAMING_STYLE)) sPrefRoamingStyle = intent.getStringExtra(KEY_ROAMING_STYLE);
             if (intent.hasExtra(KEY_VONR_VISIBILITY)) sPrefVonrVisibility = intent.getStringExtra(KEY_VONR_VISIBILITY);
+            if (intent.hasExtra(KEY_WIFI_VOLTE_VISIBILITY)) sPrefWifiVolteVisibility = intent.getStringExtra(KEY_WIFI_VOLTE_VISIBILITY);
 
             if (intent.hasExtra(KEY_SIM1_5G_CA)) sPrefSim15gCa = intent.getStringExtra(KEY_SIM1_5G_CA);
             if (intent.hasExtra(KEY_SIM1_5G_BASIC)) sPrefSim15gBasic = intent.getStringExtra(KEY_SIM1_5G_BASIC);
@@ -1099,7 +1105,7 @@ public class MainHook implements IXposedHookLoadPackage {
             if (intent.hasExtra(KEY_SIM2_VONR_VISIBILITY)) sPrefSim2VonrVisibility = intent.getStringExtra(KEY_SIM2_VONR_VISIBILITY);
 
             sConfigLoaded = true;
-            XposedBridge.log(TAG + ": [v" + VERSION + "] Config updated via Intent -> Mode: " + sPrefSimMode + ", Global CA: " + sPref5gCa + ", SIM1 CA: " + sPrefSim15gCa + ", SIM2 CA: " + sPrefSim25gCa);
+            XposedBridge.log(TAG + ": [v" + VERSION + "] Config updated via Intent -> Mode: " + sPrefSimMode + ", Global CA: " + sPref5gCa + ", SIM1 CA: " + sPrefSim15gCa + ", SIM2 CA: " + sPrefSim25gCa + ", VoNR: " + sPrefVonrVisibility + ", WiFiVoLTE: " + sPrefWifiVolteVisibility);
             return;
         }
 
@@ -1152,6 +1158,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 sPrefVowifiStyle = prefs.getString(KEY_VOWIFI_STYLE, "default");
                 sPrefRoamingStyle = prefs.getString(KEY_ROAMING_STYLE, "default");
                 sPrefVonrVisibility = prefs.getString(KEY_VONR_VISIBILITY, "default");
+                sPrefWifiVolteVisibility = prefs.getString(KEY_WIFI_VOLTE_VISIBILITY, "default");
 
                 sPrefSim15gCa = prefs.getString(KEY_SIM1_5G_CA, sPref5gCa);
                 sPrefSim15gBasic = prefs.getString(KEY_SIM1_5G_BASIC, sPref5gBasic);
@@ -1449,21 +1456,7 @@ public class MainHook implements IXposedHookLoadPackage {
                     if (desired == null) continue;
 
                     Object readonlyFlow = XposedHelpers.getObjectField(interactor, "carrierConfigShowVonr");
-                    Object stateFlow = null;
-                    try {
-                        stateFlow = XposedHelpers.getObjectField(readonlyFlow, "$$delegate_0");
-                    } catch (Throwable ignored) {}
-                    if (stateFlow == null) {
-                        for (java.lang.reflect.Field f : readonlyFlow.getClass().getDeclaredFields()) {
-                            String fieldName = f.getName().toLowerCase();
-                            String fieldType = f.getType().getName();
-                            if (fieldName.contains("delegate") || fieldType.contains("StateFlow")) {
-                                f.setAccessible(true);
-                                stateFlow = f.get(readonlyFlow);
-                                break;
-                            }
-                        }
-                    }
+                    Object stateFlow = findStateFlowDelegate(readonlyFlow);
                     if (stateFlow == null) {
                         XposedBridge.log(TAG + ": VoNR state flow delegate not found on " + readonlyFlow.getClass().getName());
                         continue;
@@ -1480,6 +1473,29 @@ public class MainHook implements IXposedHookLoadPackage {
                 }
             }
         }
+    }
+
+    /** Unwrap a kotlinx ReadonlyStateFlow to its mutable StateFlowImpl. */
+    private static Object findStateFlowDelegate(Object readonlyFlow) {
+        if (readonlyFlow == null) return null;
+        Object stateFlow = null;
+        try {
+            stateFlow = XposedHelpers.getObjectField(readonlyFlow, "$$delegate_0");
+        } catch (Throwable ignored) {}
+        if (stateFlow == null) {
+            for (java.lang.reflect.Field f : readonlyFlow.getClass().getDeclaredFields()) {
+                String fieldName = f.getName().toLowerCase();
+                String fieldType = f.getType().getName();
+                if (fieldName.contains("delegate") || fieldType.contains("StateFlow")) {
+                    try {
+                        f.setAccessible(true);
+                        stateFlow = f.get(readonlyFlow);
+                        break;
+                    } catch (Throwable ignored) {}
+                }
+            }
+        }
+        return stateFlow;
     }
 
     /** Read the unmodified carrier value by temporarily bypassing our hook. */
@@ -1499,6 +1515,193 @@ public class MainHook implements IXposedHookLoadPackage {
             }
         } catch (Throwable t) {
             return null;
+        }
+    }
+
+    private static boolean isWifiConnected() {
+        Context ctx = sContext;
+        if (ctx == null) return false;
+        try {
+            ConnectivityManager cm = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm == null) return false;
+            Network active = cm.getActiveNetwork();
+            if (active == null) return false;
+            NetworkCapabilities caps = cm.getNetworkCapabilities(active);
+            return caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private static boolean isInternationalBuild(ClassLoader cl) {
+        try {
+            Class<?> buildClz = XposedHelpers.findClass("android.os.Build", cl);
+            return XposedHelpers.getStaticBooleanField(buildClz, "IS_INTERNATIONAL_BUILD");
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** Current VoLTE/VoNR-active state for a subscription, from the tracked interactor. */
+    private static Boolean getVolteActiveForSubId(int subId) {
+        synchronized (sMobileIconInteractors) {
+            for (int i = sMobileIconInteractors.size() - 1; i >= 0; i--) {
+                Object interactor = sMobileIconInteractors.get(i).get();
+                if (interactor == null) continue;
+                try {
+                    if (XposedHelpers.getIntField(interactor, "subId") != subId) continue;
+                    Object volteFlow = XposedHelpers.getObjectField(interactor, "volte");
+                    Object value = XposedHelpers.callMethod(volteFlow, "getValue");
+                    if (value instanceof Boolean) return (Boolean) value;
+                } catch (Throwable ignored) {}
+            }
+        }
+        return null;
+    }
+
+    /** Whether the operator policy asks SystemUI to hide the VoLTE/VoNR icon. */
+    private static boolean isVoltePolicyHidden(int subId) {
+        synchronized (sMobileIconInteractors) {
+            for (int i = sMobileIconInteractors.size() - 1; i >= 0; i--) {
+                Object interactor = sMobileIconInteractors.get(i).get();
+                if (interactor == null) continue;
+                try {
+                    if (XposedHelpers.getIntField(interactor, "subId") != subId) continue;
+                    Object opFlow = XposedHelpers.getObjectField(interactor, "miuiOpConfig");
+                    Object opConfig = XposedHelpers.callMethod(opFlow, "getValue");
+                    return opConfig != null
+                            && XposedHelpers.getBooleanField(opConfig, "hideVolte");
+                } catch (Throwable ignored) {}
+            }
+        }
+        return false;
+    }
+
+    /** Whether the view model considers Wi-Fi the default connection for a subscription. */
+    private static Boolean getWifiAvailableForSubId(int subId) {
+        java.util.Map<Object, Integer> snapshot;
+        synchronized (sCellularIconVmSubIds) {
+            snapshot = new java.util.HashMap<Object, Integer>(sCellularIconVmSubIds);
+        }
+        for (java.util.Map.Entry<Object, Integer> entry : snapshot.entrySet()) {
+            if (entry.getValue().intValue() != subId) continue;
+            try {
+                Object wifiFlow = XposedHelpers.getObjectField(entry.getKey(), "wifiAvailable");
+                Object value = XposedHelpers.callMethod(wifiFlow, "getValue");
+                if (value instanceof Boolean) return (Boolean) value;
+            } catch (Throwable ignored) {}
+        }
+        return null;
+    }
+
+    private static int getSubIdForSlot(int slot) {
+        if (slot < 0) return -1;
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                return SubscriptionManager.getSubscriptionId(slot);
+            }
+            int[] subIds = (int[]) XposedHelpers.callStaticMethod(
+                    SubscriptionManager.class, "getSubId", Integer.valueOf(slot));
+            return subIds != null && subIds.length > 0 ? subIds[0] : -1;
+        } catch (Throwable t) {
+            return -1;
+        }
+    }
+
+    private static void applyVolteChildVisible(ImageView view, boolean visible) {
+        if (view == null) return;
+        ViewGroup parent = view.getParent() instanceof ViewGroup ? (ViewGroup) view.getParent() : null;
+        while (parent != null) {
+            try {
+                if (parent.getClass().getName().endsWith("MobileSignalAnimatorContainer")) {
+                    XposedHelpers.callMethod(parent, "setChildVisible", view, Boolean.valueOf(visible));
+                    return;
+                }
+            } catch (Throwable ignored) {}
+            parent = parent.getParent() instanceof ViewGroup ? (ViewGroup) parent.getParent() : null;
+        }
+        view.setVisibility(visible ? View.VISIBLE : View.GONE);
+    }
+
+    /**
+     * Push the VoLTE/VoNR Wi-Fi preference into each live MiuiCellularIconVM's
+     * volteVisibleGlobal state flow. This keeps the value durable across
+     * status-bar rebinds and applies the change immediately.
+     */
+    private static void refreshWifiVolteVisibilityOnViewModels() {
+        String wifiPref = sPrefWifiVolteVisibility;
+        java.util.Map<Object, Integer> snapshot;
+        synchronized (sCellularIconVmSubIds) {
+            snapshot = new java.util.HashMap<Object, Integer>(sCellularIconVmSubIds);
+        }
+        if (!snapshot.isEmpty() || !"default".equals(wifiPref)) {
+            XposedBridge.log(TAG + ": [v" + VERSION + "] [WiFiVoLTE] refreshVMs pref="
+                    + wifiPref + ", tracked=" + snapshot.size());
+        }
+        for (java.util.Map.Entry<Object, Integer> entry : snapshot.entrySet()) {
+            Object vm = entry.getKey();
+            int subId = entry.getValue().intValue();
+            try {
+                Object wifiFlow = XposedHelpers.getObjectField(vm, "wifiAvailable");
+                Object opFlow = XposedHelpers.getObjectField(vm, "miuiOpConfig");
+                boolean wifi = Boolean.TRUE.equals(XposedHelpers.callMethod(wifiFlow, "getValue"));
+                boolean showWhenWifi = false;
+                boolean hideVolte = false;
+                try {
+                    Object opConfig = XposedHelpers.callMethod(opFlow, "getValue");
+                    if (opConfig != null) {
+                        showWhenWifi = XposedHelpers.getBooleanField(opConfig, "showVolteWhenWifiOnAndDripEnd");
+                        hideVolte = XposedHelpers.getBooleanField(opConfig, "hideVolte");
+                    }
+                } catch (Throwable ignored) {}
+                Boolean active = getVolteActiveForSubId(subId);
+                boolean volteActive = active != null && active.booleanValue();
+                IconConfig cfg = getConfigForSlot(getSlotIdForSubId(subId));
+
+                // Matches MiuiCellularIconVM$volteVisibleGlobal$2:
+                // first = wifiAvailable && !showVolteWhenWifiOnAndDripEnd
+                // second = volte && !hideVolte
+                boolean first = wifi && !showWhenWifi;
+                boolean second = volteActive && !hideVolte;
+                if ("hide".equals(cfg.volte)) {
+                    second = false;
+                }
+
+                if (!"default".equals(wifiPref)) {
+                    if ("show".equals(wifiPref)) {
+                        first = false;
+                    } else if ("hide".equals(wifiPref) && wifi) {
+                        second = false;
+                    }
+                }
+
+                Object flow = XposedHelpers.getObjectField(vm, "volteVisibleGlobal");
+                Object stateFlow = findStateFlowDelegate(flow);
+                if (stateFlow == null) continue;
+
+                Object current = XposedHelpers.callMethod(stateFlow, "getValue");
+                Object currentFirst = null;
+                Object currentSecond = null;
+                try {
+                    currentFirst = XposedHelpers.callMethod(current, "getFirst");
+                    currentSecond = XposedHelpers.callMethod(current, "getSecond");
+                } catch (Throwable ignored) {}
+                if (Boolean.valueOf(first).equals(currentFirst)
+                        && Boolean.valueOf(second).equals(currentSecond)) {
+                    XposedBridge.log(TAG + ": [v" + VERSION + "] [WiFiVoLTE] vm subId=" + subId
+                            + " wifi=" + wifi + " unchanged=(" + first + "," + second + ")");
+                    continue;
+                }
+
+                Class<?> pairClz = XposedHelpers.findClass("kotlin.Pair", vm.getClass().getClassLoader());
+                Object pair = XposedHelpers.newInstance(pairClz,
+                        Boolean.valueOf(first), Boolean.valueOf(second));
+                XposedHelpers.callMethod(stateFlow, "setValue", pair);
+                XposedBridge.log(TAG + ": [v" + VERSION + "] [WiFiVoLTE] Pushed volteVisibleGlobal=("
+                        + first + "," + second + ") for subId=" + subId);
+            } catch (Throwable t) {
+                XposedBridge.log(TAG + ": refreshWifiVolteVisibilityOnViewModels failed: " + t);
+            }
         }
     }
 
@@ -1530,6 +1733,7 @@ public class MainHook implements IXposedHookLoadPackage {
         // Push the VoNR carrier-config value into the live interactor flows so the
         // status bar re-evaluates immediately, without waiting for a broadcast.
         refreshVonrVisibilityOnInteractors();
+        refreshWifiVolteVisibilityOnViewModels();
 
         // Live Direct Punch for tracked views on UI thread
         Handler handler = getMainHandler();
@@ -1537,6 +1741,8 @@ public class MainHook implements IXposedHookLoadPackage {
             @Override
             public void run() {
                 try {
+                    final boolean wifiConnected = isWifiConnected();
+                    final String wifiVoltePref = sPrefWifiVolteVisibility;
                     synchronized (sTrackedViews) {
                         for (int i = sTrackedViews.size() - 1; i >= 0; i--) {
                             ImageView mobileTypeView = sTrackedViews.get(i).get();
@@ -1553,7 +1759,8 @@ public class MainHook implements IXposedHookLoadPackage {
                             int volteViewId = parent.getResources().getIdentifier("mobile_volte", "id", "com.android.systemui");
                             ImageView volteView = volteViewId != 0 ? (ImageView) parent.findViewById(volteViewId) : null;
                             if (volteView != null) {
-                                if ("hide".equals(cfg.volte)) {
+                                boolean volteStyleHidden = "hide".equals(cfg.volte);
+                                if (volteStyleHidden) {
                                     volteView.setVisibility(View.GONE);
                                 } else if (!"default".equals(cfg.volte)) {
                                     initVolteResourceIds(parent.getContext());
@@ -1564,6 +1771,33 @@ public class MainHook implements IXposedHookLoadPackage {
                                     volteView.setVisibility(View.VISIBLE);
                                     volteView.invalidate();
                                     volteView.requestLayout();
+                                }
+
+                                // VoLTE/VoNR on Wi-Fi override
+                                int volteSubId = getSubIdForView(mobileTypeView);
+                                Boolean wifiState = getWifiAvailableForSubId(volteSubId);
+                                boolean wifiOn = wifiState != null ? wifiState.booleanValue() : wifiConnected;
+                                if (wifiOn) {
+                                    XposedBridge.log(TAG + ": [v" + VERSION + "] [WiFiVoLTE] punch pref="
+                                            + wifiVoltePref + ", subId=" + volteSubId + ", active="
+                                            + getVolteActiveForSubId(volteSubId) + ", vis="
+                                            + volteView.getVisibility());
+                                }
+                                if (wifiOn && !volteStyleHidden) {
+                                    if ("show".equals(wifiVoltePref)) {
+                                        Boolean active = getVolteActiveForSubId(volteSubId);
+                                        if (active != null) {
+                                            if (active.booleanValue() && !isVoltePolicyHidden(volteSubId)) {
+                                                applyVolteChildVisible(volteView, true);
+                                            } else {
+                                                applyVolteChildVisible(volteView, false);
+                                            }
+                                        }
+                                    } else if ("hide".equals(wifiVoltePref) || "default".equals(wifiVoltePref)) {
+                                        // Native behavior hides VoLTE/VoNR while Wi-Fi is the
+                                        // default connection; enforce it immediately.
+                                        applyVolteChildVisible(volteView, false);
+                                    }
                                 }
                             }
 
@@ -1765,6 +1999,7 @@ public class MainHook implements IXposedHookLoadPackage {
 
         XposedBridge.log(TAG + ": [v" + VERSION + "] Initializing HyperIcons hook for com.android.systemui");
         loadConfig(null);
+        XposedBridge.log(TAG + ": [v" + VERSION + "] WiFiVoLTE feature active (pref=" + sPrefWifiVolteVisibility + ", intl=" + isInternationalBuild(lpparam.classLoader) + ")");
 
         hookSystemUIApplication(lpparam);
         hookOperatorPolicy(lpparam);
@@ -2281,6 +2516,35 @@ public class MainHook implements IXposedHookLoadPackage {
     }
 
     private void hookVolteViewModel(final XC_LoadPackage.LoadPackageParam lpparam) {
+        // Track each MiuiCellularIconVM with its subscription so the VoLTE/VoNR
+        // Wi-Fi preference can be pushed into its live state flow.
+        Class<?> cellularVmClz = XposedHelpers.findClassIfExists(
+            "com.android.systemui.statusbar.pipeline.mobile.ui.viewmodel.MiuiCellularIconVM",
+            lpparam.classLoader
+        );
+        if (cellularVmClz != null) {
+            try {
+                XposedBridge.hookAllConstructors(cellularVmClz, new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        try {
+                            for (Object arg : param.args) {
+                                if (arg == null) continue;
+                                if (arg.getClass().getName().endsWith("MiuiMobileIconInteractorImpl")) {
+                                    int subId = XposedHelpers.getIntField(arg, "subId");
+                                    sCellularIconVmSubIds.put(param.thisObject, Integer.valueOf(subId));
+                                    XposedBridge.log(TAG + ": [v" + VERSION + "] [WiFiVoLTE] tracking VM subId=" + subId);
+                                    break;
+                                }
+                            }
+                        } catch (Throwable ignored) {}
+                    }
+                });
+            } catch (Throwable t) {
+                XposedBridge.log(TAG + ": Failed to hook MiuiCellularIconVM constructor: " + t);
+            }
+        }
+
         // 1. Hook volteVisibleGlobal to cleanly hide when pref is 'hide'
         Class<?> volteVisibleLambda = XposedHelpers.findClassIfExists(
             "com.android.systemui.statusbar.pipeline.mobile.ui.viewmodel.MiuiCellularIconVM$volteVisibleGlobal$2",
@@ -2297,17 +2561,47 @@ public class MainHook implements IXposedHookLoadPackage {
                     int slotId = getSlotIdForSubId(subId);
                     IconConfig cfg = getConfigForSlot(slotId);
 
+                    Object res = param.getResult();
+                    if (res == null) return;
+
+                    Object first;
+                    Object second;
+                    try {
+                        first = XposedHelpers.callMethod(res, "getFirst");
+                        second = XposedHelpers.callMethod(res, "getSecond");
+                    } catch (Throwable t) {
+                        return;
+                    }
+
+                    boolean changed = false;
+
                     if ("hide".equals(cfg.volte)) {
-                        Object res = param.getResult();
-                        if (res != null) {
-                            try {
-                                Object first = XposedHelpers.callMethod(res, "getFirst");
-                                Class<?> pairClz = XposedHelpers.findClass("kotlin.Pair", lpparam.classLoader);
-                                Object newPair = XposedHelpers.newInstance(pairClz, first, Boolean.FALSE);
-                                param.setResult(newPair);
-                            } catch (Throwable t) {
-                                XposedBridge.log(TAG + ": Error modifying volteVisibleGlobal: " + t);
-                            }
+                        second = Boolean.FALSE;
+                        changed = true;
+                    }
+
+                    String wifiPref = sPrefWifiVolteVisibility;
+                    if (!"default".equals(wifiPref)) {
+                        if ("hide".equals(wifiPref) && isWifiConnected()) {
+                            second = Boolean.FALSE;
+                            changed = true;
+                        } else if ("show".equals(wifiPref) && !"hide".equals(cfg.volte)) {
+                            // Disable the native Wi-Fi hide term; VoLTE/VoNR stays
+                            // visible whenever the modem reports it as active.
+                            first = Boolean.FALSE;
+                            changed = true;
+                        }
+                    }
+
+                    if (changed) {
+                        try {
+                            Class<?> pairClz = XposedHelpers.findClass("kotlin.Pair", lpparam.classLoader);
+                            param.setResult(XposedHelpers.newInstance(pairClz, first, second));
+                            XposedBridge.log(TAG + ": [v" + VERSION + "] [WiFiVoLTE] volteVisibleGlobal pref="
+                                    + wifiPref + " -> first=" + first + ", second=" + second
+                                    + " (cfg.volte=" + cfg.volte + ")");
+                        } catch (Throwable t) {
+                            XposedBridge.log(TAG + ": Error modifying volteVisibleGlobal: " + t);
                         }
                     }
                 }
@@ -2963,6 +3257,50 @@ public class MainHook implements IXposedHookLoadPackage {
                                 if ("hide".equals(cfg.vowifi)) {
                                     param.args[1] = Boolean.FALSE;
                                     child.setVisibility(View.GONE);
+                                }
+                            }
+
+                            // VoLTE/VoNR on Wi-Fi enforcement
+                            int volteId = ctx.getResources().getIdentifier("mobile_volte", "id", "com.android.systemui");
+                            if (volteId != 0 && child.getId() == volteId) {
+                                int slotId = getSlotIdForView(child);
+                                IconConfig cfg = getConfigForSlot(slotId);
+                                String wifiPref = sPrefWifiVolteVisibility;
+                                if (!"hide".equals(cfg.volte) && !"default".equals(wifiPref)) {
+                                    int subId = getSubIdForView(child);
+                                    if (subId < 0 && child.getParent() instanceof ViewGroup) {
+                                        ViewGroup childParent = (ViewGroup) child.getParent();
+                                        int mobileTypeId = childParent.getResources().getIdentifier(
+                                                "mobile_type", "id", "com.android.systemui");
+                                        if (mobileTypeId != 0) {
+                                            View mobileTypeView = childParent.findViewById(mobileTypeId);
+                                            if (mobileTypeView != null) subId = getSubIdForView(mobileTypeView);
+                                        }
+                                    }
+                                    if (subId < 0) subId = getSubIdForSlot(slotId);
+                                    Boolean wifi = getWifiAvailableForSubId(subId);
+                                    boolean wifiOn = wifi != null ? wifi.booleanValue() : isWifiConnected();
+                                    if (wifiOn) {
+                                        if ("hide".equals(wifiPref)) {
+                                            param.args[1] = Boolean.FALSE;
+                                            child.setVisibility(View.GONE);
+                                        } else if ("show".equals(wifiPref)) {
+                                            Boolean active = getVolteActiveForSubId(subId);
+                                            boolean policyHidden = isVoltePolicyHidden(subId);
+                                            boolean nativeVisible = Boolean.TRUE.equals(param.args[1]);
+                                            if (!nativeVisible) {
+                                                XposedBridge.log(TAG + ": [v" + VERSION + "] [WiFiVoLTE] childVisible native="
+                                                        + nativeVisible + ", active=" + active + ", policyHidden="
+                                                        + policyHidden + ", subId=" + subId);
+                                            }
+                                            if (active != null && active.booleanValue() && !policyHidden) {
+                                                param.args[1] = Boolean.TRUE;
+                                                if (!nativeVisible) {
+                                                    XposedBridge.log(TAG + ": [v" + VERSION + "] [WiFiVoLTE] Forced mobile_volte visible on Wi-Fi (subId=" + subId + ")");
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         } catch (Throwable t) {

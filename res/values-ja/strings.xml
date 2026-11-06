@@ -69,12 +69,25 @@
     <string name="opt_roaming_small">コンパクト小 R</string>
     <string name="opt_roaming_hide">ローミングアイコンを非表示</string>
 
+    <string name="sec_vonr_visibility_title">VoNR アイコンの表示設定</string>
+    <string name="sec_vonr_visibility_desc">VoNR アイコンの表示・非表示を強制設定</string>
+    <string name="opt_vonr_visibility_default">システムデフォルト (キャリアポリシー)</string>
+    <string name="opt_vonr_visibility_show">常に VoNR アイコンを表示</string>
+    <string name="opt_vonr_visibility_hide">VoNR アイコンを非表示</string>
+
+    <string name="sec_wifi_volte_title">Wi-Fi 接続時の表示設定</string>
+    <string name="sec_wifi_volte_desc">Wi-Fi 接続時にも VoLTE / VoNR アイコンを表示し続けるかを設定</string>
+    <string name="opt_wifi_volte_default">システムデフォルト</string>
+    <string name="opt_wifi_volte_show">Wi-Fi 接続時も表示を維持</string>
+    <string name="opt_wifi_volte_hide">Wi-Fi 接続時は非表示</string>
+
     <string name="status_active_desc">モジュール有効 · Direct Punch 高速パイプライン準備完了</string>
     <string name="status_inactive_desc">モジュール準備完了 · SystemUI 読み込み待機中 (LSPosed でスコープ確認)</string>
 
     <string name="btn_refresh_text">ステータスバーを即時同期・更新</string>
     <string name="btn_restart_sysui_text">SystemUI を再起動</string>
     <string name="tip_footer">設定は自動保存されます。上の「即時同期」をタップすれば SystemUI を再起動せずに瞬時に反映されます（ロック画面の再ロードを回避）。必要な場合のみ下の再起動をご利用ください。</string>
+    <string name="footer_license">Apache License 2.0 に基づくオープンソース</string>
 
     <string name="toast_refresh_success">更新に成功しました</string>
     <string name="toast_restart_sysui_requesting">Root 権限で SystemUI の再起動を要求中…</string>

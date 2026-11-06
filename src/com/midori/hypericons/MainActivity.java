@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -17,10 +18,11 @@ import android.widget.Toast;
 import java.io.File;
 
 public class MainActivity extends Activity {
-    public static final String VERSION_NAME = "5.3.4";
-    public static final int VERSION_CODE = 31;
+    public static final String VERSION_NAME = "5.3.5";
+    public static final int VERSION_CODE = 32;
     public static final String PREF_NAME = "hyper_icons_config";
     public static final String ACTION_RELOAD = "com.midori.hypericons.ACTION_RELOAD";
+    public static final String PROJECT_URL = "https://github.com/midori01/HyperIcons";
 
     // Mode & Tabs
     public static final String KEY_SIM_MODE = "pref_sim_mode";           // "both" | "separate"
@@ -39,8 +41,8 @@ public class MainActivity extends Activity {
     public static final String KEY_4G_RAT = "pref_4g_rat";
     public static final String KEY_ALWAYS_SHOW_RAT = "pref_always_show_rat";
     public static final String KEY_VOLTE_STYLE = "pref_volte_style";
-    public static final String KEY_VONR_VISIBILITY = "pref_vonr_visibility";
     public static final String KEY_WIFI_VOLTE_VISIBILITY = "pref_wifi_volte_visibility";
+    public static final String KEY_VONR_VISIBILITY = "pref_vonr_visibility";
     public static final String KEY_VOWIFI_STYLE = "pref_vowifi_style";
     public static final String KEY_ROAMING_STYLE = "pref_roaming_style";
 
@@ -51,6 +53,7 @@ public class MainActivity extends Activity {
     public static final String KEY_SIM1_4G_RAT = "pref_sim1_4g_rat";
     public static final String KEY_SIM1_ALWAYS_SHOW_RAT = "pref_sim1_always_show_rat";
     public static final String KEY_SIM1_VOLTE_STYLE = "pref_sim1_volte_style";
+    public static final String KEY_SIM1_WIFI_VOLTE_VISIBILITY = "pref_sim1_wifi_volte_visibility";
     public static final String KEY_SIM1_VONR_VISIBILITY = "pref_sim1_vonr_visibility";
     public static final String KEY_SIM1_VOWIFI_STYLE = "pref_sim1_vowifi_style";
     public static final String KEY_SIM1_ROAMING_STYLE = "pref_sim1_roaming_style";
@@ -62,6 +65,7 @@ public class MainActivity extends Activity {
     public static final String KEY_SIM2_4G_RAT = "pref_sim2_4g_rat";
     public static final String KEY_SIM2_ALWAYS_SHOW_RAT = "pref_sim2_always_show_rat";
     public static final String KEY_SIM2_VOLTE_STYLE = "pref_sim2_volte_style";
+    public static final String KEY_SIM2_WIFI_VOLTE_VISIBILITY = "pref_sim2_wifi_volte_visibility";
     public static final String KEY_SIM2_VONR_VISIBILITY = "pref_sim2_vonr_visibility";
     public static final String KEY_SIM2_VOWIFI_STYLE = "pref_sim2_vowifi_style";
     public static final String KEY_SIM2_ROAMING_STYLE = "pref_sim2_roaming_style";
@@ -103,13 +107,13 @@ public class MainActivity extends Activity {
     public static final String VAL_VOLTE_INTL_VO4G = "intl_vo4g";
     public static final String VAL_VOLTE_HIDE = "hide";
 
-    public static final String VAL_VONR_VISIBILITY_DEFAULT = "default";
-    public static final String VAL_VONR_VISIBILITY_SHOW = "show";
-    public static final String VAL_VONR_VISIBILITY_HIDE = "hide";
-
     public static final String VAL_WIFI_VOLTE_DEFAULT = "default";
     public static final String VAL_WIFI_VOLTE_SHOW = "show";
     public static final String VAL_WIFI_VOLTE_HIDE = "hide";
+
+    public static final String VAL_VONR_VISIBILITY_DEFAULT = "default";
+    public static final String VAL_VONR_VISIBILITY_SHOW = "show";
+    public static final String VAL_VONR_VISIBILITY_HIDE = "hide";
 
     public static final String VAL_VOWIFI_STANDARD = "vowifi_standard";
     public static final String VAL_VOWIFI_WIFI = "vowifi_wifi";
@@ -126,8 +130,8 @@ public class MainActivity extends Activity {
     private RadioGroup mRg4gRat;
     private RadioGroup mRgAlwaysShowRat;
     private RadioGroup mRgVolteStyle;
-    private RadioGroup mRgVonrVisibility;
     private RadioGroup mRgWifiVolte;
+    private RadioGroup mRgVonrVisibility;
     private RadioGroup mRgVowifiStyle;
     private RadioGroup mRgRoamingStyle;
     private Button mBtnRefresh;
@@ -149,8 +153,8 @@ public class MainActivity extends Activity {
     private TextView mBadge4gRat;
     private TextView mBadgeAlwaysShowRat;
     private TextView mBadgeVolteStyle;
-    private TextView mBadgeVonrVisibility;
     private TextView mBadgeWifiVolte;
+    private TextView mBadgeVonrVisibility;
     private TextView mBadgeVowifiStyle;
     private TextView mBadgeRoamingStyle;
 
@@ -174,8 +178,8 @@ public class MainActivity extends Activity {
         mBadge4gRat = findViewById(R.id.badge_4g_rat);
         mBadgeAlwaysShowRat = findViewById(R.id.badge_always_show_rat);
         mBadgeVolteStyle = findViewById(R.id.badge_volte_style);
-        mBadgeVonrVisibility = findViewById(R.id.badge_vonr_visibility);
         mBadgeWifiVolte = findViewById(R.id.badge_wifi_volte);
+        mBadgeVonrVisibility = findViewById(R.id.badge_vonr_visibility);
         mBadgeVowifiStyle = findViewById(R.id.badge_vowifi_style);
         mBadgeRoamingStyle = findViewById(R.id.badge_roaming_style);
 
@@ -192,8 +196,8 @@ public class MainActivity extends Activity {
         mRg4gRat = findViewById(R.id.rg_4g_rat);
         mRgAlwaysShowRat = findViewById(R.id.rg_always_show_rat);
         mRgVolteStyle = findViewById(R.id.rg_volte_style);
-        mRgVonrVisibility = findViewById(R.id.rg_vonr_visibility);
         mRgWifiVolte = findViewById(R.id.rg_wifi_volte);
+        mRgVonrVisibility = findViewById(R.id.rg_vonr_visibility);
         mRgVowifiStyle = findViewById(R.id.rg_vowifi_style);
         mRgRoamingStyle = findViewById(R.id.rg_roaming_style);
         mBtnRefresh = findViewById(R.id.btn_refresh);
@@ -304,6 +308,7 @@ public class MainActivity extends Activity {
         if (KEY_4G_RAT.equals(baseKey)) return KEY_SIM1_4G_RAT;
         if (KEY_ALWAYS_SHOW_RAT.equals(baseKey)) return KEY_SIM1_ALWAYS_SHOW_RAT;
         if (KEY_VOLTE_STYLE.equals(baseKey)) return KEY_SIM1_VOLTE_STYLE;
+        if (KEY_WIFI_VOLTE_VISIBILITY.equals(baseKey)) return KEY_SIM1_WIFI_VOLTE_VISIBILITY;
         if (KEY_VONR_VISIBILITY.equals(baseKey)) return KEY_SIM1_VONR_VISIBILITY;
         if (KEY_VOWIFI_STYLE.equals(baseKey)) return KEY_SIM1_VOWIFI_STYLE;
         if (KEY_ROAMING_STYLE.equals(baseKey)) return KEY_SIM1_ROAMING_STYLE;
@@ -317,6 +322,7 @@ public class MainActivity extends Activity {
         if (KEY_4G_RAT.equals(baseKey)) return KEY_SIM2_4G_RAT;
         if (KEY_ALWAYS_SHOW_RAT.equals(baseKey)) return KEY_SIM2_ALWAYS_SHOW_RAT;
         if (KEY_VOLTE_STYLE.equals(baseKey)) return KEY_SIM2_VOLTE_STYLE;
+        if (KEY_WIFI_VOLTE_VISIBILITY.equals(baseKey)) return KEY_SIM2_WIFI_VOLTE_VISIBILITY;
         if (KEY_VONR_VISIBILITY.equals(baseKey)) return KEY_SIM2_VONR_VISIBILITY;
         if (KEY_VOWIFI_STYLE.equals(baseKey)) return KEY_SIM2_VOWIFI_STYLE;
         if (KEY_ROAMING_STYLE.equals(baseKey)) return KEY_SIM2_ROAMING_STYLE;
@@ -476,6 +482,15 @@ public class MainActivity extends Activity {
             mRgVolteStyle.check(R.id.rb_volte_default);
         }
 
+        String wifiVolteVal = getEffectiveConfigValue(KEY_WIFI_VOLTE_VISIBILITY);
+        if (VAL_WIFI_VOLTE_SHOW.equals(wifiVolteVal)) {
+            mRgWifiVolte.check(R.id.rb_wifi_volte_show);
+        } else if (VAL_WIFI_VOLTE_HIDE.equals(wifiVolteVal)) {
+            mRgWifiVolte.check(R.id.rb_wifi_volte_hide);
+        } else {
+            mRgWifiVolte.check(R.id.rb_wifi_volte_default);
+        }
+
         String vonrVisVal = getEffectiveConfigValue(KEY_VONR_VISIBILITY);
         if (VAL_VONR_VISIBILITY_SHOW.equals(vonrVisVal)) {
             mRgVonrVisibility.check(R.id.rb_vonr_visibility_show);
@@ -483,15 +498,6 @@ public class MainActivity extends Activity {
             mRgVonrVisibility.check(R.id.rb_vonr_visibility_hide);
         } else {
             mRgVonrVisibility.check(R.id.rb_vonr_visibility_default);
-        }
-
-        String wifiVolteVal = mPrefs.getString(KEY_WIFI_VOLTE_VISIBILITY, VAL_WIFI_VOLTE_DEFAULT);
-        if (VAL_WIFI_VOLTE_SHOW.equals(wifiVolteVal)) {
-            mRgWifiVolte.check(R.id.rb_wifi_volte_show);
-        } else if (VAL_WIFI_VOLTE_HIDE.equals(wifiVolteVal)) {
-            mRgWifiVolte.check(R.id.rb_wifi_volte_hide);
-        } else {
-            mRgWifiVolte.check(R.id.rb_wifi_volte_default);
         }
 
         String vowifiVal = getEffectiveConfigValue(KEY_VOWIFI_STYLE);
@@ -629,6 +635,18 @@ public class MainActivity extends Activity {
             }
         });
 
+        mRgWifiVolte.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                if (mIsInitializing) return;
+                String val = VAL_WIFI_VOLTE_DEFAULT;
+                if (checkedId == R.id.rb_wifi_volte_show) val = VAL_WIFI_VOLTE_SHOW;
+                else if (checkedId == R.id.rb_wifi_volte_hide) val = VAL_WIFI_VOLTE_HIDE;
+
+                saveConfigValue(KEY_WIFI_VOLTE_VISIBILITY, val);
+            }
+        });
+
         mRgVonrVisibility.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
@@ -638,23 +656,6 @@ public class MainActivity extends Activity {
                 else if (checkedId == R.id.rb_vonr_visibility_hide) val = VAL_VONR_VISIBILITY_HIDE;
 
                 saveConfigValue(KEY_VONR_VISIBILITY, val);
-            }
-        });
-
-        mRgWifiVolte.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (mIsInitializing) return;
-                String val = VAL_WIFI_VOLTE_DEFAULT;
-                if (checkedId == R.id.rb_wifi_volte_show) val = VAL_WIFI_VOLTE_SHOW;
-                else if (checkedId == R.id.rb_wifi_volte_hide) val = VAL_WIFI_VOLTE_HIDE;
-
-                SharedPreferences.Editor editor = mPrefs.edit();
-                editor.putString(KEY_WIFI_VOLTE_VISIBILITY, val);
-                editor.commit();
-                fixFilePermissions();
-                updateBadges();
-                sendReloadBroadcast(false);
             }
         });
 
@@ -697,6 +698,24 @@ public class MainActivity extends Activity {
                 restartSystemUi();
             }
         });
+
+        View projectLink = findViewById(R.id.tv_project_link);
+        if (projectLink != null) {
+            projectLink.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    openProjectPage();
+                }
+            });
+        }
+    }
+
+    private void openProjectPage() {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(PROJECT_URL)));
+        } catch (Throwable t) {
+            Toast.makeText(this, PROJECT_URL, Toast.LENGTH_LONG).show();
+        }
     }
 
     private void restartSystemUi() {
@@ -736,6 +755,7 @@ public class MainActivity extends Activity {
         String ratVal = mPrefs.getString(KEY_4G_RAT, VAL_DEFAULT);
         String alwaysRatVal = mPrefs.getString(KEY_ALWAYS_SHOW_RAT, VAL_DEFAULT);
         String volteVal = mPrefs.getString(KEY_VOLTE_STYLE, VAL_DEFAULT);
+        String wifiVolteVal = mPrefs.getString(KEY_WIFI_VOLTE_VISIBILITY, VAL_DEFAULT);
         String vonrVisVal = mPrefs.getString(KEY_VONR_VISIBILITY, VAL_DEFAULT);
         String vowifiVal = mPrefs.getString(KEY_VOWIFI_STYLE, VAL_DEFAULT);
         String roamingVal = mPrefs.getString(KEY_ROAMING_STYLE, VAL_DEFAULT);
@@ -755,9 +775,8 @@ public class MainActivity extends Activity {
         intent.putExtra(KEY_4G_RAT, ratVal);
         intent.putExtra(KEY_ALWAYS_SHOW_RAT, alwaysRatVal);
         intent.putExtra(KEY_VOLTE_STYLE, volteVal);
+        intent.putExtra(KEY_WIFI_VOLTE_VISIBILITY, wifiVolteVal);
         intent.putExtra(KEY_VONR_VISIBILITY, vonrVisVal);
-        intent.putExtra(KEY_WIFI_VOLTE_VISIBILITY,
-                mPrefs.getString(KEY_WIFI_VOLTE_VISIBILITY, VAL_WIFI_VOLTE_DEFAULT));
         intent.putExtra(KEY_VOWIFI_STYLE, vowifiVal);
         intent.putExtra(KEY_ROAMING_STYLE, roamingVal);
 
@@ -768,6 +787,7 @@ public class MainActivity extends Activity {
         intent.putExtra(KEY_SIM1_4G_RAT, mPrefs.getString(KEY_SIM1_4G_RAT, ratVal));
         intent.putExtra(KEY_SIM1_ALWAYS_SHOW_RAT, mPrefs.getString(KEY_SIM1_ALWAYS_SHOW_RAT, alwaysRatVal));
         intent.putExtra(KEY_SIM1_VOLTE_STYLE, mPrefs.getString(KEY_SIM1_VOLTE_STYLE, volteVal));
+        intent.putExtra(KEY_SIM1_WIFI_VOLTE_VISIBILITY, mPrefs.getString(KEY_SIM1_WIFI_VOLTE_VISIBILITY, wifiVolteVal));
         intent.putExtra(KEY_SIM1_VONR_VISIBILITY, mPrefs.getString(KEY_SIM1_VONR_VISIBILITY, vonrVisVal));
         intent.putExtra(KEY_SIM1_VOWIFI_STYLE, mPrefs.getString(KEY_SIM1_VOWIFI_STYLE, vowifiVal));
         intent.putExtra(KEY_SIM1_ROAMING_STYLE, mPrefs.getString(KEY_SIM1_ROAMING_STYLE, roamingVal));
@@ -779,6 +799,7 @@ public class MainActivity extends Activity {
         intent.putExtra(KEY_SIM2_4G_RAT, mPrefs.getString(KEY_SIM2_4G_RAT, ratVal));
         intent.putExtra(KEY_SIM2_ALWAYS_SHOW_RAT, mPrefs.getString(KEY_SIM2_ALWAYS_SHOW_RAT, alwaysRatVal));
         intent.putExtra(KEY_SIM2_VOLTE_STYLE, mPrefs.getString(KEY_SIM2_VOLTE_STYLE, volteVal));
+        intent.putExtra(KEY_SIM2_WIFI_VOLTE_VISIBILITY, mPrefs.getString(KEY_SIM2_WIFI_VOLTE_VISIBILITY, wifiVolteVal));
         intent.putExtra(KEY_SIM2_VONR_VISIBILITY, mPrefs.getString(KEY_SIM2_VONR_VISIBILITY, vonrVisVal));
         intent.putExtra(KEY_SIM2_VOWIFI_STYLE, mPrefs.getString(KEY_SIM2_VOWIFI_STYLE, vowifiVal));
         intent.putExtra(KEY_SIM2_ROAMING_STYLE, mPrefs.getString(KEY_SIM2_ROAMING_STYLE, roamingVal));
@@ -927,20 +948,20 @@ public class MainActivity extends Activity {
             mBadgeVolteStyle.setText("[" + text + "]");
         }
 
+        String wifiVolteVal = getEffectiveConfigValue(KEY_WIFI_VOLTE_VISIBILITY);
+        if (mBadgeWifiVolte != null) {
+            String text = getString(R.string.opt_wifi_volte_default);
+            if (VAL_WIFI_VOLTE_SHOW.equals(wifiVolteVal)) text = getString(R.string.opt_wifi_volte_show);
+            else if (VAL_WIFI_VOLTE_HIDE.equals(wifiVolteVal)) text = getString(R.string.opt_wifi_volte_hide);
+            mBadgeWifiVolte.setText("[" + text + "]");
+        }
+
         String vonrVisVal = getEffectiveConfigValue(KEY_VONR_VISIBILITY);
         if (mBadgeVonrVisibility != null) {
             String text = getString(R.string.opt_vonr_visibility_default);
             if (VAL_VONR_VISIBILITY_SHOW.equals(vonrVisVal)) text = getString(R.string.opt_vonr_visibility_show);
             else if (VAL_VONR_VISIBILITY_HIDE.equals(vonrVisVal)) text = getString(R.string.opt_vonr_visibility_hide);
             mBadgeVonrVisibility.setText("[" + text + "]");
-        }
-
-        String wifiVolteVal = mPrefs.getString(KEY_WIFI_VOLTE_VISIBILITY, VAL_WIFI_VOLTE_DEFAULT);
-        if (mBadgeWifiVolte != null) {
-            String text = getString(R.string.opt_wifi_volte_default);
-            if (VAL_WIFI_VOLTE_SHOW.equals(wifiVolteVal)) text = getString(R.string.opt_wifi_volte_show);
-            else if (VAL_WIFI_VOLTE_HIDE.equals(wifiVolteVal)) text = getString(R.string.opt_wifi_volte_hide);
-            mBadgeWifiVolte.setText("[" + text + "]");
         }
 
         String vowifiVal = getEffectiveConfigValue(KEY_VOWIFI_STYLE);

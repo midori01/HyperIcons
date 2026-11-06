@@ -69,12 +69,25 @@
     <string name="opt_roaming_small">컴팩트 소형 R</string>
     <string name="opt_roaming_hide">로밍 아이콘 숨기기</string>
 
+    <string name="sec_vonr_visibility_title">VoNR 아이콘 표시 설정</string>
+    <string name="sec_vonr_visibility_desc">VoNR 아이콘 표시 또는 숨김 강제</string>
+    <string name="opt_vonr_visibility_default">시스템 기본값 (통신사 정책)</string>
+    <string name="opt_vonr_visibility_show">항상 VoNR 아이콘 표시</string>
+    <string name="opt_vonr_visibility_hide">VoNR 아이콘 숨기기</string>
+
+    <string name="sec_wifi_volte_title">Wi-Fi 연결 시 표시 설정</string>
+    <string name="sec_wifi_volte_desc">Wi-Fi 연결 중에도 VoLTE / VoNR 아이콘을 계속 표시할지 설정</string>
+    <string name="opt_wifi_volte_default">시스템 기본값</string>
+    <string name="opt_wifi_volte_show">Wi-Fi 연결 시에도 계속 표시</string>
+    <string name="opt_wifi_volte_hide">Wi-Fi 연결 시 숨기기</string>
+
     <string name="status_active_desc">모듈 활성화됨 · Direct Punch 초고속 파이프라인 준비 완료</string>
     <string name="status_inactive_desc">모듈 준비 완료 · SystemUI 로드 대기 중 (LSPosed 범위 확인)</string>
 
     <string name="btn_refresh_text">상태표시줄 즉시 동기화 및 새로고침</string>
     <string name="btn_restart_sysui_text">SystemUI 재시작</string>
     <string name="tip_footer">설정이 즉시 저장됩니다. 상단의 \'즉시 동기화\'를 누르면 SystemUI 재부팅 없이 즉시 적용됩니다 (잠금 화면 재로드 방지). 필요한 경우에만 아래 재시작을 이용하세요.</string>
+    <string name="footer_license">Apache License 2.0 기반 오픈소스</string>
 
     <string name="toast_refresh_success">새로고침 완료</string>
     <string name="toast_restart_sysui_requesting">Root 권한으로 SystemUI 재시작 요청 중…</string>

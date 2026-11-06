@@ -1,6 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/env python3
 """
-HyperStatusIconMod Dual-Model Oracle Specification Test Engine (v5.3.4)
+HyperStatusIconMod Dual-Model Oracle Specification Test Engine (v5.3.5)
 ========================================================================
 This test engine implements a rigorous "Dual-Model Oracle Verification":
 1. StatusIconGroundTruthOracle:
@@ -180,6 +180,21 @@ class StatusIconGroundTruthOracle:
 # ==============================================================================
 # 2. MainHook SystemUI Runtime Simulator (MainHook 运行期状态机精确仿真)
 # ==============================================================================
+
+    @staticmethod
+    def get_expected_volte_wifi_visibility(pref_wifi, pref_volte, wifi_default, volte_active,
+                                           hide_policy, show_when_wifi, drip_end):
+        """VoLTE/VoNR icon visibility as defined by the product spec."""
+        if pref_volte == "hide":
+            return False
+        stock = volte_active and not hide_policy and not (wifi_default and not show_when_wifi and drip_end)
+        if pref_wifi == "show":
+            return volte_active and not hide_policy
+        if pref_wifi == "hide" and wifi_default:
+            return False
+        return stock
+
+
 class MockView:
     def __init__(self, sub_id):
         self.sub_id = sub_id
@@ -468,9 +483,54 @@ class MainHookSystemUISimulator:
 # ==============================================================================
 # 3. Permutation Runner & Strict Dual-Model Assertion Engine
 # ==============================================================================
+
+    @staticmethod
+    def lambda_wifi_pref(sim_mode, pref_global, pref_sim1, pref_sim2):
+        # MainHook.getLambdaWifiVoltePref(subId = -1): the lambda carries no subscription.
+        if sim_mode != "separate":
+            return pref_global
+        return pref_sim1 if pref_sim1 == pref_sim2 else "default"
+
+    @staticmethod
+    def volte_visible_global_lambda(lambda_pref, lambda_volte, wifi_default, volte_active,
+                                    hide_policy, show_when_wifi):
+        # Stock MiuiCellularIconVM$volteVisibleGlobal$2 plus the MainHook after-hook.
+        first = wifi_default and not show_when_wifi
+        second = volte_active and not hide_policy
+        if lambda_volte == "hide":
+            second = False
+        if lambda_pref == "hide" and wifi_default:
+            second = False
+        elif lambda_pref == "show" and lambda_volte != "hide":
+            first = False
+        return first, second
+
+    @staticmethod
+    def set_child_visible_volte(native_visible, pref_wifi, pref_volte, wifi_default,
+                                volte_active, hide_policy):
+        # MobileSignalAnimatorContainer.setChildVisible before-hook for mobile_volte.
+        visible = native_visible
+        if pref_volte != "hide" and pref_wifi in ("show", "hide") and wifi_default:
+            if pref_wifi == "hide":
+                visible = False
+            elif volte_active and not hide_policy:
+                visible = True
+        return visible
+
+    def resolve_volte_visibility(self, lambda_pref, lambda_volte, pref_wifi, pref_volte, wifi_default,
+                                 volte_active, hide_policy, show_when_wifi, drip_end):
+        first, second = self.volte_visible_global_lambda(
+            lambda_pref, lambda_volte, wifi_default, volte_active, hide_policy, show_when_wifi)
+        native_visible = (not (first and drip_end)) and second
+        if pref_volte == "hide":
+            native_visible = False
+        return self.set_child_visible_volte(
+            native_visible, pref_wifi, pref_volte, wifi_default, volte_active, hide_policy)
+
+
 def run_dual_model_verification():
     print("=" * 75)
-    print("HyperStatusIconMod Dual-Model Oracle Verification Engine (v5.3.4)")
+    print("HyperStatusIconMod Dual-Model Oracle Verification Engine (v5.3.5)")
     print("=" * 75)
     print("Comparing simulated MainHook SystemUI output against independent Oracle...")
 
@@ -745,6 +805,54 @@ def run_dual_model_verification():
                         mismatches.append(f"VoWiFi/Roaming Separate Slot 1 mismatch: exp=({exp_v2},{exp_r2}), act=({act_v2},{act_r2})")
                         continue
 
+                    passed_permutations += 1
+
+    # --- Part 5: VoLTE / VoNR visibility on Wi-Fi (global and per-SIM) ---
+    WIFI_VOLTE_OPTIONS = ["default", "show", "hide"]
+    VOLTE_STYLE_SAMPLES = ["default", "intl_solid", "hide"]
+    bools = [False, True]
+
+    # 5.1 Unified mode: one preference applies to both SIMs
+    for p_wifi in WIFI_VOLTE_OPTIONS:
+        for p_volte in VOLTE_STYLE_SAMPLES:
+            for wifi_default, active, policy, show_when_wifi, drip_end in product(bools, bools, bools, bools, bools):
+                total_permutations += 1
+                exp = StatusIconGroundTruthOracle.get_expected_volte_wifi_visibility(
+                    p_wifi, p_volte, wifi_default, active, policy, show_when_wifi, drip_end)
+                sim = MainHookSystemUISimulator()
+                lambda_pref = sim.lambda_wifi_pref("both", p_wifi, p_wifi, p_wifi)
+                act = sim.resolve_volte_visibility(lambda_pref, p_volte, p_wifi, p_volte, wifi_default,
+                                                   active, policy, show_when_wifi, drip_end)
+                if act != exp:
+                    mismatches.append(
+                        f"WiFi VoLTE unified mismatch: wifi={p_wifi}, volte={p_volte}, wifiDefault={wifi_default}, "
+                        f"active={active}, policy={policy}, showWhenWifi={show_when_wifi}, dripEnd={drip_end}: "
+                        f"exp={exp}, act={act}")
+                    continue
+                passed_permutations += 1
+
+    # 5.2 Separate mode: SIM 1 and SIM 2 configured independently; operator flags per slot
+    for p_wifi_1, p_wifi_2 in product(WIFI_VOLTE_OPTIONS, WIFI_VOLTE_OPTIONS):
+        for p_volte_1, p_volte_2 in product(VOLTE_STYLE_SAMPLES, VOLTE_STYLE_SAMPLES):
+            for wifi_default, drip_end in product(bools, bools):
+                for a1, pol1, sw1, a2, pol2, sw2 in product(bools, bools, bools, bools, bools, bools):
+                    total_permutations += 1
+                    sim = MainHookSystemUISimulator()
+                    lambda_pref = sim.lambda_wifi_pref("separate", "default", p_wifi_1, p_wifi_2)
+                    exp1 = StatusIconGroundTruthOracle.get_expected_volte_wifi_visibility(
+                        p_wifi_1, p_volte_1, wifi_default, a1, pol1, sw1, drip_end)
+                    exp2 = StatusIconGroundTruthOracle.get_expected_volte_wifi_visibility(
+                        p_wifi_2, p_volte_2, wifi_default, a2, pol2, sw2, drip_end)
+                    act1 = sim.resolve_volte_visibility(lambda_pref, "default", p_wifi_1, p_volte_1,
+                                                        wifi_default, a1, pol1, sw1, drip_end)
+                    act2 = sim.resolve_volte_visibility(lambda_pref, "default", p_wifi_2, p_volte_2,
+                                                        wifi_default, a2, pol2, sw2, drip_end)
+                    if act1 != exp1 or act2 != exp2:
+                        mismatches.append(
+                            f"WiFi VoLTE separate mismatch: sim1=({p_wifi_1},{p_volte_1},{a1},{pol1},{sw1}) "
+                            f"sim2=({p_wifi_2},{p_volte_2},{a2},{pol2},{sw2}) wifiDefault={wifi_default}, "
+                            f"dripEnd={drip_end}: exp=({exp1},{exp2}), act=({act1},{act2})")
+                        continue
                     passed_permutations += 1
 
     elapsed = time.time() - start_time

@@ -1,10 +1,10 @@
 # HyperIcons
 
-[![Version](https://img.shields.io/badge/version-v5.3.4%20(Build%2031)-blue.svg)](https://github.com/midori01/HyperIcons/releases)
+[![Version](https://img.shields.io/badge/version-v5.3.5%20(Build%2032)-blue.svg)](https://github.com/midori01/HyperIcons/releases)
 [![Target OS](https://img.shields.io/badge/HyperOS-4.0%20Global-orange.svg)](#)
 [![Android](https://img.shields.io/badge/Android-17%20(API%2037)-green.svg)](#)
 [![Framework](https://img.shields.io/badge/Framework-LSPosed-purple.svg)](#)
-[![Oracle Verification](https://img.shields.io/badge/Oracle%20Tests-1%2C409%2C935%20Passed%20(100%25)-brightgreen.svg)](tests/)
+[![Oracle Verification](https://img.shields.io/badge/Oracle%20Tests-1%2C430%2C959%20Passed%20(100%25)-brightgreen.svg)](tests/)
 [![License](https://img.shields.io/badge/License-Apache--2.0-yellow.svg)](LICENSE)
 
 **HyperIcons** is an advanced LSPosed module crafted specifically for **Xiaomi HyperOS 4.0 Global (Android 17, API 37)**. It intercepts the SystemUI cellular icon dispatch pipeline and modem service frameworks to bypass carrier restrictions, delivering granular status bar customization for 5G Carrier Aggregation, legacy RAT indicators, HD voice, Wi-Fi calling, two-tier dual-SIM configurations, and hardware-level cellular feature persistence.
@@ -50,6 +50,7 @@ Forces specific cellular network radio access technology badges and carrier aggr
 - **China Super Wideband HD+**: Super wideband EVS HD+ indicator (`stat_sys_carrier_signal_hd_plus`).
 - **International Vo4G**: Compact Vo4G glyph.
 - **Hide Completely**: Completely suppresses VoLTE / VoNR indicators from the status bar.
+- **Visibility on Wi-Fi**: System Default / Keep Visible / Hide for the VoLTE / VoNR icon while Wi-Fi is the active connection, applied globally or per SIM. System Default keeps the stock carrier behavior.
 - **VoNR Icon Visibility**: Separate System Default / Always Show / Hide override for the VoNR icon, applied globally or per SIM. It overrides `config_show_vonr_icon_in_statusbar` inside SystemUI only; carrier configuration files stay untouched.
 
 ### 5) VoWiFi (Wi-Fi Calling) Indicators
@@ -90,7 +91,7 @@ HyperIcons includes an exhaustive mathematical verification engine (`tests/test_
 bash run_tests.sh
 ```
 
-- **Permutations Tested**: 1,409,935 total Cartesian combinations across single-SIM, dual-SIM, cross-slot independent controls, VoWiFi, and Roaming states.
+- **Permutations Tested**: 1,430,959 total Cartesian combinations across single-SIM, dual-SIM, cross-slot independent controls, VoWiFi, Roaming, and VoLTE / VoNR on Wi-Fi states.
 - **Accuracy**: **100.00% match (0 mismatches)** against the independent Ground Truth Oracle.
 
 ---

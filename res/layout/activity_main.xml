@@ -52,7 +52,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        android:text="v5.3.4"
+                        android:text="v5.3.5"
                         android:textColor="@color/accent"
                         android:textSize="11sp"
                         android:textStyle="bold"
@@ -778,6 +778,76 @@
                     android:textColor="@color/text_body"
                     android:textSize="14sp" />
             </RadioGroup>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/card_stroke"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/sec_wifi_volte_title"
+                    android:textColor="@color/text_title"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/badge_wifi_volte"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/accent"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_wifi_volte_desc"
+                android:textColor="@color/text_caption"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="8dp" />
+
+            <RadioGroup
+                android:id="@+id/rg_wifi_volte"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:id="@+id/rb_wifi_volte_default"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_wifi_volte_default"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_wifi_volte_show"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_wifi_volte_show"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_wifi_volte_hide"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:text="@string/opt_wifi_volte_hide"
+                    android:textColor="@color/text_body"
+                    android:textSize="14sp" />
+            </RadioGroup>
         </LinearLayout>
 
         <!-- Card: VoNR Icon Visibility -->
@@ -848,79 +918,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="40dp"
                     android:text="@string/opt_vonr_visibility_hide"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
-            </RadioGroup>
-        </LinearLayout>
-
-        <!-- Card: VoLTE / VoNR on Wi-Fi -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:layout_marginBottom="16dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/sec_wifi_volte_title"
-                    android:textColor="@color/text_title"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/badge_wifi_volte"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/accent"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/sec_wifi_volte_desc"
-                android:textColor="@color/text_caption"
-                android:textSize="12sp"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="12dp" />
-
-            <RadioGroup
-                android:id="@+id/rg_wifi_volte"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <RadioButton
-                    android:id="@+id/rb_wifi_volte_default"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_wifi_volte_default"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
-
-                <RadioButton
-                    android:id="@+id/rb_wifi_volte_show"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_wifi_volte_show"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
-
-                <RadioButton
-                    android:id="@+id/rb_wifi_volte_hide"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_wifi_volte_hide"
                     android:textColor="@color/text_body"
                     android:textSize="14sp" />
             </RadioGroup>
@@ -1128,6 +1125,35 @@
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
             android:paddingBottom="24dp" />
+
+        <!-- Project Link -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingBottom="24dp">
+
+            <TextView
+                android:id="@+id/tv_project_link"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/footer_project_link"
+                android:textColor="@color/accent"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:padding="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?android:attr/selectableItemBackground" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/footer_license"
+                android:textColor="@color/text_caption"
+                android:textSize="11sp" />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>
 

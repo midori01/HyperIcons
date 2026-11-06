@@ -69,12 +69,25 @@
     <string name="opt_roaming_small">緊湊角標小 R</string>
     <string name="opt_roaming_hide">隱藏漫遊圖示</string>
 
+    <string name="sec_vonr_visibility_title">VoNR 圖示顯隱</string>
+    <string name="sec_vonr_visibility_desc">強制開啟或關閉 VoNR 圖示顯示</string>
+    <string name="opt_vonr_visibility_default">系統預設 (網絡商策略)</string>
+    <string name="opt_vonr_visibility_show">始終顯示 VoNR 圖示</string>
+    <string name="opt_vonr_visibility_hide">隱藏 VoNR 圖示</string>
+
+    <string name="sec_wifi_volte_title">Wi-Fi 連接時顯隱</string>
+    <string name="sec_wifi_volte_desc">控制連接 Wi-Fi 時是否依然在狀態列顯示 VoLTE / VoNR 圖示</string>
+    <string name="opt_wifi_volte_default">系統預設</string>
+    <string name="opt_wifi_volte_show">連接 Wi-Fi 時保持顯示</string>
+    <string name="opt_wifi_volte_hide">連接 Wi-Fi 時隱藏</string>
+
     <string name="status_active_desc">模組已啟用 · Direct Punch 毫秒級重繪管線就緒</string>
     <string name="status_inactive_desc">模組就緒 · 等待 SystemUI 載入 (請在 LSPosed 中勾選 SystemUI 並重啟)</string>
 
     <string name="btn_refresh_text">立即同步並重新整理狀態列</string>
     <string name="btn_restart_sysui_text">一鍵重啟 SystemUI</string>
     <string name="tip_footer">設定即選即存。點擊上方「立即同步」即可 0 毫秒熱生效（無需重啟 SystemUI，避免觸發鎖定螢幕重載）。僅在必要時點擊下方重啟。</string>
+    <string name="footer_license">基於 Apache License 2.0 協議開源</string>
 
     <string name="toast_refresh_success">重新整理成功</string>
     <string name="toast_restart_sysui_requesting">正在請求 Root 重啟 SystemUI…</string>

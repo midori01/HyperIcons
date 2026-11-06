@@ -75,8 +75,8 @@
     <string name="opt_vonr_visibility_show">Always Show VoNR Icon</string>
     <string name="opt_vonr_visibility_hide">Hide VoNR Icon</string>
 
-    <string name="sec_wifi_volte_title">VoLTE / VoNR on Wi-Fi</string>
-    <string name="sec_wifi_volte_desc">Control whether VoLTE / VoNR icons stay visible while connected to Wi-Fi. Applies to all SIM cards</string>
+    <string name="sec_wifi_volte_title">Visibility on Wi-Fi</string>
+    <string name="sec_wifi_volte_desc">Control whether the VoLTE / VoNR icon stays visible while Wi-Fi is the active connection</string>
     <string name="opt_wifi_volte_default">System Default</string>
     <string name="opt_wifi_volte_show">Keep Visible on Wi-Fi</string>
     <string name="opt_wifi_volte_hide">Hide on Wi-Fi</string>
@@ -87,6 +87,8 @@
     <string name="btn_refresh_text">Sync &amp; Refresh Status Bar</string>
     <string name="btn_restart_sysui_text">Restart SystemUI</string>
     <string name="tip_footer">Settings save automatically. Tap Refresh above for 0ms instant reload (no need to restart SystemUI, avoids lockscreen reload). Tap Restart only if needed.</string>
+    <string name="footer_project_link" translatable="false">github.com/midori01/HyperIcons</string>
+    <string name="footer_license">Open source under the Apache License 2.0</string>
 
     <string name="toast_refresh_success">Refreshed successfully</string>
     <string name="toast_restart_sysui_requesting">Requesting Root to restart SystemUI…</string>

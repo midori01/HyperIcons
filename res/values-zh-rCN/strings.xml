@@ -69,12 +69,25 @@
     <string name="opt_roaming_small">紧凑角标小 R</string>
     <string name="opt_roaming_hide">隐藏漫游图标</string>
 
+    <string name="sec_vonr_visibility_title">VoNR 图标显隐</string>
+    <string name="sec_vonr_visibility_desc">强制开启或关闭 VoNR 图标显示</string>
+    <string name="opt_vonr_visibility_default">系统默认 (运营商策略)</string>
+    <string name="opt_vonr_visibility_show">始终显示 VoNR 图标</string>
+    <string name="opt_vonr_visibility_hide">隐藏 VoNR 图标</string>
+
+    <string name="sec_wifi_volte_title">Wi-Fi 连接时显隐</string>
+    <string name="sec_wifi_volte_desc">控制连接 Wi-Fi 时是否依然在状态栏显示 VoLTE / VoNR 图标</string>
+    <string name="opt_wifi_volte_default">系统默认</string>
+    <string name="opt_wifi_volte_show">连接 Wi-Fi 时保持显示</string>
+    <string name="opt_wifi_volte_hide">连接 Wi-Fi 时隐藏</string>
+
     <string name="status_active_desc">模块已激活 · Direct Punch 毫秒级重绘管线就绪</string>
     <string name="status_inactive_desc">模块就绪 · 等待 SystemUI 加载 (请在 LSPosed 中勾选 SystemUI 并重启)</string>
 
     <string name="btn_refresh_text">立即同步并刷新状态栏</string>
     <string name="btn_restart_sysui_text">一键重启 SystemUI</string>
     <string name="tip_footer">配置即选即存。点击上方「立即同步」即可 0 毫秒热生效（无需重启 SystemUI，避免触发锁屏重载）。仅在必要时点击下方重启。</string>
+    <string name="footer_license">基于 Apache License 2.0 协议开源</string>
 
     <string name="toast_refresh_success">刷新成功</string>
     <string name="toast_restart_sysui_requesting">正在请求 Root 重启 SystemUI…</string>

@@ -41,6 +41,7 @@
     <string name="sec_always_show_rat_desc">Control whether to display the mobile data type icon (RAT) when Wi-Fi is active</string>
     <string name="opt_always_show_rat_default">System Default</string>
     <string name="opt_always_show_rat_always">Always Show Data Icon</string>
+    <string name="opt_always_show_rat_data_sim">Show Data Icon on Data SIM Only</string>
     <string name="opt_always_show_rat_wifi_hide">Hide Data Icon on Wi-Fi</string>
 
     <string name="sec_volte_title">VoLTE / VoNR Icon Style</string>
@@ -86,7 +87,7 @@
 
     <string name="btn_refresh_text">Sync &amp; Refresh Status Bar</string>
     <string name="btn_restart_sysui_text">Restart SystemUI</string>
-    <string name="tip_footer">Settings save automatically. Tap Refresh above for 0ms instant reload (no need to restart SystemUI, avoids lockscreen reload). Tap Restart only if needed.</string>
+    <string name="tip_footer">Changes apply right away. Restart SystemUI only if an icon does not update.</string>
     <string name="footer_project_link" translatable="false">github.com/midori01/HyperIcons</string>
     <string name="footer_license">Open source under the Apache License 2.0</string>
 
@@ -115,4 +116,32 @@
     <string name="experimental_explain_content">【Background】\nOn devices with dual physical SIM slots + eSIM (such as Xiaomi 17 Series Global), entering the dialer code *#*#7469542#*#* unlocks hidden menus under Settings -&gt; Developer options -&gt; Cellular Network / 5G+ Feature Center to configure advanced modem parameters (including 3GPP protocol version, 5G-A, VoNR, DSDA, and Force APN editing). However, when switching between SIM 2 and eSIM (Slot 1), the Qualcomm modem power cycles the UICC and re-enumerates, resetting volatile registers. This forces the 3GPP protocol version back to default R16 and wipes out your customized toggles for 5G-A, HOM (1024QAM), SWUL (Super Uplink), Full Power Mode, VoNR, DSDA, and Force APN editing.\n\n【Mechanism】\nWhen this feature is enabled, the module hooks into the telephony service (com.android.phone) to detect SIM 2 / eSIM (Slot 1) activation and carrier configuration events. The module continuously remembers your preferences configured in the hidden developer menu and system settings. During the millisecond window following slot activation, a multi-phase self-healing engine automatically reapplies all your original configurations to the Qualcomm modem and telephony framework (faithfully respecting your original settings: previously chosen 3GPP protocol version is accurately restored, enabled toggles are re-enabled, and disabled toggles remain disabled).\n\n【No Reboot Required】\nBecause the modem resets its radio protocol stack during SIM 2 / eSIM (Slot 1) switching, reapplying your settings during slot initialization allows the device to negotiate with the network using your preferred parameters during initial RRC Attach. This eliminates the need to repeatedly re-enter the secret code to adjust developer options or reboot the device.</string>
     <string name="experimental_tip_active">Active: Telephony hooks armed. SIM 2 / eSIM (Slot 1) transitions will preserve all features based on your original configurations.</string>
     <string name="experimental_tip_inactive">Disabled: Stock behavior preserved. SIM 2 / eSIM (Slot 1) transitions will use system defaults.</string>
+    <string name="section_network">Network type</string>
+    <string name="section_calls">Voice &amp; calling</string>
+    <string name="section_indicators">Other indicators</string>
+    <string name="status_title_ok">Module active</string>
+    <string name="status_title_partial">Some features unavailable</string>
+    <string name="status_title_restart">Restart SystemUI to apply the update</string>
+    <string name="status_title_inactive">Module not running</string>
+    <string name="status_detail_processes">SystemUI %1$d/%2$d · Phone %3$d/%4$d</string>
+    <string name="status_detail_phone_missing">SystemUI %1$d/%2$d · Phone not loaded</string>
+    <string name="status_detail_restart">Running v%1$s, installed v%2$s</string>
+    <string name="status_detail_inactive">No response from SystemUI. Enable HyperIcons in LSPosed, then restart SystemUI</string>
+    <string name="dialog_hooks_title">Hook status</string>
+    <string name="dialog_hooks_framework">%1$s %2$s · API %3$s</string>
+    <string name="dialog_hooks_systemui">SystemUI</string>
+    <string name="dialog_hooks_phone">Phone</string>
+    <string name="dialog_hooks_not_loaded">Not loaded</string>
+    <string name="dialog_hooks_points">%1$d of %2$d hook points installed</string>
+    <string name="btn_restart_phone_text">Restart Phone Process</string>
+    <string name="restart_phone_desc">Reloads the phone process hooks without rebooting. Mobile network drops for a few seconds.</string>
+    <string name="dialog_restart_phone_title">Restart the phone process?</string>
+    <string name="dialog_restart_phone_message">Mobile data and calls stop for a few seconds while com.android.phone restarts, and an ongoing call will end.</string>
+    <string name="toast_restart_phone_requesting">Requesting root to restart the phone process…</string>
+    <string name="toast_restart_phone_success">Phone process restarted</string>
+    <string name="toast_restart_phone_failed">Could not restart the phone process. Make sure root access is granted.</string>
+    <string name="status_title_checking">Checking module status…</string>
+    <string name="status_title_restart_phone">Restart the phone process to apply the update</string>
+    <string name="card_state_expanded">Expanded</string>
+    <string name="card_state_collapsed">Collapsed</string>
 </resources>

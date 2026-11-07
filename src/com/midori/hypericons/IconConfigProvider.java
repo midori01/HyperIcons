@@ -6,7 +6,11 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.Bundle;
+import android.os.Process;
+
+import java.util.Map;
 
 public class IconConfigProvider extends ContentProvider {
     public static final String AUTHORITY = "com.midori.hypericons.provider";
@@ -34,70 +38,52 @@ public class IconConfigProvider extends ContentProvider {
         if (prefs == null) return null;
 
         if (METHOD_GET_CONFIG.equals(method)) {
-            prefs.edit().putLong("last_systemui_ping", System.currentTimeMillis()).apply();
             Bundle bundle = new Bundle();
-            bundle.putString(MainActivity.KEY_SIM_MODE, prefs.getString(MainActivity.KEY_SIM_MODE, MainActivity.VAL_SIM_MODE_BOTH));
-            bundle.putString(MainActivity.KEY_TARGET_TAB, prefs.getString(MainActivity.KEY_TARGET_TAB, MainActivity.TAB_BOTH));
-
-            // Global / Both SIMs config
-            bundle.putString(MainActivity.KEY_5G_CA, prefs.getString(MainActivity.KEY_5G_CA, MainActivity.VAL_DEFAULT));
-            bundle.putString(MainActivity.KEY_5G_BASIC, prefs.getString(MainActivity.KEY_5G_BASIC, MainActivity.VAL_DEFAULT));
-            bundle.putString(MainActivity.KEY_CAPSULE_STYLE, prefs.getString(MainActivity.KEY_CAPSULE_STYLE, MainActivity.VAL_DEFAULT));
-            bundle.putString(MainActivity.KEY_4G_RAT, prefs.getString(MainActivity.KEY_4G_RAT, MainActivity.VAL_DEFAULT));
-            bundle.putString(MainActivity.KEY_ALWAYS_SHOW_RAT, prefs.getString(MainActivity.KEY_ALWAYS_SHOW_RAT, MainActivity.VAL_DEFAULT));
-            bundle.putString(MainActivity.KEY_VOLTE_STYLE, prefs.getString(MainActivity.KEY_VOLTE_STYLE, MainActivity.VAL_DEFAULT));
-            bundle.putString(MainActivity.KEY_VOWIFI_STYLE, prefs.getString(MainActivity.KEY_VOWIFI_STYLE, MainActivity.VAL_DEFAULT));
-            bundle.putString(MainActivity.KEY_ROAMING_STYLE, prefs.getString(MainActivity.KEY_ROAMING_STYLE, MainActivity.VAL_DEFAULT));
-            bundle.putString(MainActivity.KEY_VONR_VISIBILITY, prefs.getString(MainActivity.KEY_VONR_VISIBILITY, MainActivity.VAL_DEFAULT));
-            bundle.putString(MainActivity.KEY_WIFI_VOLTE_VISIBILITY, prefs.getString(MainActivity.KEY_WIFI_VOLTE_VISIBILITY, MainActivity.VAL_DEFAULT));
-
-            // SIM 1 (Slot 0) config
-            bundle.putString(MainActivity.KEY_SIM1_5G_CA, prefs.getString(MainActivity.KEY_SIM1_5G_CA, prefs.getString(MainActivity.KEY_5G_CA, MainActivity.VAL_DEFAULT)));
-            bundle.putString(MainActivity.KEY_SIM1_5G_BASIC, prefs.getString(MainActivity.KEY_SIM1_5G_BASIC, prefs.getString(MainActivity.KEY_5G_BASIC, MainActivity.VAL_DEFAULT)));
-            bundle.putString(MainActivity.KEY_SIM1_CAPSULE_STYLE, prefs.getString(MainActivity.KEY_SIM1_CAPSULE_STYLE, prefs.getString(MainActivity.KEY_CAPSULE_STYLE, MainActivity.VAL_DEFAULT)));
-            bundle.putString(MainActivity.KEY_SIM1_4G_RAT, prefs.getString(MainActivity.KEY_SIM1_4G_RAT, prefs.getString(MainActivity.KEY_4G_RAT, MainActivity.VAL_DEFAULT)));
-            bundle.putString(MainActivity.KEY_SIM1_ALWAYS_SHOW_RAT, prefs.getString(MainActivity.KEY_SIM1_ALWAYS_SHOW_RAT, prefs.getString(MainActivity.KEY_ALWAYS_SHOW_RAT, MainActivity.VAL_DEFAULT)));
-            bundle.putString(MainActivity.KEY_SIM1_VOLTE_STYLE, prefs.getString(MainActivity.KEY_SIM1_VOLTE_STYLE, prefs.getString(MainActivity.KEY_VOLTE_STYLE, MainActivity.VAL_DEFAULT)));
-            bundle.putString(MainActivity.KEY_SIM1_VOWIFI_STYLE, prefs.getString(MainActivity.KEY_SIM1_VOWIFI_STYLE, prefs.getString(MainActivity.KEY_VOWIFI_STYLE, MainActivity.VAL_DEFAULT)));
-            bundle.putString(MainActivity.KEY_SIM1_ROAMING_STYLE, prefs.getString(MainActivity.KEY_SIM1_ROAMING_STYLE, prefs.getString(MainActivity.KEY_ROAMING_STYLE, MainActivity.VAL_DEFAULT)));
-            bundle.putString(MainActivity.KEY_SIM1_VONR_VISIBILITY, prefs.getString(MainActivity.KEY_SIM1_VONR_VISIBILITY, prefs.getString(MainActivity.KEY_VONR_VISIBILITY, MainActivity.VAL_DEFAULT)));
-            bundle.putString(MainActivity.KEY_SIM1_WIFI_VOLTE_VISIBILITY, prefs.getString(MainActivity.KEY_SIM1_WIFI_VOLTE_VISIBILITY, prefs.getString(MainActivity.KEY_WIFI_VOLTE_VISIBILITY, MainActivity.VAL_DEFAULT)));
-
-            // SIM 2 / eSIM (Slot 1) config
-            bundle.putString(MainActivity.KEY_SIM2_5G_CA, prefs.getString(MainActivity.KEY_SIM2_5G_CA, prefs.getString(MainActivity.KEY_5G_CA, MainActivity.VAL_DEFAULT)));
-            bundle.putString(MainActivity.KEY_SIM2_5G_BASIC, prefs.getString(MainActivity.KEY_SIM2_5G_BASIC, prefs.getString(MainActivity.KEY_5G_BASIC, MainActivity.VAL_DEFAULT)));
-            bundle.putString(MainActivity.KEY_SIM2_CAPSULE_STYLE, prefs.getString(MainActivity.KEY_SIM2_CAPSULE_STYLE, prefs.getString(MainActivity.KEY_CAPSULE_STYLE, MainActivity.VAL_DEFAULT)));
-            bundle.putString(MainActivity.KEY_SIM2_4G_RAT, prefs.getString(MainActivity.KEY_SIM2_4G_RAT, prefs.getString(MainActivity.KEY_4G_RAT, MainActivity.VAL_DEFAULT)));
-            bundle.putString(MainActivity.KEY_SIM2_ALWAYS_SHOW_RAT, prefs.getString(MainActivity.KEY_SIM2_ALWAYS_SHOW_RAT, prefs.getString(MainActivity.KEY_ALWAYS_SHOW_RAT, MainActivity.VAL_DEFAULT)));
-            bundle.putString(MainActivity.KEY_SIM2_VOLTE_STYLE, prefs.getString(MainActivity.KEY_SIM2_VOLTE_STYLE, prefs.getString(MainActivity.KEY_VOLTE_STYLE, MainActivity.VAL_DEFAULT)));
-            bundle.putString(MainActivity.KEY_SIM2_VOWIFI_STYLE, prefs.getString(MainActivity.KEY_SIM2_VOWIFI_STYLE, prefs.getString(MainActivity.KEY_VOWIFI_STYLE, MainActivity.VAL_DEFAULT)));
-            bundle.putString(MainActivity.KEY_SIM2_ROAMING_STYLE, prefs.getString(MainActivity.KEY_SIM2_ROAMING_STYLE, prefs.getString(MainActivity.KEY_ROAMING_STYLE, MainActivity.VAL_DEFAULT)));
-            bundle.putString(MainActivity.KEY_SIM2_VONR_VISIBILITY, prefs.getString(MainActivity.KEY_SIM2_VONR_VISIBILITY, prefs.getString(MainActivity.KEY_VONR_VISIBILITY, MainActivity.VAL_DEFAULT)));
-            bundle.putString(MainActivity.KEY_SIM2_WIFI_VOLTE_VISIBILITY, prefs.getString(MainActivity.KEY_SIM2_WIFI_VOLTE_VISIBILITY, prefs.getString(MainActivity.KEY_WIFI_VOLTE_VISIBILITY, MainActivity.VAL_DEFAULT)));
+            final SharedPreferences stored = prefs;
+            Map<String, String> config = ConfigKeys.resolve(new ConfigKeys.Source() {
+                @Override
+                public String get(String key, String def) {
+                    return stored.getString(key, def);
+                }
+            });
+            for (Map.Entry<String, String> entry : config.entrySet()) {
+                bundle.putString(entry.getKey(), entry.getValue());
+            }
 
             // Experimental: 5G+ Feature Center keep-alive
             bundle.putBoolean(MainActivity.KEY_ENABLE_5GA_KEEPALIVE, prefs.getBoolean(MainActivity.KEY_ENABLE_5GA_KEEPALIVE, false));
 
             return bundle;
+        } else if (METHOD_REQUEST_HOOK_REPORTS.equals(method)) {
+            if (!isTrustedWriter(Binder.getCallingUid())) return null;
+            long now = System.currentTimeMillis();
+            long token = Binder.clearCallingIdentity();
+            try {
+                context.sendBroadcast(new android.content.Intent(HookEnv.ACTION_REQUEST_REPORT));
+            } finally {
+                Binder.restoreCallingIdentity(token);
+            }
+            Bundle bundle = new Bundle();
+            bundle.putLong("time", now);
+            return bundle;
+        } else if (METHOD_GET_HOOK_REPORTS.equals(method)) {
+            if (!isTrustedWriter(Binder.getCallingUid())) return null;
+            // One process per call, flattened to a single line: fields joined by '|', lines by ';'.
+            String process = arg != null ? arg : "systemui";
+            String report = prefs.getString(KEY_HOOK_REPORT_PREFIX + process, "");
+            Bundle bundle = new Bundle();
+            bundle.putString("report", report.trim().replace('\t', '|').replace('\n', ';'));
+            return bundle;
+        } else if (HookEnv.METHOD_REPORT_HOOKS.equals(method) && extras != null) {
+            String process = extras.getString(HookEnv.EXTRA_PROCESS);
+            String report = extras.getString(HookEnv.EXTRA_REPORT);
+            if (report == null || !isHookedProcess(Binder.getCallingUid(), process)) return null;
+            prefs.edit().putString(KEY_HOOK_REPORT_PREFIX + process, report).apply();
+            return Bundle.EMPTY;
         } else if (METHOD_SET_CONFIG.equals(method) && extras != null) {
+            if (!isTrustedWriter(Binder.getCallingUid())) return null;
             SharedPreferences.Editor editor = prefs.edit();
-            String[] keys = new String[]{
-                MainActivity.KEY_SIM_MODE, MainActivity.KEY_TARGET_TAB,
-                MainActivity.KEY_5G_CA, MainActivity.KEY_5G_BASIC, MainActivity.KEY_CAPSULE_STYLE,
-                MainActivity.KEY_4G_RAT, MainActivity.KEY_ALWAYS_SHOW_RAT, MainActivity.KEY_VOLTE_STYLE,
-                MainActivity.KEY_VOWIFI_STYLE, MainActivity.KEY_ROAMING_STYLE,
-                MainActivity.KEY_VONR_VISIBILITY,
-                MainActivity.KEY_WIFI_VOLTE_VISIBILITY,
-                MainActivity.KEY_SIM1_5G_CA, MainActivity.KEY_SIM1_5G_BASIC, MainActivity.KEY_SIM1_CAPSULE_STYLE,
-                MainActivity.KEY_SIM1_4G_RAT, MainActivity.KEY_SIM1_ALWAYS_SHOW_RAT, MainActivity.KEY_SIM1_VOLTE_STYLE,
-                MainActivity.KEY_SIM1_VOWIFI_STYLE, MainActivity.KEY_SIM1_ROAMING_STYLE,
-                MainActivity.KEY_SIM1_VONR_VISIBILITY, MainActivity.KEY_SIM1_WIFI_VOLTE_VISIBILITY,
-                MainActivity.KEY_SIM2_5G_CA, MainActivity.KEY_SIM2_5G_BASIC, MainActivity.KEY_SIM2_CAPSULE_STYLE,
-                MainActivity.KEY_SIM2_4G_RAT, MainActivity.KEY_SIM2_ALWAYS_SHOW_RAT, MainActivity.KEY_SIM2_VOLTE_STYLE,
-                MainActivity.KEY_SIM2_VOWIFI_STYLE, MainActivity.KEY_SIM2_ROAMING_STYLE,
-                MainActivity.KEY_SIM2_VONR_VISIBILITY, MainActivity.KEY_SIM2_WIFI_VOLTE_VISIBILITY
-            };
-            for (String key : keys) {
+            for (String key : ConfigKeys.allStringKeys()) {
                 if (extras.containsKey(key)) {
                     editor.putString(key, extras.getString(key));
                 }
@@ -112,6 +98,32 @@ public class IconConfigProvider extends ContentProvider {
         }
 
         return null;
+    }
+
+    private static final int ROOT_UID = 0;
+    private static final int SHELL_UID = 2000;
+
+    private static boolean isTrustedWriter(int uid) {
+        return uid == Process.myUid() || uid == ROOT_UID || uid == SHELL_UID;
+    }
+
+    public static final String KEY_HOOK_REPORT_PREFIX = "hook_report_";
+    /** Hook reports for tooling (adb shell, root and the app itself). */
+    public static final String METHOD_GET_HOOK_REPORTS = "getHookReports";
+    /** Asks SystemUI and the phone process to report again (tooling only). */
+    public static final String METHOD_REQUEST_HOOK_REPORTS = "requestHookReports";
+
+    /** Only the hooked SystemUI and phone processes may report their hook status. */
+    private boolean isHookedProcess(int uid, String process) {
+        String expected = "systemui".equals(process) ? "com.android.systemui"
+                : "phone".equals(process) ? "com.android.phone" : null;
+        if (expected == null) return false;
+        String[] packages = getContext().getPackageManager().getPackagesForUid(uid);
+        if (packages == null) return false;
+        for (String pkg : packages) {
+            if (expected.equals(pkg)) return true;
+        }
+        return false;
     }
 
     @Override

@@ -52,11 +52,11 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        android:text="v5.3.5"
+                        android:text="v6.0.0"
                         android:textColor="@color/accent"
                         android:textSize="11sp"
                         android:textStyle="bold"
-                        android:background="@drawable/bg_tab_unselected"
+                        android:background="@drawable/bg_chip"
                         android:paddingStart="7dp"
                         android:paddingEnd="7dp"
                         android:paddingTop="2dp"
@@ -99,32 +99,59 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Status Banner -->
+        <!-- Status Card -->
         <LinearLayout
             android:id="@+id/card_status_banner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_card"
+            android:foreground="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:padding="14dp"
+            android:paddingStart="18dp"
+            android:paddingEnd="14dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp"
             android:layout_marginBottom="16dp">
 
             <View
                 android:id="@+id/dot_status"
                 android:layout_width="10dp"
                 android:layout_height="10dp"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="10dp" />
+                android:layout_marginEnd="14dp" />
 
-            <TextView
-                android:id="@+id/tv_status_text"
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/status_active_desc"
-                android:textColor="@color/text_body"
-                android:textSize="13sp" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_status_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_title"
+                    android:textSize="15sp"
+                    android:fontFamily="sans-serif-medium" />
+
+                <TextView
+                    android:id="@+id/tv_status_detail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/text_caption"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_marginStart="8dp"
+                android:rotation="-90"
+                android:src="@drawable/ic_chevron"
+                android:importantForAccessibility="no" />
         </LinearLayout>
 
         <!-- Two-Tier Mode and Slot Selector Card -->
@@ -238,6 +265,10 @@
                 android:text="@string/hint_mode_unified" />
         </LinearLayout>
 
+        <TextView
+            style="@style/SectionHeader"
+            android:text="@string/section_network" />
+
         <!-- Card 1: Capsule Style -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -264,11 +295,7 @@
 
                 <TextView
                     android:id="@+id/badge_capsule_style"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/accent"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    style="@style/ValueChip" />
             </LinearLayout>
 
             <TextView
@@ -287,19 +314,13 @@
 
                 <RadioButton
                     android:id="@+id/rb_capsule_default"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_capsule_default"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_capsule_default" />
 
                 <RadioButton
                     android:id="@+id/rb_capsule_korean"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_capsule_korean"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_capsule_korean" />
             </RadioGroup>
         </LinearLayout>
 
@@ -329,11 +350,7 @@
 
                 <TextView
                     android:id="@+id/badge_5g_ca"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/accent"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    style="@style/ValueChip" />
             </LinearLayout>
 
             <TextView
@@ -352,75 +369,48 @@
 
                 <RadioButton
                     android:id="@+id/rb_ca_default"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_default"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_default" />
 
                 <RadioButton
                     android:id="@+id/rb_ca_5ga"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_5ga"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_5ga" />
 
                 <RadioButton
                     android:id="@+id/rb_ca_5g_plus"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_5g_plus"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_5g_plus" />
 
                 <RadioButton
                     android:id="@+id/rb_ca_5g_plus_plus"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_5g_plus_plus"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_5g_plus_plus" />
 
                 <RadioButton
                     android:id="@+id/rb_ca_5guwb"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_5guwb"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_5guwb" />
 
                 <RadioButton
                     android:id="@+id/rb_ca_5ge"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_5ge"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_5ge" />
 
                 <RadioButton
                     android:id="@+id/rb_ca_5g_6rx"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_5g_6rx"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_5g_6rx" />
 
                 <RadioButton
                     android:id="@+id/rb_ca_5g_plus_plus_6rx"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_5g_plus_plus_6rx"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_5g_plus_plus_6rx" />
 
                 <RadioButton
                     android:id="@+id/rb_ca_5guwb_6rx"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_5guwb_6rx"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_5guwb_6rx" />
             </RadioGroup>
         </LinearLayout>
 
@@ -450,11 +440,7 @@
 
                 <TextView
                     android:id="@+id/badge_5g_basic"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/accent"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    style="@style/ValueChip" />
             </LinearLayout>
 
             <TextView
@@ -473,19 +459,13 @@
 
                 <RadioButton
                     android:id="@+id/rb_basic_default"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_5g_default"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_5g_default" />
 
                 <RadioButton
                     android:id="@+id/rb_basic_follow_ca"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_5g_follow_ca"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_5g_follow_ca" />
             </RadioGroup>
         </LinearLayout>
 
@@ -515,11 +495,7 @@
 
                 <TextView
                     android:id="@+id/badge_4g_rat"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/accent"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    style="@style/ValueChip" />
             </LinearLayout>
 
             <TextView
@@ -538,51 +514,33 @@
 
                 <RadioButton
                     android:id="@+id/rb_4g_default"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_4g_default"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_4g_default" />
 
                 <RadioButton
                     android:id="@+id/rb_4g_force_4g"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_4g_force_4g"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_4g_force_4g" />
 
                 <RadioButton
                     android:id="@+id/rb_4g_force_lte"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_4g_force_lte"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_4g_force_lte" />
 
                 <RadioButton
                     android:id="@+id/rb_4g_force_4g_lte"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_4g_force_4g_lte"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_4g_force_4g_lte" />
 
                 <RadioButton
                     android:id="@+id/rb_4g_force_45g"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_4g_force_45g"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_4g_force_45g" />
 
                 <RadioButton
                     android:id="@+id/rb_4g_force_ltea"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_4g_force_ltea"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_4g_force_ltea" />
             </RadioGroup>
         </LinearLayout>
 
@@ -612,11 +570,7 @@
 
                 <TextView
                     android:id="@+id/badge_always_show_rat"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/accent"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    style="@style/ValueChip" />
             </LinearLayout>
 
             <TextView
@@ -635,29 +589,29 @@
 
                 <RadioButton
                     android:id="@+id/rb_always_show_rat_default"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_always_show_rat_default"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_always_show_rat_default" />
 
                 <RadioButton
                     android:id="@+id/rb_always_show_rat_always"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_always_show_rat_always"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_always_show_rat_always" />
+
+                <RadioButton
+                    android:id="@+id/rb_always_show_rat_data_sim"
+                    style="@style/OptionRow"
+                    android:text="@string/opt_always_show_rat_data_sim" />
 
                 <RadioButton
                     android:id="@+id/rb_always_show_rat_wifi_hide"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_always_show_rat_wifi_hide"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_always_show_rat_wifi_hide" />
             </RadioGroup>
         </LinearLayout>
+
+        <TextView
+            style="@style/SectionHeader"
+            android:text="@string/section_calls" />
 
         <!-- Card 5: VoLTE / VoNR Icon Style -->
         <LinearLayout
@@ -685,11 +639,7 @@
 
                 <TextView
                     android:id="@+id/badge_volte_style"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/accent"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    style="@style/ValueChip" />
             </LinearLayout>
 
             <TextView
@@ -708,75 +658,48 @@
 
                 <RadioButton
                     android:id="@+id/rb_volte_default"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_volte_default"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_volte_default" />
 
                 <RadioButton
                     android:id="@+id/rb_volte_intl_solid"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_volte_intl_solid"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_volte_intl_solid" />
 
                 <RadioButton
                     android:id="@+id/rb_volte_intl_4g"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_volte_intl_4g"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_volte_intl_4g" />
 
                 <RadioButton
                     android:id="@+id/rb_volte_intl_hollow"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_volte_intl_hollow"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_volte_intl_hollow" />
 
                 <RadioButton
                     android:id="@+id/rb_volte_intl_hd_voice"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_volte_intl_hd_voice"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_volte_intl_hd_voice" />
 
                 <RadioButton
                     android:id="@+id/rb_volte_china_hd"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_volte_china_hd"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_volte_china_hd" />
 
                 <RadioButton
                     android:id="@+id/rb_volte_china_hd_plus"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_volte_china_hd_plus"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_volte_china_hd_plus" />
 
                 <RadioButton
                     android:id="@+id/rb_volte_intl_vo4g"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_volte_intl_vo4g"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_volte_intl_vo4g" />
 
                 <RadioButton
                     android:id="@+id/rb_volte_hide"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_volte_hide"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_volte_hide" />
             </RadioGroup>
 
             <View
@@ -803,11 +726,7 @@
 
                 <TextView
                     android:id="@+id/badge_wifi_volte"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/accent"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    style="@style/ValueChip" />
             </LinearLayout>
 
             <TextView
@@ -826,27 +745,18 @@
 
                 <RadioButton
                     android:id="@+id/rb_wifi_volte_default"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_wifi_volte_default"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_wifi_volte_default" />
 
                 <RadioButton
                     android:id="@+id/rb_wifi_volte_show"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_wifi_volte_show"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_wifi_volte_show" />
 
                 <RadioButton
                     android:id="@+id/rb_wifi_volte_hide"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_wifi_volte_hide"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_wifi_volte_hide" />
             </RadioGroup>
         </LinearLayout>
 
@@ -876,11 +786,7 @@
 
                 <TextView
                     android:id="@+id/badge_vonr_visibility"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/accent"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    style="@style/ValueChip" />
             </LinearLayout>
 
             <TextView
@@ -899,27 +805,18 @@
 
                 <RadioButton
                     android:id="@+id/rb_vonr_visibility_default"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_vonr_visibility_default"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_vonr_visibility_default" />
 
                 <RadioButton
                     android:id="@+id/rb_vonr_visibility_show"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_vonr_visibility_show"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_vonr_visibility_show" />
 
                 <RadioButton
                     android:id="@+id/rb_vonr_visibility_hide"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_vonr_visibility_hide"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_vonr_visibility_hide" />
             </RadioGroup>
         </LinearLayout>
 
@@ -949,11 +846,7 @@
 
                 <TextView
                     android:id="@+id/badge_vowifi_style"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/accent"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    style="@style/ValueChip" />
             </LinearLayout>
 
             <TextView
@@ -972,45 +865,34 @@
 
                 <RadioButton
                     android:id="@+id/rb_vowifi_default"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_vowifi_default"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_vowifi_default" />
 
                 <RadioButton
                     android:id="@+id/rb_vowifi_standard"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_vowifi_standard"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_vowifi_standard" />
 
                 <RadioButton
                     android:id="@+id/rb_vowifi_wifi"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_vowifi_wifi"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_vowifi_wifi" />
 
                 <RadioButton
                     android:id="@+id/rb_vowifi_call"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_vowifi_call"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_vowifi_call" />
 
                 <RadioButton
                     android:id="@+id/rb_vowifi_hide"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_vowifi_hide"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_vowifi_hide" />
             </RadioGroup>
         </LinearLayout>
+
+        <TextView
+            style="@style/SectionHeader"
+            android:text="@string/section_indicators" />
 
         <!-- Card 7: International Roaming Indicator (R) -->
         <LinearLayout
@@ -1038,11 +920,7 @@
 
                 <TextView
                     android:id="@+id/badge_roaming_style"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/accent"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    style="@style/ValueChip" />
             </LinearLayout>
 
             <TextView
@@ -1061,27 +939,18 @@
 
                 <RadioButton
                     android:id="@+id/rb_roaming_default"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_roaming_default"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_roaming_default" />
 
                 <RadioButton
                     android:id="@+id/rb_roaming_small"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_roaming_small"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_roaming_small" />
 
                 <RadioButton
                     android:id="@+id/rb_roaming_hide"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:text="@string/opt_roaming_hide"
-                    android:textColor="@color/text_body"
-                    android:textSize="14sp" />
+                    style="@style/OptionRow"
+                    android:text="@string/opt_roaming_hide" />
             </RadioGroup>
         </LinearLayout>
 

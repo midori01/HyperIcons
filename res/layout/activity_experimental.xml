@@ -193,5 +193,29 @@
                 android:textSize="12sp" />
         </LinearLayout>
 
+        <!-- Restart Phone Process -->
+        <Button
+            android:id="@+id/btn_restart_phone"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_button_secondary"
+            android:text="@string/btn_restart_phone_text"
+            android:textColor="@color/btn_secondary_text"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/restart_phone_desc"
+            android:textColor="@color/text_caption"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="24dp" />
+
     </LinearLayout>
 </ScrollView>

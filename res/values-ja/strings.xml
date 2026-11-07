@@ -41,6 +41,7 @@
     <string name="sec_always_show_rat_desc">Wi-Fi 接続時にもモバイルデータアイコン (RAT) を表示し続けるかを設定</string>
     <string name="opt_always_show_rat_default">システムデフォルト</string>
     <string name="opt_always_show_rat_always">常にデータアイコンを表示</string>
+    <string name="opt_always_show_rat_data_sim">データ通信 SIM のみ表示</string>
     <string name="opt_always_show_rat_wifi_hide">Wi-Fi 接続時は非表示</string>
 
     <string name="sec_volte_title">VoLTE / VoNR アイコンスタイル</string>
@@ -86,7 +87,7 @@
 
     <string name="btn_refresh_text">ステータスバーを即時同期・更新</string>
     <string name="btn_restart_sysui_text">SystemUI を再起動</string>
-    <string name="tip_footer">設定は自動保存されます。上の「即時同期」をタップすれば SystemUI を再起動せずに瞬時に反映されます（ロック画面の再ロードを回避）。必要な場合のみ下の再起動をご利用ください。</string>
+    <string name="tip_footer">設定はすぐに反映されます。アイコンが更新されない場合のみ SystemUI を再起動してください。</string>
     <string name="footer_license">Apache License 2.0 に基づくオープンソース</string>
 
     <string name="toast_refresh_success">更新に成功しました</string>
@@ -114,4 +115,32 @@
     <string name="experimental_explain_content">【課題と背景】\nデュアル SIM スロット + eSIM 構成の端末（Xiaomi 17 シリーズグローバル版等）では、ダイヤラーで「*#*#7469542#*#*」を入力して非表示メニューを有効化することで、「システム設定 -&gt; 開発者向けオプション -&gt; モバイルネットワーク / 5G+機能センター」から 3GPP プロトコルバージョン、5G-A、VoNR、DSDA（デュアルSIMデュアルアクティブ）、強制APN編集などの高度な通信パラメータを設定できます。しかし、SIM 2 / eSIM (Slot 1) を切り替える際、クアルコム製モデムが UICC の電源遮断と再列挙を行うため揮発性レジスタがリセットされ、3GPP プロトコルバージョンがデフォルトの R16 に強制リセットされるとともに、5G-A、1024QAM (HOM)、SWUL（スーパーアップリンク）、フルパワーモード、VoNR、DSDA、強制APN編集などの設定済みスイッチがすべて初期化されてしまいます。\n\n【動作原理】\n本機能を有効にすると、モジュールが電話サービス層（com.android.phone）で SIM 2 / eSIM (Slot 1) の準備完了およびキャリア設定の読み込みを検知します。モジュールは非表示デバッグメニューやシステム設定でユーザーが設定した各パラメータを記憶し、切り替え直後のミリ秒単位のタイミングで、マルチフェーズ自己修復エンジンがモデムおよび電話フレームワークへ元の設定値を自動再書き込みします（元の設定を厳格に尊重：設定していた 3GPP バージョンを忠実に再適用、有効にしていたスイッチは有効に復元、無効の項目は無効状態を維持）。\n\n【再起動不要について】\nSIM 2 / eSIM (Slot 1) の切り替え時にモデムはすでにプロトコルスタックを再構築しているため、初期化時に直接モデムへ元の設定を反映させることで、初期接続（RRC Attach）時に設定済みのパラメータで基地局と直接ネゴシエーションされます。暗証コードを再入力して開発者向けオプションを開き直したり、端末を再起動したりする必要はありません。</string>
     <string name="experimental_tip_active">動作中: 電話サービス層のフックが待機中です。SIM 2 / eSIM (Slot 1) 切り替え時に元の設定に基づき各機能が自動保持されます。</string>
     <string name="experimental_tip_inactive">無効: システム標準の挙動を維持します。SIM 2 / eSIM (Slot 1) 切り替え時はモデムの初期値に従います。</string>
+    <string name="section_network">ネットワーク種別</string>
+    <string name="section_calls">音声通話</string>
+    <string name="section_indicators">その他のアイコン</string>
+    <string name="status_title_ok">モジュール動作中</string>
+    <string name="status_title_partial">一部の機能が利用できません</string>
+    <string name="status_title_restart">SystemUI を再起動すると更新が反映されます</string>
+    <string name="status_title_inactive">モジュールが動作していません</string>
+    <string name="status_detail_processes">SystemUI %1$d/%2$d · 電話 %3$d/%4$d</string>
+    <string name="status_detail_phone_missing">SystemUI %1$d/%2$d · 電話は未読み込み</string>
+    <string name="status_detail_restart">実行中 v%1$s、インストール済み v%2$s</string>
+    <string name="status_detail_inactive">SystemUI から応答がありません。LSPosed で HyperIcons を有効にし、SystemUI を再起動してください</string>
+    <string name="dialog_hooks_title">フックの状態</string>
+    <string name="dialog_hooks_framework">%1$s %2$s · API %3$s</string>
+    <string name="dialog_hooks_systemui">SystemUI</string>
+    <string name="dialog_hooks_phone">電話</string>
+    <string name="dialog_hooks_not_loaded">未読み込み</string>
+    <string name="dialog_hooks_points">フックポイント %2$d 個中 %1$d 個を適用</string>
+    <string name="btn_restart_phone_text">電話プロセスを再起動</string>
+    <string name="restart_phone_desc">再起動せずに電話プロセスのフックを読み込み直します。モバイル通信が数秒間切れます。</string>
+    <string name="dialog_restart_phone_title">電話プロセスを再起動しますか？</string>
+    <string name="dialog_restart_phone_message">com.android.phone の再起動中、モバイルデータ通信と通話が数秒間止まり、通話中の場合は切断されます。</string>
+    <string name="toast_restart_phone_requesting">Root 権限で電話プロセスを再起動しています…</string>
+    <string name="toast_restart_phone_success">電話プロセスを再起動しました</string>
+    <string name="toast_restart_phone_failed">電話プロセスを再起動できませんでした。Root 権限を許可してください。</string>
+    <string name="status_title_checking">モジュールの状態を確認中…</string>
+    <string name="status_title_restart_phone">電話プロセスを再起動すると更新が反映されます</string>
+    <string name="card_state_expanded">展開</string>
+    <string name="card_state_collapsed">折りたたみ</string>
 </resources>

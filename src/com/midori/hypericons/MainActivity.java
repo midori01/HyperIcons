@@ -1,6 +1,8 @@
 package com.midori.hypericons;
 
+import android.animation.LayoutTransition;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -8,25 +10,33 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
 
 public class MainActivity extends Activity {
-    public static final String VERSION_NAME = "5.3.5";
+    public static final String VERSION_NAME = "6.0.0";
     public static final int VERSION_CODE = 32;
     public static final String PREF_NAME = "hyper_icons_config";
     public static final String ACTION_RELOAD = "com.midori.hypericons.ACTION_RELOAD";
     public static final String PROJECT_URL = "https://github.com/midori01/HyperIcons";
 
     // Mode & Tabs
-    public static final String KEY_SIM_MODE = "pref_sim_mode";           // "both" | "separate"
-    public static final String KEY_TARGET_TAB = "pref_target_tab";       // "sim1" | "sim2"
+    public static final String KEY_SIM_MODE = ConfigKeys.KEY_SIM_MODE;           // "both" | "separate"
+    public static final String KEY_TARGET_TAB = ConfigKeys.KEY_TARGET_TAB;       // "sim1" | "sim2"
 
     public static final String VAL_SIM_MODE_BOTH = "both";
     public static final String VAL_SIM_MODE_SEPARATE = "separate";
@@ -34,41 +44,17 @@ public class MainActivity extends Activity {
     public static final String TAB_SIM1 = "sim1";
     public static final String TAB_SIM2 = "sim2";
 
-    // Global / Both SIMs keys
-    public static final String KEY_5G_CA = "pref_5g_ca";
-    public static final String KEY_5G_BASIC = "pref_5g_basic";
-    public static final String KEY_CAPSULE_STYLE = "pref_capsule_style";
-    public static final String KEY_4G_RAT = "pref_4g_rat";
-    public static final String KEY_ALWAYS_SHOW_RAT = "pref_always_show_rat";
-    public static final String KEY_VOLTE_STYLE = "pref_volte_style";
-    public static final String KEY_WIFI_VOLTE_VISIBILITY = "pref_wifi_volte_visibility";
-    public static final String KEY_VONR_VISIBILITY = "pref_vonr_visibility";
-    public static final String KEY_VOWIFI_STYLE = "pref_vowifi_style";
-    public static final String KEY_ROAMING_STYLE = "pref_roaming_style";
-
-    // SIM 1 (Slot 0) keys
-    public static final String KEY_SIM1_5G_CA = "pref_sim1_5g_ca";
-    public static final String KEY_SIM1_5G_BASIC = "pref_sim1_5g_basic";
-    public static final String KEY_SIM1_CAPSULE_STYLE = "pref_sim1_capsule_style";
-    public static final String KEY_SIM1_4G_RAT = "pref_sim1_4g_rat";
-    public static final String KEY_SIM1_ALWAYS_SHOW_RAT = "pref_sim1_always_show_rat";
-    public static final String KEY_SIM1_VOLTE_STYLE = "pref_sim1_volte_style";
-    public static final String KEY_SIM1_WIFI_VOLTE_VISIBILITY = "pref_sim1_wifi_volte_visibility";
-    public static final String KEY_SIM1_VONR_VISIBILITY = "pref_sim1_vonr_visibility";
-    public static final String KEY_SIM1_VOWIFI_STYLE = "pref_sim1_vowifi_style";
-    public static final String KEY_SIM1_ROAMING_STYLE = "pref_sim1_roaming_style";
-
-    // SIM 2 / eSIM (Slot 1) keys
-    public static final String KEY_SIM2_5G_CA = "pref_sim2_5g_ca";
-    public static final String KEY_SIM2_5G_BASIC = "pref_sim2_5g_basic";
-    public static final String KEY_SIM2_CAPSULE_STYLE = "pref_sim2_capsule_style";
-    public static final String KEY_SIM2_4G_RAT = "pref_sim2_4g_rat";
-    public static final String KEY_SIM2_ALWAYS_SHOW_RAT = "pref_sim2_always_show_rat";
-    public static final String KEY_SIM2_VOLTE_STYLE = "pref_sim2_volte_style";
-    public static final String KEY_SIM2_WIFI_VOLTE_VISIBILITY = "pref_sim2_wifi_volte_visibility";
-    public static final String KEY_SIM2_VONR_VISIBILITY = "pref_sim2_vonr_visibility";
-    public static final String KEY_SIM2_VOWIFI_STYLE = "pref_sim2_vowifi_style";
-    public static final String KEY_SIM2_ROAMING_STYLE = "pref_sim2_roaming_style";
+    // Per-SIM option keys (see ConfigKeys for the slot overrides)
+    public static final String KEY_5G_CA = ConfigKeys.KEY_5G_CA;
+    public static final String KEY_5G_BASIC = ConfigKeys.KEY_5G_BASIC;
+    public static final String KEY_CAPSULE_STYLE = ConfigKeys.KEY_CAPSULE_STYLE;
+    public static final String KEY_4G_RAT = ConfigKeys.KEY_4G_RAT;
+    public static final String KEY_ALWAYS_SHOW_RAT = ConfigKeys.KEY_ALWAYS_SHOW_RAT;
+    public static final String KEY_VOLTE_STYLE = ConfigKeys.KEY_VOLTE_STYLE;
+    public static final String KEY_VOWIFI_STYLE = ConfigKeys.KEY_VOWIFI_STYLE;
+    public static final String KEY_ROAMING_STYLE = ConfigKeys.KEY_ROAMING_STYLE;
+    public static final String KEY_VONR_VISIBILITY = ConfigKeys.KEY_VONR_VISIBILITY;
+    public static final String KEY_WIFI_VOLTE_VISIBILITY = ConfigKeys.KEY_WIFI_VOLTE_VISIBILITY;
 
     // Experimental: 5G+ Feature Center keep-alive
     public static final String KEY_ENABLE_5GA_KEEPALIVE = "pref_enable_5ga_keepalive";
@@ -97,6 +83,7 @@ public class MainActivity extends Activity {
     public static final String VAL_ALWAYS_SHOW_RAT_DEFAULT = "default";
     public static final String VAL_ALWAYS_SHOW_RAT_ALWAYS = "always";
     public static final String VAL_ALWAYS_SHOW_RAT_WIFI_HIDE = "wifi_hide";
+    public static final String VAL_ALWAYS_SHOW_RAT_DATA_SIM = "data_sim";
 
     public static final String VAL_VOLTE_INTL_SOLID = "intl_solid";
     public static final String VAL_VOLTE_INTL_4G = "intl_4g";
@@ -147,6 +134,22 @@ public class MainActivity extends Activity {
 
     private View mDotStatus;
     private TextView mTvStatusText;
+    private TextView mTvStatusDetail;
+
+    private final SharedPreferences.OnSharedPreferenceChangeListener mReportListener =
+            new SharedPreferences.OnSharedPreferenceChangeListener() {
+                @Override
+                public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+                    if (key != null && key.startsWith(IconConfigProvider.KEY_HOOK_REPORT_PREFIX)) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                updateStatusBanner();
+                            }
+                        });
+                    }
+                }
+            };
     private TextView mBadgeCapsuleStyle;
     private TextView mBadge5gCa;
     private TextView mBadge5gBasic;
@@ -172,6 +175,16 @@ public class MainActivity extends Activity {
 
         mDotStatus = findViewById(R.id.dot_status);
         mTvStatusText = findViewById(R.id.tv_status_text);
+        mTvStatusDetail = findViewById(R.id.tv_status_detail);
+        View statusCard = findViewById(R.id.card_status_banner);
+        if (statusCard != null) {
+            statusCard.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showHookStatusDialog();
+                }
+            });
+        }
         mBadgeCapsuleStyle = findViewById(R.id.badge_capsule_style);
         mBadge5gCa = findViewById(R.id.badge_5g_ca);
         mBadge5gBasic = findViewById(R.id.badge_5g_basic);
@@ -226,6 +239,7 @@ public class MainActivity extends Activity {
         updateStatusBanner();
         updateBadges();
         setupListeners();
+        setupCollapsibleCards();
 
         View btnExp = findViewById(R.id.btn_experimental);
         if (btnExp != null) {
@@ -244,6 +258,164 @@ public class MainActivity extends Activity {
         super.onResume();
         updateTabVisuals();
         updateStatusBanner();
+        mPrefs.registerOnSharedPreferenceChangeListener(mReportListener);
+        requestHookReports();
+    }
+
+    /** Reports older than this request are treated as stale (e.g. the module was disabled since). */
+    private long mReportRequestedAt = 0;
+    private boolean mReportWaitOver = false;
+    private static final long REPORT_TIMEOUT_MS = 4000;
+    private static final long CLOCK_SLACK_MS = 1000;
+
+    private void requestHookReports() {
+        mReportRequestedAt = System.currentTimeMillis();
+        mReportWaitOver = false;
+        Intent sysui = new Intent(HookEnv.ACTION_REQUEST_REPORT);
+        sysui.setPackage("com.android.systemui");
+        sendBroadcast(sysui);
+        Intent phone = new Intent(HookEnv.ACTION_REQUEST_REPORT);
+        phone.setPackage("com.android.phone");
+        sendBroadcast(phone);
+        updateStatusBanner();
+        final long requestedAt = mReportRequestedAt;
+        getWindow().getDecorView().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (requestedAt != mReportRequestedAt) return;
+                mReportWaitOver = true;
+                updateStatusBanner();
+            }
+        }, REPORT_TIMEOUT_MS);
+    }
+
+    private HookReport freshReport(String process) {
+        HookReport r = HookReport.parse(mPrefs.getString(IconConfigProvider.KEY_HOOK_REPORT_PREFIX + process, null));
+        return r != null && r.time >= mReportRequestedAt - CLOCK_SLACK_MS ? r : null;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mPrefs.unregisterOnSharedPreferenceChangeListener(mReportListener);
+    }
+
+    private int dp(float value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    /**
+     * Option cards start collapsed to their title and current value; tapping the
+     * title (or a collapsed card) expands the options.
+     */
+    private void setupCollapsibleCards() {
+        View content = ((ViewGroup) findViewById(android.R.id.content)).getChildAt(0);
+        if (!(content instanceof ScrollView)) return;
+        View column = ((ScrollView) content).getChildAt(0);
+        if (!(column instanceof ViewGroup)) return;
+        ViewGroup group = (ViewGroup) column;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View child = group.getChildAt(i);
+            if (child instanceof LinearLayout && hasRadioGroup((LinearLayout) child)) {
+                makeCollapsible((LinearLayout) child);
+            }
+        }
+    }
+
+    private static boolean hasRadioGroup(ViewGroup group) {
+        for (int i = 0; i < group.getChildCount(); i++) {
+            if (group.getChildAt(i) instanceof RadioGroup) return true;
+        }
+        return false;
+    }
+
+    private void makeCollapsible(final LinearLayout card) {
+        View first = card.getChildAt(0);
+        if (!(first instanceof LinearLayout)) return;
+        final LinearLayout header = (LinearLayout) first;
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        final ImageView chevron = new ImageView(this);
+        chevron.setImageResource(R.drawable.ic_chevron);
+        chevron.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(22), dp(22));
+        lp.setMarginStart(dp(6));
+        header.addView(chevron, lp);
+
+        LayoutTransition transition = new LayoutTransition();
+        transition.enableTransitionType(LayoutTransition.CHANGING);
+        card.setLayoutTransition(transition);
+        setCardExpanded(card, chevron, false);
+
+        header.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setCardExpanded(card, chevron, !isCardExpanded(card));
+            }
+        });
+        card.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!isCardExpanded(card)) setCardExpanded(card, chevron, true);
+            }
+        });
+    }
+
+    private static boolean isCardExpanded(LinearLayout card) {
+        return card.getChildCount() > 1 && card.getChildAt(1).getVisibility() == View.VISIBLE;
+    }
+
+    private static void setCardExpanded(LinearLayout card, ImageView chevron, boolean expanded) {
+        for (int i = 1; i < card.getChildCount(); i++) {
+            card.getChildAt(i).setVisibility(expanded ? View.VISIBLE : View.GONE);
+        }
+        chevron.animate().rotation(expanded ? 180f : 0f).setDuration(200).start();
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+            card.getChildAt(0).setStateDescription(card.getContext().getString(
+                    expanded ? R.string.card_state_expanded : R.string.card_state_collapsed));
+        }
+    }
+
+    private void showHookStatusDialog() {
+        SpannableStringBuilder sb = new SpannableStringBuilder();
+        HookReport sys = HookReport.parse(mPrefs.getString(IconConfigProvider.KEY_HOOK_REPORT_PREFIX + "systemui", null));
+        HookReport phone = HookReport.parse(mPrefs.getString(IconConfigProvider.KEY_HOOK_REPORT_PREFIX + "phone", null));
+        HookReport any = sys != null ? sys : phone;
+        if (any != null) {
+            sb.append(getString(R.string.dialog_hooks_framework, any.framework, any.frameworkVersion, any.apiVersion));
+            sb.append("\n");
+        }
+        appendReport(sb, getString(R.string.dialog_hooks_systemui), sys);
+        appendReport(sb, getString(R.string.dialog_hooks_phone), phone);
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.dialog_hooks_title)
+                .setMessage(sb)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
+    }
+
+    private void appendReport(SpannableStringBuilder sb, String process, HookReport report) {
+        sb.append("\n");
+        int start = sb.length();
+        sb.append(process);
+        sb.setSpan(new android.text.style.StyleSpan(Typeface.BOLD), start, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        sb.append("\n");
+        if (report == null) {
+            sb.append(getString(R.string.dialog_hooks_not_loaded)).append("\n");
+            return;
+        }
+        int okColor = getColor(R.color.status_ok);
+        int failColor = getColor(R.color.status_error);
+        for (HookReport.Entry e : report.groups) {
+            int markStart = sb.length();
+            sb.append(e.failure == null ? "✓ " : "✗ ");
+            sb.setSpan(new ForegroundColorSpan(e.failure == null ? okColor : failColor),
+                    markStart, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.append(e.name);
+            if (e.failure != null) sb.append(" — ").append(e.failure);
+            sb.append("\n");
+        }
+        sb.append(getString(R.string.dialog_hooks_points,
+                HookReport.countOk(report.points), report.points.size())).append("\n");
     }
 
     private void updateTabVisuals() {
@@ -302,31 +474,11 @@ public class MainActivity extends Activity {
     }
 
     private String getSlot1Key(String baseKey) {
-        if (KEY_CAPSULE_STYLE.equals(baseKey)) return KEY_SIM1_CAPSULE_STYLE;
-        if (KEY_5G_CA.equals(baseKey)) return KEY_SIM1_5G_CA;
-        if (KEY_5G_BASIC.equals(baseKey)) return KEY_SIM1_5G_BASIC;
-        if (KEY_4G_RAT.equals(baseKey)) return KEY_SIM1_4G_RAT;
-        if (KEY_ALWAYS_SHOW_RAT.equals(baseKey)) return KEY_SIM1_ALWAYS_SHOW_RAT;
-        if (KEY_VOLTE_STYLE.equals(baseKey)) return KEY_SIM1_VOLTE_STYLE;
-        if (KEY_WIFI_VOLTE_VISIBILITY.equals(baseKey)) return KEY_SIM1_WIFI_VOLTE_VISIBILITY;
-        if (KEY_VONR_VISIBILITY.equals(baseKey)) return KEY_SIM1_VONR_VISIBILITY;
-        if (KEY_VOWIFI_STYLE.equals(baseKey)) return KEY_SIM1_VOWIFI_STYLE;
-        if (KEY_ROAMING_STYLE.equals(baseKey)) return KEY_SIM1_ROAMING_STYLE;
-        return baseKey;
+        return ConfigKeys.slotKey(baseKey, 0);
     }
 
     private String getSlot2Key(String baseKey) {
-        if (KEY_CAPSULE_STYLE.equals(baseKey)) return KEY_SIM2_CAPSULE_STYLE;
-        if (KEY_5G_CA.equals(baseKey)) return KEY_SIM2_5G_CA;
-        if (KEY_5G_BASIC.equals(baseKey)) return KEY_SIM2_5G_BASIC;
-        if (KEY_4G_RAT.equals(baseKey)) return KEY_SIM2_4G_RAT;
-        if (KEY_ALWAYS_SHOW_RAT.equals(baseKey)) return KEY_SIM2_ALWAYS_SHOW_RAT;
-        if (KEY_VOLTE_STYLE.equals(baseKey)) return KEY_SIM2_VOLTE_STYLE;
-        if (KEY_WIFI_VOLTE_VISIBILITY.equals(baseKey)) return KEY_SIM2_WIFI_VOLTE_VISIBILITY;
-        if (KEY_VONR_VISIBILITY.equals(baseKey)) return KEY_SIM2_VONR_VISIBILITY;
-        if (KEY_VOWIFI_STYLE.equals(baseKey)) return KEY_SIM2_VOWIFI_STYLE;
-        if (KEY_ROAMING_STYLE.equals(baseKey)) return KEY_SIM2_ROAMING_STYLE;
-        return baseKey;
+        return ConfigKeys.slotKey(baseKey, 1);
     }
 
     private String getActivePrefKey(String baseKey) {
@@ -455,6 +607,8 @@ public class MainActivity extends Activity {
         String alwaysRatVal = getEffectiveConfigValue(KEY_ALWAYS_SHOW_RAT);
         if (VAL_ALWAYS_SHOW_RAT_ALWAYS.equals(alwaysRatVal)) {
             mRgAlwaysShowRat.check(R.id.rb_always_show_rat_always);
+        } else if (VAL_ALWAYS_SHOW_RAT_DATA_SIM.equals(alwaysRatVal)) {
+            mRgAlwaysShowRat.check(R.id.rb_always_show_rat_data_sim);
         } else if (VAL_ALWAYS_SHOW_RAT_WIFI_HIDE.equals(alwaysRatVal)) {
             mRgAlwaysShowRat.check(R.id.rb_always_show_rat_wifi_hide);
         } else {
@@ -611,6 +765,7 @@ public class MainActivity extends Activity {
                 if (mIsInitializing) return;
                 String val = VAL_DEFAULT;
                 if (checkedId == R.id.rb_always_show_rat_always) val = VAL_ALWAYS_SHOW_RAT_ALWAYS;
+                else if (checkedId == R.id.rb_always_show_rat_data_sim) val = VAL_ALWAYS_SHOW_RAT_DATA_SIM;
                 else if (checkedId == R.id.rb_always_show_rat_wifi_hide) val = VAL_ALWAYS_SHOW_RAT_WIFI_HIDE;
 
                 saveConfigValue(KEY_ALWAYS_SHOW_RAT, val);
@@ -747,62 +902,12 @@ public class MainActivity extends Activity {
     }
 
     private void sendReloadBroadcast(boolean showToast) {
-        String simMode = mPrefs.getString(KEY_SIM_MODE, VAL_SIM_MODE_BOTH);
-
-        String capsuleVal = mPrefs.getString(KEY_CAPSULE_STYLE, VAL_DEFAULT);
-        String caVal = mPrefs.getString(KEY_5G_CA, VAL_DEFAULT);
-        String basicVal = mPrefs.getString(KEY_5G_BASIC, VAL_DEFAULT);
-        String ratVal = mPrefs.getString(KEY_4G_RAT, VAL_DEFAULT);
-        String alwaysRatVal = mPrefs.getString(KEY_ALWAYS_SHOW_RAT, VAL_DEFAULT);
-        String volteVal = mPrefs.getString(KEY_VOLTE_STYLE, VAL_DEFAULT);
-        String wifiVolteVal = mPrefs.getString(KEY_WIFI_VOLTE_VISIBILITY, VAL_DEFAULT);
-        String vonrVisVal = mPrefs.getString(KEY_VONR_VISIBILITY, VAL_DEFAULT);
-        String vowifiVal = mPrefs.getString(KEY_VOWIFI_STYLE, VAL_DEFAULT);
-        String roamingVal = mPrefs.getString(KEY_ROAMING_STYLE, VAL_DEFAULT);
-
         try {
             getContentResolver().notifyChange(IconConfigProvider.CONTENT_URI, null);
         } catch (Throwable ignored) {}
 
         Intent intent = new Intent(ACTION_RELOAD);
         intent.setPackage("com.android.systemui");
-        intent.putExtra(KEY_SIM_MODE, simMode);
-        intent.putExtra(KEY_TARGET_TAB, mCurrentSubSlot);
-
-        intent.putExtra(KEY_CAPSULE_STYLE, capsuleVal);
-        intent.putExtra(KEY_5G_CA, caVal);
-        intent.putExtra(KEY_5G_BASIC, basicVal);
-        intent.putExtra(KEY_4G_RAT, ratVal);
-        intent.putExtra(KEY_ALWAYS_SHOW_RAT, alwaysRatVal);
-        intent.putExtra(KEY_VOLTE_STYLE, volteVal);
-        intent.putExtra(KEY_WIFI_VOLTE_VISIBILITY, wifiVolteVal);
-        intent.putExtra(KEY_VONR_VISIBILITY, vonrVisVal);
-        intent.putExtra(KEY_VOWIFI_STYLE, vowifiVal);
-        intent.putExtra(KEY_ROAMING_STYLE, roamingVal);
-
-        // Put SIM 1 keys
-        intent.putExtra(KEY_SIM1_CAPSULE_STYLE, mPrefs.getString(KEY_SIM1_CAPSULE_STYLE, capsuleVal));
-        intent.putExtra(KEY_SIM1_5G_CA, mPrefs.getString(KEY_SIM1_5G_CA, caVal));
-        intent.putExtra(KEY_SIM1_5G_BASIC, mPrefs.getString(KEY_SIM1_5G_BASIC, basicVal));
-        intent.putExtra(KEY_SIM1_4G_RAT, mPrefs.getString(KEY_SIM1_4G_RAT, ratVal));
-        intent.putExtra(KEY_SIM1_ALWAYS_SHOW_RAT, mPrefs.getString(KEY_SIM1_ALWAYS_SHOW_RAT, alwaysRatVal));
-        intent.putExtra(KEY_SIM1_VOLTE_STYLE, mPrefs.getString(KEY_SIM1_VOLTE_STYLE, volteVal));
-        intent.putExtra(KEY_SIM1_WIFI_VOLTE_VISIBILITY, mPrefs.getString(KEY_SIM1_WIFI_VOLTE_VISIBILITY, wifiVolteVal));
-        intent.putExtra(KEY_SIM1_VONR_VISIBILITY, mPrefs.getString(KEY_SIM1_VONR_VISIBILITY, vonrVisVal));
-        intent.putExtra(KEY_SIM1_VOWIFI_STYLE, mPrefs.getString(KEY_SIM1_VOWIFI_STYLE, vowifiVal));
-        intent.putExtra(KEY_SIM1_ROAMING_STYLE, mPrefs.getString(KEY_SIM1_ROAMING_STYLE, roamingVal));
-
-        // Put SIM 2 keys
-        intent.putExtra(KEY_SIM2_CAPSULE_STYLE, mPrefs.getString(KEY_SIM2_CAPSULE_STYLE, capsuleVal));
-        intent.putExtra(KEY_SIM2_5G_CA, mPrefs.getString(KEY_SIM2_5G_CA, caVal));
-        intent.putExtra(KEY_SIM2_5G_BASIC, mPrefs.getString(KEY_SIM2_5G_BASIC, basicVal));
-        intent.putExtra(KEY_SIM2_4G_RAT, mPrefs.getString(KEY_SIM2_4G_RAT, ratVal));
-        intent.putExtra(KEY_SIM2_ALWAYS_SHOW_RAT, mPrefs.getString(KEY_SIM2_ALWAYS_SHOW_RAT, alwaysRatVal));
-        intent.putExtra(KEY_SIM2_VOLTE_STYLE, mPrefs.getString(KEY_SIM2_VOLTE_STYLE, volteVal));
-        intent.putExtra(KEY_SIM2_WIFI_VOLTE_VISIBILITY, mPrefs.getString(KEY_SIM2_WIFI_VOLTE_VISIBILITY, wifiVolteVal));
-        intent.putExtra(KEY_SIM2_VONR_VISIBILITY, mPrefs.getString(KEY_SIM2_VONR_VISIBILITY, vonrVisVal));
-        intent.putExtra(KEY_SIM2_VOWIFI_STYLE, mPrefs.getString(KEY_SIM2_VOWIFI_STYLE, vowifiVal));
-        intent.putExtra(KEY_SIM2_ROAMING_STYLE, mPrefs.getString(KEY_SIM2_ROAMING_STYLE, roamingVal));
 
         sendBroadcast(intent);
 
@@ -869,30 +974,58 @@ public class MainActivity extends Activity {
 
     private void updateStatusBanner() {
         if (mTvStatusText == null || mDotStatus == null) return;
-        long lastPing = mPrefs.getLong("last_systemui_ping", 0);
+        HookReport sys = freshReport("systemui");
+        HookReport phone = freshReport("phone");
+
+        int color;
+        String title;
+        String detail;
+        if (sys == null && !mReportWaitOver) {
+            color = R.color.status_off;
+            title = getString(R.string.status_title_checking);
+            detail = "";
+        } else if (sys == null) {
+            // No answer to this request: the module is disabled, or SystemUI runs a build without reports.
+            color = R.color.status_off;
+            title = getString(R.string.status_title_inactive);
+            detail = getString(R.string.status_detail_inactive);
+        } else if (!VERSION_NAME.equals(sys.moduleVersion)) {
+            color = R.color.status_warn;
+            title = getString(R.string.status_title_restart);
+            detail = getString(R.string.status_detail_restart, sys.moduleVersion, VERSION_NAME);
+        } else if (phone != null && !VERSION_NAME.equals(phone.moduleVersion)) {
+            color = R.color.status_warn;
+            title = getString(R.string.status_title_restart_phone);
+            detail = getString(R.string.status_detail_restart, phone.moduleVersion, VERSION_NAME);
+        } else {
+            int sysOk = HookReport.countOk(sys.groups);
+            int sysAll = sys.groups.size();
+            boolean healthy = sysAll > 0 && sysOk == sysAll;
+            if (phone != null) {
+                int phoneOk = HookReport.countOk(phone.groups);
+                int phoneAll = phone.groups.size();
+                healthy = healthy && phoneAll > 0 && phoneOk == phoneAll;
+                detail = getString(R.string.status_detail_processes, sysOk, sysAll, phoneOk, phoneAll);
+            } else {
+                detail = getString(R.string.status_detail_phone_missing, sysOk, sysAll);
+            }
+            color = healthy ? R.color.status_ok : R.color.status_warn;
+            title = getString(healthy ? R.string.status_title_ok : R.string.status_title_partial);
+        }
+
         GradientDrawable dot = new GradientDrawable();
         dot.setShape(GradientDrawable.OVAL);
-        int dotPx = (int) (10 * getResources().getDisplayMetrics().density);
-        dot.setSize(dotPx, dotPx);
-
-        if (lastPing > 0) {
-            dot.setColor(0xFF34C759); // Emerald active green
-            mDotStatus.setBackground(dot);
-            mTvStatusText.setText(R.string.status_active_desc);
-            mTvStatusText.setTextColor(getColor(R.color.text_body));
-        } else {
-            dot.setColor(0xFF8E8E93); // System standby gray
-            mDotStatus.setBackground(dot);
-            mTvStatusText.setText(R.string.status_inactive_desc);
-            mTvStatusText.setTextColor(getColor(R.color.text_caption));
-        }
+        dot.setColor(getColor(color));
+        mDotStatus.setBackground(dot);
+        mTvStatusText.setText(title);
+        if (mTvStatusDetail != null) mTvStatusDetail.setText(detail);
     }
 
     private void updateBadges() {
         String capsuleVal = getEffectiveConfigValue(KEY_CAPSULE_STYLE);
         if (mBadgeCapsuleStyle != null) {
             String text = VAL_CAPSULE_KOREAN.equals(capsuleVal) ? getString(R.string.opt_capsule_korean) : getString(R.string.opt_capsule_default);
-            mBadgeCapsuleStyle.setText("[" + text + "]");
+            mBadgeCapsuleStyle.setText(text);
         }
 
         String caVal = getEffectiveConfigValue(KEY_5G_CA);
@@ -906,13 +1039,13 @@ public class MainActivity extends Activity {
             else if (VAL_5G_6RX.equals(caVal)) text = "5G 6Rx";
             else if (VAL_5G_PLUS_PLUS_6RX.equals(caVal)) text = "5G++ 6Rx";
             else if (VAL_5GUWB_6RX.equals(caVal)) text = "5GUWB 6Rx";
-            mBadge5gCa.setText("[" + text + "]");
+            mBadge5gCa.setText(text);
         }
 
         String basicVal = getEffectiveConfigValue(KEY_5G_BASIC);
         if (mBadge5gBasic != null) {
             String text = VAL_5G_FOLLOW_CA.equals(basicVal) ? getString(R.string.opt_5g_follow_ca) : getString(R.string.opt_5g_default);
-            mBadge5gBasic.setText("[" + text + "]");
+            mBadge5gBasic.setText(text);
         }
 
         String ratVal = getEffectiveConfigValue(KEY_4G_RAT);
@@ -923,15 +1056,16 @@ public class MainActivity extends Activity {
             else if (VAL_4G_FORCE_4G_LTE.equals(ratVal)) text = "4G LTE";
             else if (VAL_4G_FORCE_45G.equals(ratVal)) text = "4.5G";
             else if (VAL_4G_FORCE_LTEA.equals(ratVal)) text = "LTE-A";
-            mBadge4gRat.setText("[" + text + "]");
+            mBadge4gRat.setText(text);
         }
 
         String alwaysRatVal = getEffectiveConfigValue(KEY_ALWAYS_SHOW_RAT);
         if (mBadgeAlwaysShowRat != null) {
             String text = getString(R.string.opt_always_show_rat_default);
             if (VAL_ALWAYS_SHOW_RAT_ALWAYS.equals(alwaysRatVal)) text = getString(R.string.opt_always_show_rat_always);
+            else if (VAL_ALWAYS_SHOW_RAT_DATA_SIM.equals(alwaysRatVal)) text = getString(R.string.opt_always_show_rat_data_sim);
             else if (VAL_ALWAYS_SHOW_RAT_WIFI_HIDE.equals(alwaysRatVal)) text = getString(R.string.opt_always_show_rat_wifi_hide);
-            mBadgeAlwaysShowRat.setText("[" + text + "]");
+            mBadgeAlwaysShowRat.setText(text);
         }
 
         String volteVal = getEffectiveConfigValue(KEY_VOLTE_STYLE);
@@ -945,7 +1079,7 @@ public class MainActivity extends Activity {
             else if (VAL_VOLTE_CHINA_HD_PLUS.equals(volteVal)) text = getString(R.string.opt_volte_china_hd_plus);
             else if (VAL_VOLTE_INTL_VO4G.equals(volteVal)) text = "Vo4G";
             else if (VAL_VOLTE_HIDE.equals(volteVal)) text = getString(R.string.opt_volte_hide);
-            mBadgeVolteStyle.setText("[" + text + "]");
+            mBadgeVolteStyle.setText(text);
         }
 
         String wifiVolteVal = getEffectiveConfigValue(KEY_WIFI_VOLTE_VISIBILITY);
@@ -953,7 +1087,7 @@ public class MainActivity extends Activity {
             String text = getString(R.string.opt_wifi_volte_default);
             if (VAL_WIFI_VOLTE_SHOW.equals(wifiVolteVal)) text = getString(R.string.opt_wifi_volte_show);
             else if (VAL_WIFI_VOLTE_HIDE.equals(wifiVolteVal)) text = getString(R.string.opt_wifi_volte_hide);
-            mBadgeWifiVolte.setText("[" + text + "]");
+            mBadgeWifiVolte.setText(text);
         }
 
         String vonrVisVal = getEffectiveConfigValue(KEY_VONR_VISIBILITY);
@@ -961,7 +1095,7 @@ public class MainActivity extends Activity {
             String text = getString(R.string.opt_vonr_visibility_default);
             if (VAL_VONR_VISIBILITY_SHOW.equals(vonrVisVal)) text = getString(R.string.opt_vonr_visibility_show);
             else if (VAL_VONR_VISIBILITY_HIDE.equals(vonrVisVal)) text = getString(R.string.opt_vonr_visibility_hide);
-            mBadgeVonrVisibility.setText("[" + text + "]");
+            mBadgeVonrVisibility.setText(text);
         }
 
         String vowifiVal = getEffectiveConfigValue(KEY_VOWIFI_STYLE);
@@ -971,7 +1105,7 @@ public class MainActivity extends Activity {
             else if (VAL_VOWIFI_WIFI.equals(vowifiVal)) text = getString(R.string.opt_vowifi_wifi);
             else if (VAL_VOWIFI_CALL.equals(vowifiVal)) text = getString(R.string.opt_vowifi_call);
             else if (VAL_VOWIFI_HIDE.equals(vowifiVal)) text = getString(R.string.opt_vowifi_hide);
-            mBadgeVowifiStyle.setText("[" + text + "]");
+            mBadgeVowifiStyle.setText(text);
         }
 
         String roamingVal = getEffectiveConfigValue(KEY_ROAMING_STYLE);
@@ -979,7 +1113,7 @@ public class MainActivity extends Activity {
             String text = getString(R.string.opt_roaming_default);
             if (VAL_ROAMING_SMALL.equals(roamingVal)) text = getString(R.string.opt_roaming_small);
             else if (VAL_ROAMING_HIDE.equals(roamingVal)) text = getString(R.string.opt_roaming_hide);
-            mBadgeRoamingStyle.setText("[" + text + "]");
+            mBadgeRoamingStyle.setText(text);
         }
     }
 }

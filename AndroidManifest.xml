@@ -1,12 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.midori.hypericons"
-    android:versionCode="32"
-    android:versionName="5.3.5">
+    android:versionCode="33"
+    android:versionName="6.0.0">
 
     <uses-sdk
         android:minSdkVersion="26"
         android:targetSdkVersion="34" />
+
+    <permission
+        android:name="com.midori.hypericons.permission.RELOAD"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="com.midori.hypericons.permission.RELOAD" />
+
+    <queries>
+        <package android:name="com.android.systemui" />
+        <package android:name="com.android.phone" />
+    </queries>
 
     <application
         android:allowBackup="true"
@@ -23,7 +33,7 @@
             android:value="@string/xposed_description" />
         <meta-data
             android:name="xposedminversion"
-            android:value="82" />
+            android:value="102" />
         <meta-data
             android:name="xposedscope"
             android:resource="@array/xposed_scope" />
@@ -35,6 +45,11 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="de.robv.android.xposed.category.MODULE_SETTINGS" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 

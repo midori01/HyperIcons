@@ -1,6 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/env python3
 """
-HyperStatusIconMod Dual-Model Oracle Specification Test Engine (v5.3.5)
+HyperStatusIconMod Dual-Model Oracle Specification Test Engine (v6.0.0)
 ========================================================================
 This test engine implements a rigorous "Dual-Model Oracle Verification":
 1. StatusIconGroundTruthOracle:
@@ -32,10 +32,11 @@ CA_OPTIONS = ["default", "5ga", "5g_plus", "5g_plus_plus", "5guwb", "5ge", "5g_6
 BASIC_OPTIONS = ["default", "follow_ca"]
 CAPSULE_OPTIONS = ["default", "korean"]
 RAT_4G_OPTIONS = ["default", "force_4g", "force_lte", "force_4g_lte", "force_45g", "force_ltea"]
-RAT_WIFI_OPTIONS = ["default", "always", "wifi_hide"]
+RAT_WIFI_OPTIONS = ["default", "always", "data_sim", "wifi_hide"]
 VOLTE_OPTIONS = ["default", "intl_solid", "intl_4g", "intl_hollow", "intl_hd_voice", "china_hd", "china_hd_plus", "intl_vo4g", "hide"]
 VOWIFI_OPTIONS = ["default", "vowifi_standard", "vowifi_wifi", "vowifi_call", "hide"]
 ROAMING_OPTIONS = ["default", "small", "hide"]
+WIFI_VOLTE_OPTIONS = ["default", "show", "hide"]
 
 CA_TEXTS = ("5GA", "5G+", "5G++", "5GUWB", "5Ge", "5G 6Rx", "5G++ 6Rx", "5GUWB 6Rx")
 
@@ -81,6 +82,19 @@ class StatusIconGroundTruthOracle:
             if pref_4g == "force_ltea": return "LTE"
             return "4G"  # default
 
+    @staticmethod
+    def get_expected_rat_allowed(pref_always_show_rat, rom_region, is_wifi, is_data_sim):
+        if pref_always_show_rat == "always":
+            return True
+        if pref_always_show_rat == "data_sim":
+            return is_data_sim
+        if pref_always_show_rat == "wifi_hide":
+            return (not is_wifi) and is_data_sim
+        # "default"
+        if rom_region == "intl":
+            return (not is_wifi) and is_data_sim
+        return True  # China ROM shows on Wi-Fi and shows both cards
+
     @classmethod
     def get_expected_state(cls, sub_id, radio_type, default_data_sub_id, is_wifi, rom_region,
                            pref_ca, pref_basic, pref_capsule, pref_4g, pref_always_show_rat, pref_volte):
@@ -89,15 +103,8 @@ class StatusIconGroundTruthOracle:
         Returns: (expected_text, expected_mobile_vis, expected_special_vis, expected_breath, expected_volte_vis)
         """
         # 1. RAT Visibility Rule
-        if pref_always_show_rat == "always":
-            rat_allowed = True
-        elif pref_always_show_rat == "wifi_hide":
-            rat_allowed = False if is_wifi else (sub_id == default_data_sub_id)
-        else:  # "default"
-            if rom_region == "intl":
-                rat_allowed = False if is_wifi else (sub_id == default_data_sub_id)
-            else:
-                rat_allowed = True  # China ROM shows on Wi-Fi and shows both cards
+        rat_allowed = cls.get_expected_rat_allowed(
+            pref_always_show_rat, rom_region, is_wifi, sub_id == default_data_sub_id)
 
         # 2. Text & Visibility Expectations per Radio Type
         if radio_type == RADIO_2G_3G:
@@ -315,6 +322,8 @@ class MainHookSystemUISimulator:
         """Exact mirror of shouldShowRat in MainHook.java"""
         if pref_always == "always":
             return True
+        if pref_always == "data_sim":
+            return sub_id == default_data_sub_id
         if pref_always == "wifi_hide":
             if is_wifi:
                 return False
@@ -530,7 +539,7 @@ class MainHookSystemUISimulator:
 
 def run_dual_model_verification():
     print("=" * 75)
-    print("HyperStatusIconMod Dual-Model Oracle Verification Engine (v5.3.5)")
+    print("HyperStatusIconMod Dual-Model Oracle Verification Engine (v6.0.0)")
     print("=" * 75)
     print("Comparing simulated MainHook SystemUI output against independent Oracle...")
 
@@ -541,12 +550,12 @@ def run_dual_model_verification():
     start_time = time.time()
 
     menu_configs = list(product(CA_OPTIONS, BASIC_OPTIONS, CAPSULE_OPTIONS, RAT_4G_OPTIONS, RAT_WIFI_OPTIONS, VOLTE_OPTIONS))
-    assert len(menu_configs) == 5832
+    assert len(menu_configs) == 7776
 
     rom_regions = ["intl", "china"]
     wifi_states = [True, False]
 
-    # --- Part 1: Single SIM Scenarios (40 environments * 5832 menus = 233,280) ---
+    # --- Part 1: Single SIM Scenarios (40 environments * 7776 menus = 311,040) ---
     for slot_id in [1, 2]:
         sub_id = slot_id
         default_data_sub_id = sub_id
@@ -602,7 +611,7 @@ def run_dual_model_verification():
 
                         passed_permutations += 1
 
-    # --- Part 2: Dual SIM Scenarios (200 environments * 5832 menus = 1,166,400) ---
+    # --- Part 2: Dual SIM Scenarios (200 environments * 7776 menus = 1,555,200) ---
     for data_slot in [1, 2]:
         default_data_sub_id = data_slot
         for is_wifi in wifi_states:
@@ -680,7 +689,7 @@ def run_dual_model_verification():
         ("5ga", "default", "korean", "force_4g", "always", "china_hd"),
         ("5guwb", "follow_ca", "default", "force_45g", "default", "intl_solid"),
         ("5ge", "default", "korean", "force_ltea", "wifi_hide", "hide"),
-        ("5g_plus_plus", "follow_ca", "korean", "force_4g_lte", "always", "intl_vo4g"),
+        ("5g_plus_plus", "follow_ca", "korean", "force_4g_lte", "data_sim", "intl_vo4g"),
         ("5g_6rx", "follow_ca", "korean", "force_4g", "always", "china_hd_plus"),
     ]
     sample_configs_sim2 = [
@@ -688,7 +697,7 @@ def run_dual_model_verification():
         ("default", "default", "korean", "default", "always", "intl_hd_voice"),
         ("5ga", "default", "default", "force_4g", "default", "intl_hollow"),
         ("5guwb", "default", "korean", "force_lte", "wifi_hide", "hide"),
-        ("5guwb_6rx", "default", "korean", "force_45g", "always", "china_hd_plus"),
+        ("5guwb_6rx", "default", "korean", "force_45g", "data_sim", "china_hd_plus"),
     ]
 
     for is_esim in [False, True]:  # Physical SIM 2 vs eSIM replacing SIM 2
@@ -808,7 +817,6 @@ def run_dual_model_verification():
                     passed_permutations += 1
 
     # --- Part 5: VoLTE / VoNR visibility on Wi-Fi (global and per-SIM) ---
-    WIFI_VOLTE_OPTIONS = ["default", "show", "hide"]
     VOLTE_STYLE_SAMPLES = ["default", "intl_solid", "hide"]
     bools = [False, True]
 
@@ -932,6 +940,16 @@ def test_wifi_direct_isolation():
     # In 'always' mode, RAT is always visible even on real Wi-Fi
     rat_always = sim.should_show_rat(sub_id=1, default_data_sub_id=1, is_wifi=is_wifi_sta, rom_region="intl", pref_always="always")
     assert rat_always is True, "Failed: 'always' mode must keep RAT visible on Wi-Fi"
+
+    # In 'data_sim' mode, RAT shows only on the default data SIM on both Wi-Fi and cellular, regardless of ROM region
+    assert sim.should_show_rat(sub_id=1, default_data_sub_id=1, is_wifi=is_wifi_sta, rom_region="intl", pref_always="data_sim") is True, "Failed: 'data_sim' mode must show RAT on data SIM on Wi-Fi (intl)"
+    assert sim.should_show_rat(sub_id=2, default_data_sub_id=1, is_wifi=is_wifi_sta, rom_region="intl", pref_always="data_sim") is False, "Failed: 'data_sim' mode must hide RAT on non-data SIM on Wi-Fi (intl)"
+    assert sim.should_show_rat(sub_id=1, default_data_sub_id=1, is_wifi=False, rom_region="intl", pref_always="data_sim") is True, "Failed: 'data_sim' mode must show RAT on data SIM on cellular (intl)"
+    assert sim.should_show_rat(sub_id=2, default_data_sub_id=1, is_wifi=False, rom_region="intl", pref_always="data_sim") is False, "Failed: 'data_sim' mode must hide RAT on non-data SIM on cellular (intl)"
+    assert sim.should_show_rat(sub_id=1, default_data_sub_id=1, is_wifi=is_wifi_sta, rom_region="china", pref_always="data_sim") is True, "Failed: 'data_sim' mode must show RAT on data SIM on Wi-Fi (china)"
+    assert sim.should_show_rat(sub_id=2, default_data_sub_id=1, is_wifi=is_wifi_sta, rom_region="china", pref_always="data_sim") is False, "Failed: 'data_sim' mode must hide RAT on non-data SIM on Wi-Fi (china)"
+    assert sim.should_show_rat(sub_id=1, default_data_sub_id=1, is_wifi=False, rom_region="china", pref_always="data_sim") is True, "Failed: 'data_sim' mode must show RAT on data SIM on cellular (china)"
+    assert sim.should_show_rat(sub_id=2, default_data_sub_id=1, is_wifi=False, rom_region="china", pref_always="data_sim") is False, "Failed: 'data_sim' mode must hide RAT on non-data SIM on cellular (china)"
 
     print("[PASS] Wi-Fi Direct / Quick Share isolation tests passed with 100% precision!")
 

@@ -1,17 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#0066FF</color>
-    <color name="primary_dark">#0052CC</color>
-    <color name="accent">#0066FF</color>
-    <color name="background">#F2F4F7</color>
+    <color name="primary">#2563EB</color>
+    <color name="primary_dark">#1D4ED8</color>
+    <color name="accent">#2563EB</color>
+    <color name="background">#F4F5F9</color>
     <color name="card_bg">#FFFFFF</color>
-    <color name="card_stroke">#E5E7EB</color>
-    <color name="text_title">#111827</color>
-    <color name="text_body">#374151</color>
-    <color name="text_caption">#6B7280</color>
-    <color name="radio_checked">#0066FF</color>
-    <color name="btn_bg">#0066FF</color>
+    <color name="card_stroke">#ECEEF3</color>
+    <color name="text_title">#0F172A</color>
+    <color name="text_body">#334155</color>
+    <color name="text_caption">#64748B</color>
+    <color name="radio_checked">#2563EB</color>
+    <color name="btn_bg">#2563EB</color>
     <color name="btn_text">#FFFFFF</color>
-    <color name="btn_secondary_bg">#374151</color>
-    <color name="btn_secondary_text">#FFFFFF</color>
+    <color name="btn_secondary_bg">#E8EBF2</color>
+    <color name="btn_secondary_text">#1E293B</color>
+    <color name="option_idle_bg">#F6F7FA</color>
+    <color name="option_checked_bg">#EDF2FF</color>
+    <color name="chip_bg">#E8EFFE</color>
+    <color name="status_ok">#16A34A</color>
+    <color name="status_warn">#F59E0B</color>
+    <color name="status_off">#94A3B8</color>
+    <color name="status_error">#DC2626</color>
 </resources>

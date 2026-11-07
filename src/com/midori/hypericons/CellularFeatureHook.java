@@ -18,11 +18,6 @@ import android.widget.Toast;
 
 import java.io.File;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XSharedPreferences;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class CellularFeatureHook {
     private static final String TAG = "HyperIconsPhoneHook";
@@ -72,32 +67,41 @@ public class CellularFeatureHook {
         return result;
     }
 
-    private static boolean checkFeatureEnabledDirect(ClassLoader cl) {
-        // 1. Query ContentProvider if Context is available
+    private static Context getPhoneContext(ClassLoader cl) {
         Context ctx = sContext;
         if (ctx == null && cl != null) {
             try {
-                Class<?> f5gClz = XposedHelpers.findClassIfExists("com.android.phone.FiveGManagerBase", cl);
+                Class<?> f5gClz = Reflect.findClassIfExists("com.android.phone.FiveGManagerBase", cl);
                 if (f5gClz != null) {
-                    ctx = (Context) XposedHelpers.getStaticObjectField(f5gClz, "mContext");
+                    ctx = (Context) Reflect.getStaticObjectField(f5gClz, "mContext");
                 }
             } catch (Throwable ignored) {}
         }
+        return ctx;
+    }
 
-        if (ctx != null) {
-            try {
-                Bundle b = ctx.getContentResolver().call(PROVIDER_URI, "getConfig", null, null);
-                if (b != null && b.containsKey(KEY_ENABLE_5GA_KEEPALIVE)) {
-                    return b.getBoolean(KEY_ENABLE_5GA_KEEPALIVE, false);
-                }
-            } catch (Throwable ignored) {}
+    private static Bundle queryProviderConfig(ClassLoader cl) {
+        Context ctx = getPhoneContext(cl);
+        if (ctx == null) return null;
+        try {
+            return ctx.getContentResolver().call(PROVIDER_URI, "getConfig", null, null);
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private static boolean checkFeatureEnabledDirect(ClassLoader cl) {
+        // 1. Query ContentProvider if Context is available
+        Bundle b = queryProviderConfig(cl);
+        if (b != null && b.containsKey(KEY_ENABLE_5GA_KEEPALIVE)) {
+            return b.getBoolean(KEY_ENABLE_5GA_KEEPALIVE, false);
         }
 
         // 2. Query Direct Boot aware Device Protected storage
         try {
             File deFile = new File("/data/user_de/0/" + PREF_PACKAGE + "/shared_prefs/" + PREF_FILE + ".xml");
             if (deFile.exists() && deFile.canRead()) {
-                XSharedPreferences dePrefs = new XSharedPreferences(deFile);
+                PrefsFile dePrefs = new PrefsFile(deFile);
                 dePrefs.reload();
                 return dePrefs.getBoolean(KEY_ENABLE_5GA_KEEPALIVE, false);
             }
@@ -107,7 +111,7 @@ public class CellularFeatureHook {
         try {
             File ceFile = new File("/data/data/" + PREF_PACKAGE + "/shared_prefs/" + PREF_FILE + ".xml");
             if (ceFile.exists() && ceFile.canRead()) {
-                XSharedPreferences cePrefs = new XSharedPreferences(ceFile);
+                PrefsFile cePrefs = new PrefsFile(ceFile);
                 cePrefs.reload();
                 return cePrefs.getBoolean(KEY_ENABLE_5GA_KEEPALIVE, false);
             }
@@ -115,7 +119,7 @@ public class CellularFeatureHook {
 
         // 4. Query package prefs fallback
         try {
-            XSharedPreferences pkgPrefs = new XSharedPreferences(PREF_PACKAGE, PREF_FILE);
+            PrefsFile pkgPrefs = new PrefsFile(PREF_PACKAGE, PREF_FILE);
             pkgPrefs.reload();
             return pkgPrefs.getBoolean(KEY_ENABLE_5GA_KEEPALIVE, false);
         } catch (Throwable ignored) {}
@@ -145,7 +149,7 @@ public class CellularFeatureHook {
         SharedPreferences sp = getKeepAlivePrefs(ctx);
         if (sp != null) {
             sp.edit().putBoolean("saved_vonr_slot_" + slotId, enabled).apply();
-            XposedBridge.log(TAG + ": User configured VoNR for slot " + slotId + " = " + enabled);
+            HookEnv.log(TAG + ": User configured VoNR for slot " + slotId + " = " + enabled);
         }
     }
 
@@ -167,7 +171,7 @@ public class CellularFeatureHook {
         SharedPreferences sp = getKeepAlivePrefs(ctx);
         if (sp != null) {
             sp.edit().putBoolean("saved_dsda_enabled", enabled).apply();
-            XposedBridge.log(TAG + ": User configured DSDA = " + enabled);
+            HookEnv.log(TAG + ": User configured DSDA = " + enabled);
         }
     }
 
@@ -188,41 +192,42 @@ public class CellularFeatureHook {
         SharedPreferences sp = getKeepAlivePrefs(ctx);
         if (sp != null) {
             sp.edit().putInt("saved_apn_modify_flag", val).apply();
-            XposedBridge.log(TAG + ": User configured APN modify flag = " + val);
+            HookEnv.log(TAG + ": User configured APN modify flag = " + val);
         }
     }
 
-    public static void init(final XC_LoadPackage.LoadPackageParam lpparam) {
-        XposedBridge.log(TAG + ": Initializing CellularFeatureHook for com.android.phone");
+    public static void init(final LoadPackageParam lpparam) {
+        HookEnv.log(TAG + ": Initializing CellularFeatureHook for com.android.phone");
 
         // 1. Hook PhoneApp onCreate to register SIM, CarrierConfig broadcast listeners & APN observer
-        hookApplication(lpparam);
+        HookEnv.group("Phone application", () -> hookApplication(lpparam));
 
         // 2. Hook FiveGManagerBase lifecycle, CarrierConfig changes, data slot transitions & VoNR
-        hookFiveGManager(lpparam);
+        HookEnv.group("5G manager", () -> hookFiveGManager(lpparam));
 
         // 3. Hook MiuiDsdaManager lifecycle & DSDA state tracking
-        hookDsdaManager(lpparam);
+        HookEnv.group("DSDA manager", () -> hookDsdaManager(lpparam));
 
         // 4. Hook status getters to prevent UI regression and self-heal modem states
-        hookStatusGetters(lpparam);
+        HookEnv.group("5G status getters", () -> hookStatusGetters(lpparam));
     }
 
-    private static void hookApplication(final XC_LoadPackage.LoadPackageParam lpparam) {
-        Class<?> appClz = XposedHelpers.findClassIfExists("com.android.phone.PhoneApp", lpparam.classLoader);
+    private static void hookApplication(final LoadPackageParam lpparam) {
+        Class<?> appClz = Reflect.findClassIfExists("com.android.phone.PhoneApp", lpparam.classLoader);
         if (appClz == null) {
-            appClz = XposedHelpers.findClassIfExists("com.android.phone.MiuiPhoneApp", lpparam.classLoader);
+            appClz = Reflect.findClassIfExists("com.android.phone.MiuiPhoneApp", lpparam.classLoader);
         }
         if (appClz == null) {
-            appClz = XposedHelpers.findClassIfExists("android.app.Application", lpparam.classLoader);
+            appClz = Reflect.findClassIfExists("android.app.Application", lpparam.classLoader);
         }
         if (appClz != null) {
-            XposedHelpers.findAndHookMethod(appClz, "onCreate", new XC_MethodHook() {
+            HookEnv.findAndHookMethod(appClz, "onCreate", new MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     sContext = (Context) param.thisObject;
                     registerSimReceiver(sContext, lpparam.classLoader);
                     registerApnObserver(sContext);
+                    HookEnv.report(sContext, "phone");
                 }
             });
         }
@@ -250,10 +255,10 @@ public class CellularFeatureHook {
                         }
                     }
                 );
-                XposedBridge.log(TAG + ": ContentObserver registered for apn_modify_flag (initial=" + initialApn + ")");
+                HookEnv.log(TAG + ": ContentObserver registered for apn_modify_flag (initial=" + initialApn + ")");
             }
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": Failed to register APN observer: " + t);
+            HookEnv.log(TAG + ": Failed to register APN observer: " + t);
         }
     }
 
@@ -262,18 +267,25 @@ public class CellularFeatureHook {
             IntentFilter filter = new IntentFilter();
             filter.addAction("android.telephony.action.CARRIER_CONFIG_CHANGED");
             filter.addAction("android.intent.action.SIM_STATE_CHANGED");
-            filter.addAction(ACTION_RELOAD);
+            IntentFilter trustedFilter = new IntentFilter(ACTION_RELOAD);
+            trustedFilter.addAction(HookEnv.ACTION_REQUEST_REPORT);
             BroadcastReceiver reloadReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context ctx, Intent intent) {
                     if (intent == null) return;
                     String action = intent.getAction();
 
+                    if (HookEnv.ACTION_REQUEST_REPORT.equals(action)) {
+                        HookEnv.report(context, "phone");
+                        return;
+                    }
+
                     if (ACTION_RELOAD.equals(action)) {
+                        HookEnv.report(context, "phone");
                         invalidateFeatureEnabledCache();
-                        maybeReloadCarrierConfig(intent, cl);
+                        maybeReloadCarrierConfig(cl);
                         boolean enabled = isFeatureEnabled(cl);
-                        XposedBridge.log(TAG + ": ACTION_RELOAD received, 5G+ keepalive enabled=" + enabled);
+                        HookEnv.log(TAG + ": ACTION_RELOAD received, 5G+ keepalive enabled=" + enabled);
                         if (enabled) {
                             scheduleRestoreMultiPhase(cl, 0);
                             scheduleRestoreMultiPhase(cl, 1);
@@ -282,7 +294,7 @@ public class CellularFeatureHook {
                     }
 
                     if (!isFeatureEnabled(cl)) {
-                        XposedBridge.log(TAG + ": Event " + action + " ignored (feature disabled)");
+                        HookEnv.log(TAG + ": Event " + action + " ignored (feature disabled)");
                         return;
                     }
 
@@ -290,7 +302,7 @@ public class CellularFeatureHook {
                     if (slot < 0) slot = intent.getIntExtra("slot", -1);
                     if (slot < 0) slot = intent.getIntExtra("phone", -1);
 
-                    XposedBridge.log(TAG + ": Broadcast received: " + action + ", slot=" + slot);
+                    HookEnv.log(TAG + ": Broadcast received: " + action + ", slot=" + slot);
                     if (slot >= 0 && slot <= 1) {
                         scheduleRestoreMultiPhase(cl, slot);
                     } else {
@@ -304,9 +316,10 @@ public class CellularFeatureHook {
             } else {
                 context.registerReceiver(reloadReceiver, filter);
             }
-            XposedBridge.log(TAG + ": BroadcastReceiver registered for CARRIER_CONFIG_CHANGED, SIM_STATE_CHANGED & ACTION_RELOAD");
+            HookEnv.registerTrustedReceiver(context, reloadReceiver, trustedFilter);
+            HookEnv.log(TAG + ": BroadcastReceiver registered for CARRIER_CONFIG_CHANGED, SIM_STATE_CHANGED & ACTION_RELOAD");
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": registerSimReceiver error: " + t);
+            HookEnv.log(TAG + ": registerSimReceiver error: " + t);
         }
     }
 
@@ -322,11 +335,13 @@ public class CellularFeatureHook {
      * process broadcast CARRIER_CONFIG_CHANGED, which makes SystemUI re-read
      * getConfigForSubId() and re-evaluate the VoNR icon immediately.
      */
-    private static void maybeReloadCarrierConfig(Intent intent, final ClassLoader cl) {
+    private static void maybeReloadCarrierConfig(final ClassLoader cl) {
         try {
-            String g = intent.getStringExtra(MainHook.KEY_VONR_VISIBILITY);
-            String s1 = intent.getStringExtra(MainHook.KEY_SIM1_VONR_VISIBILITY);
-            String s2 = intent.getStringExtra(MainHook.KEY_SIM2_VONR_VISIBILITY);
+            Bundle config = queryProviderConfig(cl);
+            if (config == null) return;
+            String g = config.getString(MainHook.KEY_VONR_VISIBILITY);
+            String s1 = config.getString(ConfigKeys.slotKey(MainHook.KEY_VONR_VISIBILITY, 0));
+            String s2 = config.getString(ConfigKeys.slotKey(MainHook.KEY_VONR_VISIBILITY, 1));
             if (g == null && s1 == null && s2 == null) return;
             if (g == null) g = "default";
             if (s1 == null) s1 = g;
@@ -349,52 +364,52 @@ public class CellularFeatureHook {
             // Small delay so SystemUI has consumed the same ACTION_RELOAD first.
             if (h != null) h.postDelayed(r, 400); else r.run();
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": maybeReloadCarrierConfig error: " + t);
+            HookEnv.log(TAG + ": maybeReloadCarrierConfig error: " + t);
         }
     }
 
     private static void reloadCarrierConfigForAllSlots(ClassLoader cl) {
         try {
-            Class<?> clz = XposedHelpers.findClassIfExists("com.android.phone.CarrierConfigLoader", cl);
+            Class<?> clz = Reflect.findClassIfExists("com.android.phone.CarrierConfigLoader", cl);
             if (clz == null) {
-                XposedBridge.log(TAG + ": CarrierConfigLoader not found, cannot reload");
+                HookEnv.log(TAG + ": CarrierConfigLoader not found, cannot reload");
                 return;
             }
-            Object instance = XposedHelpers.getStaticObjectField(clz, "sInstance");
+            Object instance = Reflect.getStaticObjectField(clz, "sInstance");
             if (instance == null) {
-                XposedBridge.log(TAG + ": CarrierConfigLoader.sInstance is null, reload skipped");
+                HookEnv.log(TAG + ": CarrierConfigLoader.sInstance is null, reload skipped");
                 return;
             }
             int numPhones = 2;
             try {
-                numPhones = XposedHelpers.getIntField(instance, "mNumPhones");
+                numPhones = Reflect.getIntField(instance, "mNumPhones");
             } catch (Throwable ignored) {}
             for (int slot = 0; slot < numPhones; slot++) {
                 final int s = slot;
                 try {
-                    XposedHelpers.callMethod(instance, "updateConfigForPhoneId", Integer.valueOf(s));
+                    Reflect.callMethod(instance, "updateConfigForPhoneId", Integer.valueOf(s));
                 } catch (Throwable t) {
-                    XposedBridge.log(TAG + ": updateConfigForPhoneId(" + s + ") failed: " + t);
+                    HookEnv.log(TAG + ": updateConfigForPhoneId(" + s + ") failed: " + t);
                 }
             }
-            XposedBridge.log(TAG + ": [VoNR] Requested CarrierConfig reload for " + numPhones + " slot(s)");
+            HookEnv.log(TAG + ": [VoNR] Requested CarrierConfig reload for " + numPhones + " slot(s)");
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": reloadCarrierConfigForAllSlots error: " + t);
+            HookEnv.log(TAG + ": reloadCarrierConfigForAllSlots error: " + t);
         }
     }
 
-    private static void hookFiveGManager(final XC_LoadPackage.LoadPackageParam lpparam) {
-        final Class<?> f5gClz = XposedHelpers.findClassIfExists("com.android.phone.FiveGManagerBase", lpparam.classLoader);
+    private static void hookFiveGManager(final LoadPackageParam lpparam) {
+        final Class<?> f5gClz = Reflect.findClassIfExists("com.android.phone.FiveGManagerBase", lpparam.classLoader);
         if (f5gClz != null) {
             // Hook onHandleCarrierConfigChanged
             try {
-                XposedHelpers.findAndHookMethod(f5gClz, "onHandleCarrierConfigChanged", Message.class, new XC_MethodHook() {
+                HookEnv.findAndHookMethod(f5gClz, "onHandleCarrierConfigChanged", Message.class, new MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         if (!isFeatureEnabled(lpparam.classLoader)) return;
                         Message msg = (Message) param.args[0];
                         int slotId = (msg != null) ? msg.arg1 : -1;
-                        XposedBridge.log(TAG + ": onHandleCarrierConfigChanged slotId=" + slotId);
+                        HookEnv.log(TAG + ": onHandleCarrierConfigChanged slotId=" + slotId);
                         if (slotId >= 0 && slotId <= 1) {
                             scheduleRestoreMultiPhase(lpparam.classLoader, slotId);
                         } else {
@@ -404,61 +419,61 @@ public class CellularFeatureHook {
                     }
                 });
             } catch (Throwable t) {
-                XposedBridge.log(TAG + ": Failed to hook onHandleCarrierConfigChanged: " + t);
+                HookEnv.log(TAG + ": Failed to hook onHandleCarrierConfigChanged: " + t);
             }
 
             // Hook onDataSlotReady
             try {
-                XposedHelpers.findAndHookMethod(f5gClz, "onDataSlotReady", boolean.class, new XC_MethodHook() {
+                HookEnv.findAndHookMethod(f5gClz, "onDataSlotReady", boolean.class, new MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         if (!isFeatureEnabled(lpparam.classLoader)) return;
-                        XposedBridge.log(TAG + ": onDataSlotReady triggered");
+                        HookEnv.log(TAG + ": onDataSlotReady triggered");
                         scheduleRestoreMultiPhase(lpparam.classLoader, 0);
                         scheduleRestoreMultiPhase(lpparam.classLoader, 1);
                     }
                 });
             } catch (Throwable t) {
-                XposedBridge.log(TAG + ": Failed to hook onDataSlotReady: " + t);
+                HookEnv.log(TAG + ": Failed to hook onDataSlotReady: " + t);
             }
 
             // Hook onInitFiveGData
             try {
-                XposedHelpers.findAndHookMethod(f5gClz, "onInitFiveGData", new XC_MethodHook() {
+                HookEnv.findAndHookMethod(f5gClz, "onInitFiveGData", new MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         if (!isFeatureEnabled(lpparam.classLoader)) return;
-                        XposedBridge.log(TAG + ": onInitFiveGData triggered");
+                        HookEnv.log(TAG + ": onInitFiveGData triggered");
                         scheduleRestoreMultiPhase(lpparam.classLoader, 0);
                         scheduleRestoreMultiPhase(lpparam.classLoader, 1);
                     }
                 });
             } catch (Throwable t) {
-                XposedBridge.log(TAG + ": Failed to hook onInitFiveGData: " + t);
+                HookEnv.log(TAG + ": Failed to hook onInitFiveGData: " + t);
             }
 
             // Hook setUserVoNREnabled to capture user preference changes
             try {
-                XposedHelpers.findAndHookMethod(f5gClz, "setUserVoNREnabled", int.class, boolean.class, new XC_MethodHook() {
+                HookEnv.findAndHookMethod(f5gClz, "setUserVoNREnabled", int.class, boolean.class, new MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         int slotId = (Integer) param.args[0];
                         boolean enabled = (Boolean) param.args[1];
-                        Context ctx = (Context) XposedHelpers.getStaticObjectField(f5gClz, "mContext");
+                        Context ctx = (Context) Reflect.getStaticObjectField(f5gClz, "mContext");
                         saveVoNRSetting(ctx != null ? ctx : sContext, slotId, enabled);
                     }
                 });
             } catch (Throwable t) {
-                XposedBridge.log(TAG + ": Failed to hook setUserVoNREnabled on FiveGManagerBase: " + t);
+                HookEnv.log(TAG + ": Failed to hook setUserVoNREnabled on FiveGManagerBase: " + t);
             }
         }
     }
 
-    private static void hookDsdaManager(final XC_LoadPackage.LoadPackageParam lpparam) {
-        Class<?> dsdaClz = XposedHelpers.findClassIfExists("com.android.phone.dsda.MiuiDsdaManager", lpparam.classLoader);
+    private static void hookDsdaManager(final LoadPackageParam lpparam) {
+        Class<?> dsdaClz = Reflect.findClassIfExists("com.android.phone.dsda.MiuiDsdaManager", lpparam.classLoader);
         if (dsdaClz != null) {
             try {
-                XposedHelpers.findAndHookMethod(dsdaClz, "setDsdaEnabled", boolean.class, int.class, new XC_MethodHook() {
+                HookEnv.findAndHookMethod(dsdaClz, "setDsdaEnabled", boolean.class, int.class, new MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         boolean enabled = (Boolean) param.args[0];
@@ -466,15 +481,15 @@ public class CellularFeatureHook {
                     }
                 });
             } catch (Throwable t) {
-                XposedBridge.log(TAG + ": Failed to hook setDsdaEnabled on MiuiDsdaManager: " + t);
+                HookEnv.log(TAG + ": Failed to hook setDsdaEnabled on MiuiDsdaManager: " + t);
             }
         }
 
         // Suppress "双卡双通开启 重启生效" Toast spam completely when keepalive feature is enabled
-        Class<?> handlerClz = XposedHelpers.findClassIfExists("com.android.phone.dsda.MiuiDsdaManager$DsdaHandler", lpparam.classLoader);
+        Class<?> handlerClz = Reflect.findClassIfExists("com.android.phone.dsda.MiuiDsdaManager$DsdaHandler", lpparam.classLoader);
         if (handlerClz != null) {
             try {
-                XposedHelpers.findAndHookMethod(handlerClz, "handleMessage", Message.class, new XC_MethodHook() {
+                HookEnv.findAndHookMethod(handlerClz, "handleMessage", Message.class, new MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         Message msg = (Message) param.args[0];
@@ -487,23 +502,23 @@ public class CellularFeatureHook {
                     }
                 });
             } catch (Throwable t) {
-                XposedBridge.log(TAG + ": Failed to hook DsdaHandler.handleMessage: " + t);
+                HookEnv.log(TAG + ": Failed to hook DsdaHandler.handleMessage: " + t);
             }
         }
 
         // Global Toast interceptor in com.android.phone as ultimate safety fallback
         try {
-            XposedHelpers.findAndHookMethod(Toast.class, "show", new XC_MethodHook() {
+            HookEnv.findAndHookMethod(Toast.class, "show", new MethodHook() {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                     if (!isFeatureEnabled(param.thisObject.getClass().getClassLoader())) return;
                     CharSequence text = null;
                     try {
-                        text = (CharSequence) XposedHelpers.callMethod(param.thisObject, "getText");
+                        text = (CharSequence) Reflect.callMethod(param.thisObject, "getText");
                     } catch (Throwable ignored) {}
                     if (text == null) {
                         try {
-                            Object t = XposedHelpers.getObjectField(param.thisObject, "mText");
+                            Object t = Reflect.getObjectField(param.thisObject, "mText");
                             if (t != null) text = t.toString();
                         } catch (Throwable ignored) {}
                     }
@@ -516,18 +531,18 @@ public class CellularFeatureHook {
                 }
             });
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": Failed to hook Toast.show: " + t);
+            HookEnv.log(TAG + ": Failed to hook Toast.show: " + t);
         }
     }
 
-    private static void hookStatusGetters(final XC_LoadPackage.LoadPackageParam lpparam) {
-        final Class<?> qcomClz = XposedHelpers.findClassIfExists("com.android.phone.FiveGManager", lpparam.classLoader);
-        final Class<?> baseClz = XposedHelpers.findClassIfExists("com.android.phone.FiveGManagerBase", lpparam.classLoader);
+    private static void hookStatusGetters(final LoadPackageParam lpparam) {
+        final Class<?> qcomClz = Reflect.findClassIfExists("com.android.phone.FiveGManager", lpparam.classLoader);
+        final Class<?> baseClz = Reflect.findClassIfExists("com.android.phone.FiveGManagerBase", lpparam.classLoader);
 
         if (qcomClz != null) {
             // 1. get3GPPVersion
             try {
-                XposedHelpers.findAndHookMethod(qcomClz, "get3GPPVersion", int.class, new XC_MethodHook() {
+                HookEnv.findAndHookMethod(qcomClz, "get3GPPVersion", int.class, new MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         if (!isFeatureEnabled(param.thisObject.getClass().getClassLoader())) return;
@@ -542,7 +557,7 @@ public class CellularFeatureHook {
                     }
                 });
             } catch (Throwable t) {
-                XposedBridge.log(TAG + ": Failed to hook get3GPPVersion: " + t);
+                HookEnv.log(TAG + ": Failed to hook get3GPPVersion: " + t);
             }
 
             // 2. 5G-A and enhanced features getters
@@ -560,10 +575,10 @@ public class CellularFeatureHook {
         }
 
         // 4. DSDA getter hook on MiuiDsdaManager
-        Class<?> dsdaClz = XposedHelpers.findClassIfExists("com.android.phone.dsda.MiuiDsdaManager", lpparam.classLoader);
+        Class<?> dsdaClz = Reflect.findClassIfExists("com.android.phone.dsda.MiuiDsdaManager", lpparam.classLoader);
         if (dsdaClz != null) {
             try {
-                XposedHelpers.findAndHookMethod(dsdaClz, "isDsdaEnabled", new XC_MethodHook() {
+                HookEnv.findAndHookMethod(dsdaClz, "isDsdaEnabled", new MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         if (!isFeatureEnabled(param.thisObject.getClass().getClassLoader())) return;
@@ -575,20 +590,20 @@ public class CellularFeatureHook {
                     }
                 });
             } catch (Throwable t) {
-                XposedBridge.log(TAG + ": Failed to hook isDsdaEnabled on MiuiDsdaManager: " + t);
+                HookEnv.log(TAG + ": Failed to hook isDsdaEnabled on MiuiDsdaManager: " + t);
             }
         }
     }
 
     private static void hookVoNRGetter(Class<?> qcomClz, final Class<?> baseClz) {
         try {
-            XposedHelpers.findAndHookMethod(qcomClz, "isVoNREnabled", int.class, new XC_MethodHook() {
+            HookEnv.findAndHookMethod(qcomClz, "isVoNREnabled", int.class, new MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     if (!isFeatureEnabled(param.thisObject.getClass().getClassLoader())) return;
                     int slotId = (Integer) param.args[0];
                     if (slotId < 0 || slotId > 1) return;
-                    Context ctx = baseClz != null ? (Context) XposedHelpers.getStaticObjectField(baseClz, "mContext") : null;
+                    Context ctx = baseClz != null ? (Context) Reflect.getStaticObjectField(baseClz, "mContext") : null;
                     boolean target = getSavedVoNRSetting(ctx != null ? ctx : sContext, slotId);
                     boolean result = (Boolean) param.getResult();
                     if (!result && target) {
@@ -598,13 +613,13 @@ public class CellularFeatureHook {
                 }
             });
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": Failed to hook isVoNREnabled: " + t);
+            HookEnv.log(TAG + ": Failed to hook isVoNREnabled: " + t);
         }
     }
 
     private static void hookBooleanGetter(Class<?> clz, final String getterName, final String setterName, final String prefKey, final boolean defValue) {
         try {
-            XposedHelpers.findAndHookMethod(clz, getterName, int.class, new XC_MethodHook() {
+            HookEnv.findAndHookMethod(clz, getterName, int.class, new MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     if (!isFeatureEnabled(param.thisObject.getClass().getClassLoader())) return;
@@ -619,7 +634,7 @@ public class CellularFeatureHook {
                 }
             });
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": Failed to hook " + getterName + ": " + t);
+            HookEnv.log(TAG + ": Failed to hook " + getterName + ": " + t);
         }
     }
 
@@ -658,18 +673,18 @@ public class CellularFeatureHook {
         if (slotId < 0 || slotId > 1) return;
         sLastAutoRestoreTime = System.currentTimeMillis();
         try {
-            Class<?> f5gClz = XposedHelpers.findClassIfExists("com.android.phone.FiveGManagerBase", cl);
+            Class<?> f5gClz = Reflect.findClassIfExists("com.android.phone.FiveGManagerBase", cl);
             if (f5gClz == null) return;
-            Object manager = XposedHelpers.callStaticMethod(f5gClz, "getInstance");
+            Object manager = Reflect.callStaticMethod(f5gClz, "getInstance");
             if (manager == null) {
-                Class<?> qcomClz = XposedHelpers.findClassIfExists("com.android.phone.FiveGManager", cl);
+                Class<?> qcomClz = Reflect.findClassIfExists("com.android.phone.FiveGManager", cl);
                 if (qcomClz != null) {
-                    manager = XposedHelpers.callStaticMethod(qcomClz, "internalInit");
+                    manager = Reflect.callStaticMethod(qcomClz, "internalInit");
                 }
             }
             if (manager == null) return;
 
-            Context ctx = (Context) XposedHelpers.getStaticObjectField(f5gClz, "mContext");
+            Context ctx = (Context) Reflect.getStaticObjectField(f5gClz, "mContext");
             Context activeCtx = ctx != null ? ctx : sContext;
             SharedPreferences sp = ctx != null ? PreferenceManager.getDefaultSharedPreferences(ctx) : null;
 
@@ -708,7 +723,7 @@ public class CellularFeatureHook {
             // 2. VoNR auto keepalive
             boolean targetVoNR = getSavedVoNRSetting(activeCtx, slotId);
             applySingleMethod(manager, "setUserVoNREnabled", slotId, targetVoNR);
-            XposedBridge.log(TAG + ": [Slot " + slotId + "] VoNR auto-restored to " + targetVoNR);
+            HookEnv.log(TAG + ": [Slot " + slotId + "] VoNR auto-restored to " + targetVoNR);
 
             // 3. DSDA (双卡双通) auto keepalive - Silent, zero toast spam (Only for Slot 1: SIM 2 / eSIM)
             boolean targetDsda = getSavedDsdaSetting(activeCtx);
@@ -718,29 +733,29 @@ public class CellularFeatureHook {
                     if (curDb != (targetDsda ? 1 : 0)) {
                         Settings.Global.putInt(activeCtx.getContentResolver(), "hybrid_dsda_mode_enabled", targetDsda ? 1 : 0);
                     }
-                    Class<?> dsdaClz = XposedHelpers.findClassIfExists("com.android.phone.dsda.MiuiDsdaManager", cl);
+                    Class<?> dsdaClz = Reflect.findClassIfExists("com.android.phone.dsda.MiuiDsdaManager", cl);
                     if (dsdaClz != null) {
-                        Object dsdaMgr = XposedHelpers.callStaticMethod(dsdaClz, "getInstance");
+                        Object dsdaMgr = Reflect.callStaticMethod(dsdaClz, "getInstance");
                         if (dsdaMgr != null) {
                             boolean isResetHwMbn = false;
                             try {
-                                isResetHwMbn = (Boolean) XposedHelpers.callMethod(dsdaMgr, "isSwitchDsdaModeByResetHwMbn");
+                                isResetHwMbn = (Boolean) Reflect.callMethod(dsdaMgr, "isSwitchDsdaModeByResetHwMbn");
                             } catch (Throwable ignored) {}
 
                             if (isResetHwMbn) {
                                 // Directly update persistent property without posting Toast Message 3
-                                Object modemUtils = XposedHelpers.getObjectField(dsdaMgr, "mModemDsdaUtils");
+                                Object modemUtils = Reflect.getObjectField(dsdaMgr, "mModemDsdaUtils");
                                 if (modemUtils != null) {
-                                    XposedHelpers.callMethod(modemUtils, "setDsdaCapPropertyEnabled", targetDsda);
+                                    Reflect.callMethod(modemUtils, "setDsdaCapPropertyEnabled", targetDsda);
                                 }
                             } else {
-                                XposedHelpers.callMethod(dsdaMgr, "setDsdaEnabledByQmiMsimPreference", targetDsda);
+                                Reflect.callMethod(dsdaMgr, "setDsdaEnabledByQmiMsimPreference", targetDsda);
                             }
                         }
                     }
-                    XposedBridge.log(TAG + ": DSDA auto-restored (silent) to " + targetDsda);
+                    HookEnv.log(TAG + ": DSDA auto-restored (silent) to " + targetDsda);
                 } catch (Throwable t) {
-                    XposedBridge.log(TAG + ": Failed to restore DSDA: " + t);
+                    HookEnv.log(TAG + ": Failed to restore DSDA: " + t);
                 }
             }
 
@@ -749,40 +764,40 @@ public class CellularFeatureHook {
             if (activeCtx != null) {
                 try {
                     Settings.System.putInt(activeCtx.getContentResolver(), "apn_modify_flag", targetApn);
-                    XposedBridge.log(TAG + ": apn_modify_flag auto-restored to " + targetApn);
+                    HookEnv.log(TAG + ": apn_modify_flag auto-restored to " + targetApn);
                 } catch (Throwable t) {
-                    XposedBridge.log(TAG + ": Failed to restore apn_modify_flag: " + t);
+                    HookEnv.log(TAG + ": Failed to restore apn_modify_flag: " + t);
                 }
             }
 
-            XposedBridge.log(TAG + ": [SIM 2 / eSIM (Slot 1)] Full features locked & restored: R" + targetVersion + ", 5GA=" + fivega + ", VoNR=" + targetVoNR + ", DSDA=" + targetDsda + ", APN=" + targetApn);
+            HookEnv.log(TAG + ": [SIM 2 / eSIM (Slot 1)] Full features locked & restored: R" + targetVersion + ", 5GA=" + fivega + ", VoNR=" + targetVoNR + ", DSDA=" + targetDsda + ", APN=" + targetApn);
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": restoreFeatures failed for slot " + slotId + ": " + t);
+            HookEnv.log(TAG + ": restoreFeatures failed for slot " + slotId + ": " + t);
         }
     }
 
     private static void applySingleMethod(Object manager, String methodName, int val, int slotId) {
         if (manager == null) return;
         try {
-            XposedHelpers.callMethod(manager, methodName, val, slotId);
+            Reflect.callMethod(manager, methodName, val, slotId);
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": " + methodName + " failed: " + t);
+            HookEnv.log(TAG + ": " + methodName + " failed: " + t);
         }
     }
 
     private static void applySingleMethod(Object manager, String methodName, int slotId, boolean val) {
         if (manager == null) return;
         try {
-            XposedHelpers.callMethod(manager, methodName, slotId, val);
+            Reflect.callMethod(manager, methodName, slotId, val);
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": " + methodName + " failed: " + t);
+            HookEnv.log(TAG + ": " + methodName + " failed: " + t);
         }
     }
 
     private static int getTarget3GPPVersion(Object manager) {
         try {
-            Context ctx = (Context) XposedHelpers.getStaticObjectField(
-                XposedHelpers.findClass("com.android.phone.FiveGManagerBase", manager.getClass().getClassLoader()),
+            Context ctx = (Context) Reflect.getStaticObjectField(
+                Reflect.findClass("com.android.phone.FiveGManagerBase", manager.getClass().getClassLoader()),
                 "mContext"
             );
             if (ctx != null) {
@@ -796,8 +811,8 @@ public class CellularFeatureHook {
 
     private static boolean getTargetFeatureEnabled(Object manager, String prefKey, boolean defVal) {
         try {
-            Context ctx = (Context) XposedHelpers.getStaticObjectField(
-                XposedHelpers.findClass("com.android.phone.FiveGManagerBase", manager.getClass().getClassLoader()),
+            Context ctx = (Context) Reflect.getStaticObjectField(
+                Reflect.findClass("com.android.phone.FiveGManagerBase", manager.getClass().getClassLoader()),
                 "mContext"
             );
             if (ctx != null) {

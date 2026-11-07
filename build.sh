@@ -32,30 +32,25 @@ aapt2 compile --dir res -o compiled_res.zip
 aapt2 link -I "$ANDROID_JAR" --manifest AndroidManifest.xml --java gen/ -o base.apk compiled_res.zip
 
 echo "=== [3/6] Compiling Java sources with javac ==="
-javac -cp "$ANDROID_JAR:libs/api-82.jar" -d classes -source 8 -target 8 \
+javac -cp "$ANDROID_JAR:libs/api-102.jar" -d classes -source 8 -target 8 \
     gen/com/midori/hypericons/R.java \
-    src/com/midori/hypericons/IconConfigProvider.java \
-    src/com/midori/hypericons/MainActivity.java \
-    src/com/midori/hypericons/ExperimentalActivity.java \
-    src/com/midori/hypericons/CellularFeatureHook.java \
-    src/com/midori/hypericons/MainHook.java
+    $(find src -name '*.java' | sort)
 
 echo "=== [4/6] Compiling DEX with d8 ==="
 d8 --release --min-api 26 --output dex/ classes/com/midori/hypericons/*.class
 
 echo "=== [5/6] Packaging and aligning APK ==="
 python3 -c "
-import zipfile, shutil, struct
+import os, zipfile, shutil, struct
 
 shutil.copyfile('base.apk', 'unaligned.apk')
 
 with zipfile.ZipFile('unaligned.apk', 'a', compression=zipfile.ZIP_DEFLATED) as z:
     z.write('dex/classes.dex', 'classes.dex')
-    z.writestr('assets/xposed_init', 'com.midori.hypericons.MainHook\n')
-    z.writestr('META-INF/xposed/scope.list', 'com.android.systemui\ncom.android.phone\n')
-    z.writestr('META-INF/xposed/java_init.list', 'com.midori.hypericons.MainHook\n')
+    for name in sorted(os.listdir('META-INF/xposed')):
+        z.write(os.path.join('META-INF/xposed', name), 'META-INF/xposed/' + name)
 
-print('[✓] unaligned.apk packaged with classes.dex & xposed entry points.')
+print('[✓] unaligned.apk packaged with classes.dex & libxposed metadata (META-INF/xposed).')
 
 def zipalign(in_path, out_path, alignment=4):
     with zipfile.ZipFile(in_path, 'r') as zin, open(out_path, 'wb') as fout:

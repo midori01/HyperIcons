@@ -36,17 +36,12 @@ import android.widget.TextView;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-import de.robv.android.xposed.IXposedHookLoadPackage;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XSharedPreferences;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
-public class MainHook implements IXposedHookLoadPackage {
+public class MainHook {
     private static final String TAG = "HyperIconsHook";
-    public static final String VERSION = "5.3.5";
+    public static final String VERSION = "6.0.0";
     public static final String ACTION_RELOAD = "com.midori.hypericons.ACTION_RELOAD";
     public static final String PREF_PACKAGE = "com.midori.hypericons";
     public static final String PREF_FILE = "hyper_icons_config";
@@ -55,83 +50,23 @@ public class MainHook implements IXposedHookLoadPackage {
     public static final Uri CONFIG_URI = Uri.parse("content://" + PROVIDER_AUTHORITY + "/config");
 
     // Mode and Tab Keys
-    public static final String KEY_SIM_MODE = "pref_sim_mode";           // "both" | "separate"
-    public static final String KEY_TARGET_TAB = "pref_target_tab";       // "sim1" | "sim2"
+    public static final String KEY_SIM_MODE = ConfigKeys.KEY_SIM_MODE;           // "both" | "separate"
+    public static final String KEY_TARGET_TAB = ConfigKeys.KEY_TARGET_TAB;       // "sim1" | "sim2"
 
-    // Global / Both SIMs Keys
-    public static final String KEY_5G_CA = "pref_5g_ca";
-    public static final String KEY_5G_BASIC = "pref_5g_basic";
-    public static final String KEY_CAPSULE_STYLE = "pref_capsule_style";
-    public static final String KEY_4G_RAT = "pref_4g_rat";
-    public static final String KEY_ALWAYS_SHOW_RAT = "pref_always_show_rat";
-    public static final String KEY_VOLTE_STYLE = "pref_volte_style";
-    public static final String KEY_VOWIFI_STYLE = "pref_vowifi_style";
-    public static final String KEY_ROAMING_STYLE = "pref_roaming_style";
-    public static final String KEY_VONR_VISIBILITY = "pref_vonr_visibility";
-    public static final String KEY_WIFI_VOLTE_VISIBILITY = "pref_wifi_volte_visibility";
+    // Per-SIM option keys (see ConfigKeys for the slot overrides)
+    public static final String KEY_5G_CA = ConfigKeys.KEY_5G_CA;
+    public static final String KEY_5G_BASIC = ConfigKeys.KEY_5G_BASIC;
+    public static final String KEY_CAPSULE_STYLE = ConfigKeys.KEY_CAPSULE_STYLE;
+    public static final String KEY_4G_RAT = ConfigKeys.KEY_4G_RAT;
+    public static final String KEY_ALWAYS_SHOW_RAT = ConfigKeys.KEY_ALWAYS_SHOW_RAT;
+    public static final String KEY_VOLTE_STYLE = ConfigKeys.KEY_VOLTE_STYLE;
+    public static final String KEY_VOWIFI_STYLE = ConfigKeys.KEY_VOWIFI_STYLE;
+    public static final String KEY_ROAMING_STYLE = ConfigKeys.KEY_ROAMING_STYLE;
+    public static final String KEY_VONR_VISIBILITY = ConfigKeys.KEY_VONR_VISIBILITY;
+    public static final String KEY_WIFI_VOLTE_VISIBILITY = ConfigKeys.KEY_WIFI_VOLTE_VISIBILITY;
 
-    // SIM 1 (Slot 0) Keys
-    public static final String KEY_SIM1_5G_CA = "pref_sim1_5g_ca";
-    public static final String KEY_SIM1_5G_BASIC = "pref_sim1_5g_basic";
-    public static final String KEY_SIM1_CAPSULE_STYLE = "pref_sim1_capsule_style";
-    public static final String KEY_SIM1_4G_RAT = "pref_sim1_4g_rat";
-    public static final String KEY_SIM1_ALWAYS_SHOW_RAT = "pref_sim1_always_show_rat";
-    public static final String KEY_SIM1_VOLTE_STYLE = "pref_sim1_volte_style";
-    public static final String KEY_SIM1_VOWIFI_STYLE = "pref_sim1_vowifi_style";
-    public static final String KEY_SIM1_ROAMING_STYLE = "pref_sim1_roaming_style";
-    public static final String KEY_SIM1_VONR_VISIBILITY = "pref_sim1_vonr_visibility";
-    public static final String KEY_SIM1_WIFI_VOLTE_VISIBILITY = "pref_sim1_wifi_volte_visibility";
-
-    // SIM 2 / eSIM (Slot 1) Keys
-    public static final String KEY_SIM2_5G_CA = "pref_sim2_5g_ca";
-    public static final String KEY_SIM2_5G_BASIC = "pref_sim2_5g_basic";
-    public static final String KEY_SIM2_CAPSULE_STYLE = "pref_sim2_capsule_style";
-    public static final String KEY_SIM2_4G_RAT = "pref_sim2_4g_rat";
-    public static final String KEY_SIM2_ALWAYS_SHOW_RAT = "pref_sim2_always_show_rat";
-    public static final String KEY_SIM2_VOLTE_STYLE = "pref_sim2_volte_style";
-    public static final String KEY_SIM2_VOWIFI_STYLE = "pref_sim2_vowifi_style";
-    public static final String KEY_SIM2_ROAMING_STYLE = "pref_sim2_roaming_style";
-    public static final String KEY_SIM2_VONR_VISIBILITY = "pref_sim2_vonr_visibility";
-    public static final String KEY_SIM2_WIFI_VOLTE_VISIBILITY = "pref_sim2_wifi_volte_visibility";
-
-    private static volatile String sPrefSimMode = "both";
-    private static volatile String sPrefTargetTab = "sim1";
-
-    // Global / Both SIMs preferences
-    private static volatile String sPref5gCa = "default";
-    private static volatile String sPref5gBasic = "default";
-    private static volatile String sPrefCapsuleStyle = "default";
-    private static volatile String sPref4gRat = "default";
-    private static volatile String sPrefAlwaysShowRat = "default";
-    private static volatile String sPrefVolteStyle = "default";
-    private static volatile String sPrefVowifiStyle = "default";
-    private static volatile String sPrefRoamingStyle = "default";
-    private static volatile String sPrefVonrVisibility = "default";
-    private static volatile String sPrefWifiVolteVisibility = "default";
-
-    // SIM 1 (Slot 0) preferences
-    private static volatile String sPrefSim15gCa = "default";
-    private static volatile String sPrefSim15gBasic = "default";
-    private static volatile String sPrefSim1CapsuleStyle = "default";
-    private static volatile String sPrefSim14gRat = "default";
-    private static volatile String sPrefSim1AlwaysShowRat = "default";
-    private static volatile String sPrefSim1VolteStyle = "default";
-    private static volatile String sPrefSim1VowifiStyle = "default";
-    private static volatile String sPrefSim1RoamingStyle = "default";
-    private static volatile String sPrefSim1VonrVisibility = "default";
-    private static volatile String sPrefSim1WifiVolteVisibility = "default";
-
-    // SIM 2 / eSIM (Slot 1) preferences
-    private static volatile String sPrefSim25gCa = "default";
-    private static volatile String sPrefSim25gBasic = "default";
-    private static volatile String sPrefSim2CapsuleStyle = "default";
-    private static volatile String sPrefSim24gRat = "default";
-    private static volatile String sPrefSim2AlwaysShowRat = "default";
-    private static volatile String sPrefSim2VolteStyle = "default";
-    private static volatile String sPrefSim2VowifiStyle = "default";
-    private static volatile String sPrefSim2RoamingStyle = "default";
-    private static volatile String sPrefSim2VonrVisibility = "default";
-    private static volatile String sPrefSim2WifiVolteVisibility = "default";
+    // Immutable snapshot of the resolved config; replaced as a whole on reload.
+    private static volatile Map<String, String> sConfig = ConfigKeys.defaults();
 
     public static class IconConfig {
         public String ca = "default";
@@ -147,45 +82,30 @@ public class MainHook implements IXposedHookLoadPackage {
     }
 
     public static IconConfig getConfigForSlot(int slotId) {
+        Map<String, String> c = sConfig;
+        int slot = "separate".equals(c.get(KEY_SIM_MODE)) && (slotId == 0 || slotId == 1) ? slotId : -1;
         IconConfig cfg = new IconConfig();
-        if ("separate".equals(sPrefSimMode)) {
-            if (slotId == 0) {
-                cfg.ca = sPrefSim15gCa;
-                cfg.basic = sPrefSim15gBasic;
-                cfg.capsule = sPrefSim1CapsuleStyle;
-                cfg.rat = sPrefSim14gRat;
-                cfg.alwaysRat = sPrefSim1AlwaysShowRat;
-                cfg.volte = sPrefSim1VolteStyle;
-                cfg.vowifi = sPrefSim1VowifiStyle;
-                cfg.roaming = sPrefSim1RoamingStyle;
-                cfg.vonrVisibility = sPrefSim1VonrVisibility;
-                cfg.wifiVolte = sPrefSim1WifiVolteVisibility;
-                return cfg;
-            } else if (slotId == 1) {
-                cfg.ca = sPrefSim25gCa;
-                cfg.basic = sPrefSim25gBasic;
-                cfg.capsule = sPrefSim2CapsuleStyle;
-                cfg.rat = sPrefSim24gRat;
-                cfg.alwaysRat = sPrefSim2AlwaysShowRat;
-                cfg.volte = sPrefSim2VolteStyle;
-                cfg.vowifi = sPrefSim2VowifiStyle;
-                cfg.roaming = sPrefSim2RoamingStyle;
-                cfg.vonrVisibility = sPrefSim2VonrVisibility;
-                cfg.wifiVolte = sPrefSim2WifiVolteVisibility;
-                return cfg;
-            }
-        }
-        cfg.ca = sPref5gCa;
-        cfg.basic = sPref5gBasic;
-        cfg.capsule = sPrefCapsuleStyle;
-        cfg.rat = sPref4gRat;
-        cfg.alwaysRat = sPrefAlwaysShowRat;
-        cfg.volte = sPrefVolteStyle;
-        cfg.vowifi = sPrefVowifiStyle;
-        cfg.roaming = sPrefRoamingStyle;
-        cfg.vonrVisibility = sPrefVonrVisibility;
-        cfg.wifiVolte = sPrefWifiVolteVisibility;
+        cfg.ca = configValue(c, KEY_5G_CA, slot);
+        cfg.basic = configValue(c, KEY_5G_BASIC, slot);
+        cfg.capsule = configValue(c, KEY_CAPSULE_STYLE, slot);
+        cfg.rat = configValue(c, KEY_4G_RAT, slot);
+        cfg.alwaysRat = configValue(c, KEY_ALWAYS_SHOW_RAT, slot);
+        cfg.volte = configValue(c, KEY_VOLTE_STYLE, slot);
+        cfg.vowifi = configValue(c, KEY_VOWIFI_STYLE, slot);
+        cfg.roaming = configValue(c, KEY_ROAMING_STYLE, slot);
+        cfg.vonrVisibility = configValue(c, KEY_VONR_VISIBILITY, slot);
+        cfg.wifiVolte = configValue(c, KEY_WIFI_VOLTE_VISIBILITY, slot);
         return cfg;
+    }
+
+    private static String configValue(Map<String, String> c, String baseKey, int slot) {
+        String v = c.get(slot >= 0 ? ConfigKeys.slotKey(baseKey, slot) : baseKey);
+        return v != null ? v : ConfigKeys.DEFAULT_VALUE;
+    }
+
+    private static String pref(String key) {
+        String v = sConfig.get(key);
+        return v != null ? v : ConfigKeys.DEFAULT_VALUE;
     }
 
     public static int getSlotIdForSubId(int subId) {
@@ -197,9 +117,9 @@ public class MainHook implements IXposedHookLoadPackage {
             }
         } catch (Throwable ignored) {}
         try {
-            Class<?> smClz = XposedHelpers.findClassIfExists("android.telephony.SubscriptionManager", null);
+            Class<?> smClz = Reflect.findClassIfExists("android.telephony.SubscriptionManager", null);
             if (smClz != null) {
-                Object res = XposedHelpers.callStaticMethod(smClz, "getSlotIndex", subId);
+                Object res = Reflect.callStaticMethod(smClz, "getSlotIndex", subId);
                 if (res instanceof Integer && ((Integer) res).intValue() >= 0) {
                     return (Integer) res;
                 }
@@ -241,13 +161,13 @@ public class MainHook implements IXposedHookLoadPackage {
             } catch (Throwable ignored) {}
         }
         try {
-            Class<?> smClz = XposedHelpers.findClassIfExists("android.telephony.SubscriptionManager", null);
+            Class<?> smClz = Reflect.findClassIfExists("android.telephony.SubscriptionManager", null);
             if (smClz != null) {
-                Object res = XposedHelpers.callStaticMethod(smClz, "getSubscriptionId", slotId);
+                Object res = Reflect.callStaticMethod(smClz, "getSubscriptionId", slotId);
                 if (res instanceof Integer && ((Integer) res).intValue() >= 0 && ((Integer) res).intValue() != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
                     return (Integer) res;
                 }
-                Object ids = XposedHelpers.callStaticMethod(smClz, "getSubId", slotId);
+                Object ids = Reflect.callStaticMethod(smClz, "getSubId", slotId);
                 if (ids instanceof int[]) {
                     int[] arr = (int[]) ids;
                     if (arr.length > 0 && arr[0] >= 0 && arr[0] != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
@@ -262,7 +182,7 @@ public class MainHook implements IXposedHookLoadPackage {
     public static int getSlotIdForView(View view) {
         if (view == null) return -1;
         try {
-            Object direct = XposedHelpers.getAdditionalInstanceField(view, "slotId");
+            Object direct = Reflect.getAdditionalInstanceField(view, "slotId");
             if (direct instanceof Integer && ((Integer) direct).intValue() >= 0) {
                 return ((Integer) direct).intValue();
             }
@@ -277,11 +197,11 @@ public class MainHook implements IXposedHookLoadPackage {
         View curr = view;
         while (curr != null) {
             try {
-                int slotId = XposedHelpers.getIntField(curr, "slotId");
+                int slotId = Reflect.getIntField(curr, "slotId");
                 if (slotId >= 0) return slotId;
             } catch (Throwable ignored) {}
             try {
-                int slotId = XposedHelpers.getIntField(curr, "mSlotId");
+                int slotId = Reflect.getIntField(curr, "mSlotId");
                 if (slotId >= 0) return slotId;
             } catch (Throwable ignored) {}
             if (curr.getParent() instanceof View) {
@@ -293,12 +213,12 @@ public class MainHook implements IXposedHookLoadPackage {
         return -1;
     }
 
-    public static final int RADIO_TYPE_UNKNOWN = 0;
-    public static final int RADIO_TYPE_2G_3G = 1;
-    public static final int RADIO_TYPE_4G = 2;
-    public static final int RADIO_TYPE_4G_CA = 3;
-    public static final int RADIO_TYPE_5G = 4;
-    public static final int RADIO_TYPE_5G_CA = 5;
+    public static final int RADIO_TYPE_UNKNOWN = IconPolicy.RADIO_TYPE_UNKNOWN;
+    public static final int RADIO_TYPE_2G_3G = IconPolicy.RADIO_TYPE_2G_3G;
+    public static final int RADIO_TYPE_4G = IconPolicy.RADIO_TYPE_4G;
+    public static final int RADIO_TYPE_4G_CA = IconPolicy.RADIO_TYPE_4G_CA;
+    public static final int RADIO_TYPE_5G = IconPolicy.RADIO_TYPE_5G;
+    public static final int RADIO_TYPE_5G_CA = IconPolicy.RADIO_TYPE_5G_CA;
 
     private static volatile boolean sIs5GConnected = false;
     private static volatile boolean sIs5GCaConnected = false;
@@ -380,7 +300,7 @@ public class MainHook implements IXposedHookLoadPackage {
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
-                    XposedBridge.log(TAG + ": [v" + VERSION + "] Multi-phase data switch reload pass (" + delay + "ms)");
+                    HookEnv.log(TAG + ": [v" + VERSION + "] Multi-phase data switch reload pass (" + delay + "ms)");
                     performStatusReload();
                 }
             };
@@ -389,7 +309,7 @@ public class MainHook implements IXposedHookLoadPackage {
         }
     }
 
-    private static XSharedPreferences sPrefs = null;
+    private static PrefsFile sPrefs = null;
     private static volatile boolean sConfigLoaded = false;
     private static volatile boolean sRetryScheduled = false;
 
@@ -426,7 +346,7 @@ public class MainHook implements IXposedHookLoadPackage {
             if (sResVonrSolid == 0) sResVonrSolid = res.getIdentifier("stat_sys_signal_vonr", "drawable", "com.android.systemui");
             if (sResVonrNoFrame == 0) sResVonrNoFrame = res.getIdentifier("stat_sys_signal_vonr_no_frame", "drawable", "com.android.systemui");
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": initVolteResourceIds error: " + t);
+            HookEnv.log(TAG + ": initVolteResourceIds error: " + t);
         }
     }
 
@@ -459,7 +379,7 @@ public class MainHook implements IXposedHookLoadPackage {
             if (sResVowifiCall1 == 0) sResVowifiCall1 = res.getIdentifier("stat_sys_vowifi_call_1", "drawable", "com.android.systemui");
             if (sResVowifiCall2 == 0) sResVowifiCall2 = res.getIdentifier("stat_sys_vowifi_call_2", "drawable", "com.android.systemui");
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": initVowifiResourceIds error: " + t);
+            HookEnv.log(TAG + ": initVowifiResourceIds error: " + t);
         }
     }
 
@@ -483,7 +403,7 @@ public class MainHook implements IXposedHookLoadPackage {
             if (sResRoam == 0) sResRoam = res.getIdentifier("stat_sys_data_connected_roam", "drawable", "com.android.systemui");
             if (sResRoamSmall == 0) sResRoamSmall = res.getIdentifier("stat_sys_data_connected_roam_small", "drawable", "com.android.systemui");
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": initRoamingResourceIds error: " + t);
+            HookEnv.log(TAG + ": initRoamingResourceIds error: " + t);
         }
     }
 
@@ -503,16 +423,7 @@ public class MainHook implements IXposedHookLoadPackage {
     }
 
     private static String getTarget5gCaText(IconConfig cfg) {
-        String ca = cfg != null ? cfg.ca : sPref5gCa;
-        if ("5ga".equals(ca)) return "5GA";
-        if ("5g_plus".equals(ca)) return "5G+";
-        if ("5g_plus_plus".equals(ca)) return "5G++";
-        if ("5guwb".equals(ca)) return "5GUWB";
-        if ("5ge".equals(ca)) return "5Ge";
-        if ("5g_6rx".equals(ca)) return "5G 6Rx";
-        if ("5g_plus_plus_6rx".equals(ca)) return "5G++ 6Rx";
-        if ("5guwb_6rx".equals(ca)) return "5GUWB 6Rx";
-        return "";
+        return IconPolicy.target5gCaText(cfg != null ? cfg.ca : pref(KEY_5G_CA));
     }
 
     private static String getTarget5gCaText() {
@@ -520,8 +431,7 @@ public class MainHook implements IXposedHookLoadPackage {
     }
 
     private static String getEffective5gCaText(IconConfig cfg) {
-        String ca = getTarget5gCaText(cfg);
-        return TextUtils.isEmpty(ca) ? "5G+" : ca;
+        return IconPolicy.effective5gCaText(cfg != null ? cfg.ca : pref(KEY_5G_CA));
     }
 
     private static String getEffective5gCaText() {
@@ -529,11 +439,8 @@ public class MainHook implements IXposedHookLoadPackage {
     }
 
     private static String getTarget5gBasicText(IconConfig cfg) {
-        String basic = cfg != null ? cfg.basic : sPref5gBasic;
-        if ("follow_ca".equals(basic)) {
-            return getEffective5gCaText(cfg);
-        }
-        return "5G";
+        return IconPolicy.target5gBasicText(cfg != null ? cfg.basic : pref(KEY_5G_BASIC),
+                cfg != null ? cfg.ca : pref(KEY_5G_CA));
     }
 
     private static String getTarget5gBasicText() {
@@ -549,34 +456,27 @@ public class MainHook implements IXposedHookLoadPackage {
     }
 
     private static boolean is5gCaText(String text) {
-        if (TextUtils.isEmpty(text)) return false;
-        return "5GA".equals(text) || "5G+".equals(text) || "5G++".equals(text) || "5GUWB".equals(text) || "5Ge".equals(text)
-                || "5G 6Rx".equals(text) || "5G++ 6Rx".equals(text) || "5GUWB 6Rx".equals(text);
+        return IconPolicy.is5gCaText(text);
     }
 
     private static boolean is4gCaText(String text) {
-        if (TextUtils.isEmpty(text)) return false;
-        return text.contains("+") || text.contains("-A") || "4.5G+".equals(text);
+        return IconPolicy.is4gCaText(text);
     }
 
     private static boolean is5gText(String text) {
-        if (TextUtils.isEmpty(text)) return false;
-        return text.startsWith("5G");
+        return IconPolicy.is5gText(text);
     }
 
     private static boolean is4gText(String text) {
-        if (TextUtils.isEmpty(text)) return false;
-        return text.contains("4G") || text.contains("LTE") || text.contains("4.5G");
+        return IconPolicy.is4gText(text);
     }
 
     private static boolean isCapsuleTargetText(String text) {
-        if (TextUtils.isEmpty(text)) return false;
-        return is5gText(text) || is4gText(text);
+        return IconPolicy.isCapsuleTargetText(text);
     }
 
     private static boolean isTargetBreathText(String text) {
-        if (TextUtils.isEmpty(text)) return false;
-        return is5gCaText(text) || is4gCaText(text);
+        return IconPolicy.isTargetBreathText(text);
     }
 
     private static String getDrawableMobileType(Drawable drawable) {
@@ -584,22 +484,22 @@ public class MainHook implements IXposedHookLoadPackage {
         try {
             boolean isDoublePlus = false;
             try {
-                isDoublePlus = XposedHelpers.getBooleanField(drawable, "mShowMobileTypeDoublePlus");
+                isDoublePlus = Reflect.getBooleanField(drawable, "mShowMobileTypeDoublePlus");
             } catch (Throwable ignored) {}
             if (isDoublePlus) {
                 return "5G++";
             }
-            Object textObj = XposedHelpers.getObjectField(drawable, "mMobileType");
+            Object textObj = Reflect.getObjectField(drawable, "mMobileType");
             if (textObj instanceof String) {
                 String str = (String) textObj;
                 if ("5G++".equals(str)) return "5G++";
                 if (!TextUtils.isEmpty(str)) return str;
             }
-            Object actual = XposedHelpers.getAdditionalInstanceField(drawable, "actualMobileType");
+            Object actual = Reflect.getAdditionalInstanceField(drawable, "actualMobileType");
             if (actual instanceof String && !TextUtils.isEmpty((String) actual)) {
                 return (String) actual;
             }
-            Object viewObj = XposedHelpers.getAdditionalInstanceField(drawable, "view");
+            Object viewObj = Reflect.getAdditionalInstanceField(drawable, "view");
             if (viewObj instanceof View) {
                 Object tag = ((View) viewObj).getTag();
                 if (tag instanceof String && !TextUtils.isEmpty((String) tag)) {
@@ -630,14 +530,14 @@ public class MainHook implements IXposedHookLoadPackage {
 
     private static boolean isChinaRom() {
         try {
-            Class<?> spClz = XposedHelpers.findClassIfExists("android.os.SystemProperties", null);
+            Class<?> spClz = Reflect.findClassIfExists("android.os.SystemProperties", null);
             if (spClz != null) {
-                String modDevice = (String) XposedHelpers.callStaticMethod(spClz, "get", "ro.product.mod_device", "");
+                String modDevice = (String) Reflect.callStaticMethod(spClz, "get", "ro.product.mod_device", "");
                 if (modDevice != null && (modDevice.contains("_global") || modDevice.contains("_eea") || modDevice.contains("_in")
                         || modDevice.contains("_ru") || modDevice.contains("_id") || modDevice.contains("_tr") || modDevice.contains("_tw") || modDevice.contains("_jp"))) {
                     return false;
                 }
-                String incremental = (String) XposedHelpers.callStaticMethod(spClz, "get", "ro.build.version.incremental", "");
+                String incremental = (String) Reflect.callStaticMethod(spClz, "get", "ro.build.version.incremental", "");
                 if (incremental != null) {
                     if (incremental.toLowerCase().contains("xiaomi.eu") || incremental.toLowerCase().contains("eu")) {
                         return false;
@@ -651,7 +551,7 @@ public class MainHook implements IXposedHookLoadPackage {
                         return false;
                     }
                 }
-                String region = (String) XposedHelpers.callStaticMethod(spClz, "get", "ro.miui.region", "");
+                String region = (String) Reflect.callStaticMethod(spClz, "get", "ro.miui.region", "");
                 if (!TextUtils.isEmpty(region)) {
                     if ("CN".equalsIgnoreCase(region)) {
                         return true;
@@ -664,9 +564,9 @@ public class MainHook implements IXposedHookLoadPackage {
         try {
             ClassLoader cl = MainHook.class.getClassLoader();
             if (sContext != null) cl = sContext.getClassLoader();
-            Class<?> buildClz = XposedHelpers.findClassIfExists("miui.os.Build", cl);
+            Class<?> buildClz = Reflect.findClassIfExists("miui.os.Build", cl);
             if (buildClz != null) {
-                return !XposedHelpers.getStaticBooleanField(buildClz, "IS_INTERNATIONAL_BUILD");
+                return !Reflect.getStaticBooleanField(buildClz, "IS_INTERNATIONAL_BUILD");
             }
         } catch (Throwable ignored) {}
         return false;
@@ -677,30 +577,13 @@ public class MainHook implements IXposedHookLoadPackage {
     }
 
     private static boolean shouldShowRat(View view, Context context, IconConfig cfg) {
-        String alwaysRat = cfg != null ? cfg.alwaysRat : sPrefAlwaysShowRat;
-        if ("always".equals(alwaysRat)) {
-            // "always": regardless of ROM version or data SIM status, display on BOTH SIMs!
-            return true;
-        }
-
-        boolean isWifi = isWifiConnected(context);
-        if ("wifi_hide".equals(alwaysRat)) {
-            if (isWifi) return false;
-            // On cellular, only active data SIM shows RAT
-            return isDataSimCard(view);
-        }
-
-        // "default": respect native ROM behavior
-        if (isInternationalRom()) {
-            // International ROM (Global, EU, RU, ID, TR, TW, etc.):
-            // 1. Hide on Wi-Fi
-            if (isWifi) return false;
-            // 2. On cellular, only active data SIM shows RAT
-            return isDataSimCard(view);
-        } else {
-            // China ROM: follow system default behavior
-            return true;
-        }
+        String mode = cfg != null ? cfg.alwaysRat : pref(KEY_ALWAYS_SHOW_RAT);
+        boolean intl = IconPolicy.ratRuleUsesRomRegion(mode) && isInternationalRom();
+        int rule = IconPolicy.ratRule(mode, intl);
+        if (rule == IconPolicy.RAT_SHOW) return true;
+        boolean isWifi = rule == IconPolicy.RAT_HIDE_ON_WIFI && isWifiConnected(context);
+        if (isWifi) return false;
+        return IconPolicy.shouldShowRat(rule, isWifi, isDataSimCard(view));
     }
 
     private static boolean shouldShowRat(View view, Context context) {
@@ -711,7 +594,7 @@ public class MainHook implements IXposedHookLoadPackage {
     private static int getSubIdForView(View view) {
         if (view == null) return -1;
         try {
-            Object direct = XposedHelpers.getAdditionalInstanceField(view, "subId");
+            Object direct = Reflect.getAdditionalInstanceField(view, "subId");
             if (direct instanceof Integer && ((Integer) direct).intValue() >= 0) {
                 return ((Integer) direct).intValue();
             }
@@ -719,29 +602,29 @@ public class MainHook implements IXposedHookLoadPackage {
         View curr = view;
         while (curr != null) {
             try {
-                int subId = XposedHelpers.getIntField(curr, "subId");
+                int subId = Reflect.getIntField(curr, "subId");
                 if (subId >= 0) return subId;
             } catch (Throwable ignored) {}
             try {
-                int subId = XposedHelpers.getIntField(curr, "mSubId");
+                int subId = Reflect.getIntField(curr, "mSubId");
                 if (subId >= 0) return subId;
             } catch (Throwable ignored) {}
             try {
-                int slotId = XposedHelpers.getIntField(curr, "mSlotId");
+                int slotId = Reflect.getIntField(curr, "mSlotId");
                 if (slotId >= 0) {
                     int subId = getSubIdForSlotId(slotId);
                     if (subId >= 0) return subId;
                 }
             } catch (Throwable ignored) {}
             try {
-                int slotId = XposedHelpers.getIntField(curr, "slotId");
+                int slotId = Reflect.getIntField(curr, "slotId");
                 if (slotId >= 0) {
                     int subId = getSubIdForSlotId(slotId);
                     if (subId >= 0) return subId;
                 }
             } catch (Throwable ignored) {}
             try {
-                Object res = XposedHelpers.callMethod(curr, "getSubId");
+                Object res = Reflect.callMethod(curr, "getSubId");
                 if (res instanceof Integer && ((Integer) res) >= 0) {
                     return (Integer) res;
                 }
@@ -764,17 +647,12 @@ public class MainHook implements IXposedHookLoadPackage {
                     return r.intValue();
                 }
             }
-            Object viewR = XposedHelpers.getAdditionalInstanceField(view, "radioType");
+            Object viewR = Reflect.getAdditionalInstanceField(view, "radioType");
             if (viewR instanceof Integer && ((Integer) viewR).intValue() != RADIO_TYPE_UNKNOWN) {
                 return ((Integer) viewR).intValue();
             }
         }
-        if (is5gCaText(text)) return RADIO_TYPE_5G_CA;
-        if ("5G".equals(text)) return RADIO_TYPE_5G;
-        if (text != null && (text.contains("+") || text.contains("-A"))) return RADIO_TYPE_4G_CA;
-        if (text != null && (text.contains("4G") || text.contains("LTE") || text.contains("4.5G"))) return RADIO_TYPE_4G;
-        if (!TextUtils.isEmpty(text)) return RADIO_TYPE_2G_3G;
-        return RADIO_TYPE_UNKNOWN;
+        return IconPolicy.radioTypeForText(text);
     }
 
     private static int getDefaultDataSubId() {
@@ -795,9 +673,9 @@ public class MainHook implements IXposedHookLoadPackage {
             } catch (Throwable ignored) {}
         }
         try {
-            Class<?> smClz = XposedHelpers.findClassIfExists("android.telephony.SubscriptionManager", null);
+            Class<?> smClz = Reflect.findClassIfExists("android.telephony.SubscriptionManager", null);
             if (smClz != null) {
-                Object res = XposedHelpers.callStaticMethod(smClz, "getDefaultDataSubscriptionId");
+                Object res = Reflect.callStaticMethod(smClz, "getDefaultDataSubscriptionId");
                 if (res instanceof Integer && ((Integer) res) >= 0 && ((Integer) res) != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
                     return (Integer) res;
                 }
@@ -931,21 +809,6 @@ public class MainHook implements IXposedHookLoadPackage {
         return false;
     }
 
-    private static boolean isRatHiddenOnWifi(Context context) {
-        if ("always".equals(sPrefAlwaysShowRat)) {
-            return false;
-        }
-        boolean isWifi = isWifiConnected(context);
-        if (!isWifi) {
-            return false;
-        }
-        if ("wifi_hide".equals(sPrefAlwaysShowRat)) {
-            return true;
-        }
-        // "default": follow ROM default (International ROM hides on Wi-Fi; China ROM shows on Wi-Fi)
-        return isInternationalRom();
-    }
-
     private static synchronized void registerNetworkCallback(Context context) {
         if (sNetworkCallbackRegistered || context == null) return;
         try {
@@ -969,9 +832,9 @@ public class MainHook implements IXposedHookLoadPackage {
                 }
             });
             sNetworkCallbackRegistered = true;
-            XposedBridge.log(TAG + ": [v" + VERSION + "] Wi-Fi NetworkCallback registered successfully.");
+            HookEnv.log(TAG + ": [v" + VERSION + "] Wi-Fi NetworkCallback registered successfully.");
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": Failed to register NetworkCallback: " + t);
+            HookEnv.log(TAG + ": Failed to register NetworkCallback: " + t);
         }
     }
 
@@ -983,6 +846,7 @@ public class MainHook implements IXposedHookLoadPackage {
             registerContentObserver(sContext);
             registerNetworkCallback(sContext);
             registerDataSwitchListener(sContext);
+            reportHooksLater(3000);
         } else if (!sDataSwitchListenerRegistered) {
             registerDataSwitchListener(sContext);
         }
@@ -1020,7 +884,7 @@ public class MainHook implements IXposedHookLoadPackage {
                     if (sContext != null && loadConfigFromProvider(sContext)) {
                         sRetryScheduled = false;
                         triggerStatusReload();
-                        XposedBridge.log(TAG + ": [v" + VERSION + "] Cold boot config loaded successfully on retry (" + delay + "ms).");
+                        HookEnv.log(TAG + ": [v" + VERSION + "] Cold boot config loaded successfully on retry (" + delay + "ms).");
                     } else if (isLast) {
                         sRetryScheduled = false;
                     }
@@ -1034,95 +898,24 @@ public class MainHook implements IXposedHookLoadPackage {
         try {
             Bundle bundle = context.getContentResolver().call(PROVIDER_URI, "getConfig", null, null);
             if (bundle != null) {
-                sPrefSimMode = bundle.getString(KEY_SIM_MODE, "both");
-                sPrefTargetTab = bundle.getString(KEY_TARGET_TAB, "both");
-
-                sPref5gCa = bundle.getString(KEY_5G_CA, "default");
-                sPref5gBasic = bundle.getString(KEY_5G_BASIC, "default");
-                sPrefCapsuleStyle = bundle.getString(KEY_CAPSULE_STYLE, "default");
-                sPref4gRat = bundle.getString(KEY_4G_RAT, "default");
-                sPrefAlwaysShowRat = bundle.getString(KEY_ALWAYS_SHOW_RAT, "default");
-                sPrefVolteStyle = bundle.getString(KEY_VOLTE_STYLE, "default");
-                sPrefVowifiStyle = bundle.getString(KEY_VOWIFI_STYLE, "default");
-                sPrefRoamingStyle = bundle.getString(KEY_ROAMING_STYLE, "default");
-                sPrefVonrVisibility = bundle.getString(KEY_VONR_VISIBILITY, "default");
-                sPrefWifiVolteVisibility = bundle.getString(KEY_WIFI_VOLTE_VISIBILITY, "default");
-
-                sPrefSim15gCa = bundle.getString(KEY_SIM1_5G_CA, sPref5gCa);
-                sPrefSim15gBasic = bundle.getString(KEY_SIM1_5G_BASIC, sPref5gBasic);
-                sPrefSim1CapsuleStyle = bundle.getString(KEY_SIM1_CAPSULE_STYLE, sPrefCapsuleStyle);
-                sPrefSim14gRat = bundle.getString(KEY_SIM1_4G_RAT, sPref4gRat);
-                sPrefSim1AlwaysShowRat = bundle.getString(KEY_SIM1_ALWAYS_SHOW_RAT, sPrefAlwaysShowRat);
-                sPrefSim1VolteStyle = bundle.getString(KEY_SIM1_VOLTE_STYLE, sPrefVolteStyle);
-                sPrefSim1VowifiStyle = bundle.getString(KEY_SIM1_VOWIFI_STYLE, sPrefVowifiStyle);
-                sPrefSim1RoamingStyle = bundle.getString(KEY_SIM1_ROAMING_STYLE, sPrefRoamingStyle);
-                sPrefSim1VonrVisibility = bundle.getString(KEY_SIM1_VONR_VISIBILITY, sPrefVonrVisibility);
-                sPrefSim1WifiVolteVisibility = bundle.getString(KEY_SIM1_WIFI_VOLTE_VISIBILITY, sPrefWifiVolteVisibility);
-
-                sPrefSim25gCa = bundle.getString(KEY_SIM2_5G_CA, sPref5gCa);
-                sPrefSim25gBasic = bundle.getString(KEY_SIM2_5G_BASIC, sPref5gBasic);
-                sPrefSim2CapsuleStyle = bundle.getString(KEY_SIM2_CAPSULE_STYLE, sPrefCapsuleStyle);
-                sPrefSim24gRat = bundle.getString(KEY_SIM2_4G_RAT, sPref4gRat);
-                sPrefSim2AlwaysShowRat = bundle.getString(KEY_SIM2_ALWAYS_SHOW_RAT, sPrefAlwaysShowRat);
-                sPrefSim2VolteStyle = bundle.getString(KEY_SIM2_VOLTE_STYLE, sPrefVolteStyle);
-                sPrefSim2VowifiStyle = bundle.getString(KEY_SIM2_VOWIFI_STYLE, sPrefVowifiStyle);
-                sPrefSim2RoamingStyle = bundle.getString(KEY_SIM2_ROAMING_STYLE, sPrefRoamingStyle);
-                sPrefSim2VonrVisibility = bundle.getString(KEY_SIM2_VONR_VISIBILITY, sPrefVonrVisibility);
-                sPrefSim2WifiVolteVisibility = bundle.getString(KEY_SIM2_WIFI_VOLTE_VISIBILITY, sPrefWifiVolteVisibility);
-
+                final Bundle loaded = bundle;
+                sConfig = ConfigKeys.resolve(new ConfigKeys.Source() {
+                    @Override
+                    public String get(String key, String def) {
+                        return loaded.getString(key, def);
+                    }
+                });
                 sConfigLoaded = true;
-                XposedBridge.log(TAG + ": [v" + VERSION + "] Config loaded from Provider -> Mode: " + sPrefSimMode + ", Global: [CA=" + sPref5gCa + ", Basic=" + sPref5gBasic + ", Cap=" + sPrefCapsuleStyle + ", 4G=" + sPref4gRat + ", RAT=" + sPrefAlwaysShowRat + ", VoLTE=" + sPrefVolteStyle + ", VoWiFi=" + sPrefVowifiStyle + ", Roam=" + sPrefRoamingStyle + ", VoNR=" + sPrefVonrVisibility + ", WiFiVoLTE=" + sPrefWifiVolteVisibility + "], SIM1: [CA=" + sPrefSim15gCa + "], SIM2: [CA=" + sPrefSim25gCa + "]");
+                HookEnv.log(TAG + ": [v" + VERSION + "] Config loaded from Provider -> " + sConfig);
                 return true;
             }
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": Error querying Provider: " + t.getMessage());
+            HookEnv.log(TAG + ": Error querying Provider: " + t.getMessage());
         }
         return false;
     }
 
-    private static void loadConfig(Intent intent) {
-        if (intent != null) {
-            if (intent.hasExtra(KEY_SIM_MODE)) sPrefSimMode = intent.getStringExtra(KEY_SIM_MODE);
-            if (intent.hasExtra(KEY_TARGET_TAB)) sPrefTargetTab = intent.getStringExtra(KEY_TARGET_TAB);
-
-            if (intent.hasExtra(KEY_5G_CA)) sPref5gCa = intent.getStringExtra(KEY_5G_CA);
-            if (intent.hasExtra(KEY_5G_BASIC)) sPref5gBasic = intent.getStringExtra(KEY_5G_BASIC);
-            if (intent.hasExtra(KEY_CAPSULE_STYLE)) sPrefCapsuleStyle = intent.getStringExtra(KEY_CAPSULE_STYLE);
-            if (intent.hasExtra(KEY_4G_RAT)) sPref4gRat = intent.getStringExtra(KEY_4G_RAT);
-            if (intent.hasExtra(KEY_ALWAYS_SHOW_RAT)) sPrefAlwaysShowRat = intent.getStringExtra(KEY_ALWAYS_SHOW_RAT);
-            if (intent.hasExtra(KEY_VOLTE_STYLE)) sPrefVolteStyle = intent.getStringExtra(KEY_VOLTE_STYLE);
-            if (intent.hasExtra(KEY_VOWIFI_STYLE)) sPrefVowifiStyle = intent.getStringExtra(KEY_VOWIFI_STYLE);
-            if (intent.hasExtra(KEY_ROAMING_STYLE)) sPrefRoamingStyle = intent.getStringExtra(KEY_ROAMING_STYLE);
-            if (intent.hasExtra(KEY_VONR_VISIBILITY)) sPrefVonrVisibility = intent.getStringExtra(KEY_VONR_VISIBILITY);
-            if (intent.hasExtra(KEY_WIFI_VOLTE_VISIBILITY)) sPrefWifiVolteVisibility = intent.getStringExtra(KEY_WIFI_VOLTE_VISIBILITY);
-
-            if (intent.hasExtra(KEY_SIM1_5G_CA)) sPrefSim15gCa = intent.getStringExtra(KEY_SIM1_5G_CA);
-            if (intent.hasExtra(KEY_SIM1_5G_BASIC)) sPrefSim15gBasic = intent.getStringExtra(KEY_SIM1_5G_BASIC);
-            if (intent.hasExtra(KEY_SIM1_CAPSULE_STYLE)) sPrefSim1CapsuleStyle = intent.getStringExtra(KEY_SIM1_CAPSULE_STYLE);
-            if (intent.hasExtra(KEY_SIM1_4G_RAT)) sPrefSim14gRat = intent.getStringExtra(KEY_SIM1_4G_RAT);
-            if (intent.hasExtra(KEY_SIM1_ALWAYS_SHOW_RAT)) sPrefSim1AlwaysShowRat = intent.getStringExtra(KEY_SIM1_ALWAYS_SHOW_RAT);
-            if (intent.hasExtra(KEY_SIM1_VOLTE_STYLE)) sPrefSim1VolteStyle = intent.getStringExtra(KEY_SIM1_VOLTE_STYLE);
-            if (intent.hasExtra(KEY_SIM1_VOWIFI_STYLE)) sPrefSim1VowifiStyle = intent.getStringExtra(KEY_SIM1_VOWIFI_STYLE);
-            if (intent.hasExtra(KEY_SIM1_ROAMING_STYLE)) sPrefSim1RoamingStyle = intent.getStringExtra(KEY_SIM1_ROAMING_STYLE);
-            if (intent.hasExtra(KEY_SIM1_VONR_VISIBILITY)) sPrefSim1VonrVisibility = intent.getStringExtra(KEY_SIM1_VONR_VISIBILITY);
-            if (intent.hasExtra(KEY_SIM1_WIFI_VOLTE_VISIBILITY)) sPrefSim1WifiVolteVisibility = intent.getStringExtra(KEY_SIM1_WIFI_VOLTE_VISIBILITY);
-
-            if (intent.hasExtra(KEY_SIM2_5G_CA)) sPrefSim25gCa = intent.getStringExtra(KEY_SIM2_5G_CA);
-            if (intent.hasExtra(KEY_SIM2_5G_BASIC)) sPrefSim25gBasic = intent.getStringExtra(KEY_SIM2_5G_BASIC);
-            if (intent.hasExtra(KEY_SIM2_CAPSULE_STYLE)) sPrefSim2CapsuleStyle = intent.getStringExtra(KEY_SIM2_CAPSULE_STYLE);
-            if (intent.hasExtra(KEY_SIM2_4G_RAT)) sPrefSim24gRat = intent.getStringExtra(KEY_SIM2_4G_RAT);
-            if (intent.hasExtra(KEY_SIM2_ALWAYS_SHOW_RAT)) sPrefSim2AlwaysShowRat = intent.getStringExtra(KEY_SIM2_ALWAYS_SHOW_RAT);
-            if (intent.hasExtra(KEY_SIM2_VOLTE_STYLE)) sPrefSim2VolteStyle = intent.getStringExtra(KEY_SIM2_VOLTE_STYLE);
-            if (intent.hasExtra(KEY_SIM2_VOWIFI_STYLE)) sPrefSim2VowifiStyle = intent.getStringExtra(KEY_SIM2_VOWIFI_STYLE);
-            if (intent.hasExtra(KEY_SIM2_ROAMING_STYLE)) sPrefSim2RoamingStyle = intent.getStringExtra(KEY_SIM2_ROAMING_STYLE);
-            if (intent.hasExtra(KEY_SIM2_VONR_VISIBILITY)) sPrefSim2VonrVisibility = intent.getStringExtra(KEY_SIM2_VONR_VISIBILITY);
-            if (intent.hasExtra(KEY_SIM2_WIFI_VOLTE_VISIBILITY)) sPrefSim2WifiVolteVisibility = intent.getStringExtra(KEY_SIM2_WIFI_VOLTE_VISIBILITY);
-
-            sConfigLoaded = true;
-            XposedBridge.log(TAG + ": [v" + VERSION + "] Config updated via Intent -> Mode: " + sPrefSimMode + ", Global CA: " + sPref5gCa + ", SIM1 CA: " + sPrefSim15gCa + ", SIM2 CA: " + sPrefSim25gCa + ", VoNR: " + sPrefVonrVisibility + ", WiFiVoLTE: " + sPrefWifiVolteVisibility);
-            return;
-        }
-
+    private static void loadConfig() {
         if (sContext != null && loadConfigFromProvider(sContext)) {
             return;
         }
@@ -1134,70 +927,41 @@ public class MainHook implements IXposedHookLoadPackage {
         try {
             java.io.File deFile = new java.io.File("/data/user_de/0/" + PREF_PACKAGE + "/shared_prefs/" + PREF_FILE + ".xml");
             if (deFile.exists() && deFile.canRead()) {
-                XSharedPreferences dePrefs = new XSharedPreferences(deFile);
+                PrefsFile dePrefs = new PrefsFile(deFile);
                 if (parsePrefs(dePrefs, "DE-File")) return;
             }
 
             java.io.File ceFile = new java.io.File("/data/data/" + PREF_PACKAGE + "/shared_prefs/" + PREF_FILE + ".xml");
             if (ceFile.exists() && ceFile.canRead()) {
-                XSharedPreferences cePrefs = new XSharedPreferences(ceFile);
+                PrefsFile cePrefs = new PrefsFile(ceFile);
                 if (parsePrefs(cePrefs, "CE-File")) return;
             }
 
             if (sPrefs == null) {
-                sPrefs = new XSharedPreferences(PREF_PACKAGE, PREF_FILE);
+                sPrefs = new PrefsFile(PREF_PACKAGE, PREF_FILE);
             } else {
                 sPrefs.reload();
             }
             parsePrefs(sPrefs, "Package");
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": Failed to load config from XSharedPreferences: " + t.getMessage());
+            HookEnv.log(TAG + ": Failed to load config from PrefsFile: " + t.getMessage());
         }
     }
 
-    private static boolean parsePrefs(XSharedPreferences prefs, String source) {
+    private static boolean parsePrefs(PrefsFile prefs, String source) {
         if (prefs == null) return false;
         try {
             prefs.reload();
             if (prefs.getAll() != null && !prefs.getAll().isEmpty()) {
-                sPrefSimMode = prefs.getString(KEY_SIM_MODE, "both");
-                sPrefTargetTab = prefs.getString(KEY_TARGET_TAB, "both");
-
-                sPref5gCa = prefs.getString(KEY_5G_CA, "default");
-                sPref5gBasic = prefs.getString(KEY_5G_BASIC, "default");
-                sPrefCapsuleStyle = prefs.getString(KEY_CAPSULE_STYLE, "default");
-                sPref4gRat = prefs.getString(KEY_4G_RAT, "default");
-                sPrefAlwaysShowRat = prefs.getString(KEY_ALWAYS_SHOW_RAT, "default");
-                sPrefVolteStyle = prefs.getString(KEY_VOLTE_STYLE, "default");
-                sPrefVowifiStyle = prefs.getString(KEY_VOWIFI_STYLE, "default");
-                sPrefRoamingStyle = prefs.getString(KEY_ROAMING_STYLE, "default");
-                sPrefVonrVisibility = prefs.getString(KEY_VONR_VISIBILITY, "default");
-                sPrefWifiVolteVisibility = prefs.getString(KEY_WIFI_VOLTE_VISIBILITY, "default");
-
-                sPrefSim15gCa = prefs.getString(KEY_SIM1_5G_CA, sPref5gCa);
-                sPrefSim15gBasic = prefs.getString(KEY_SIM1_5G_BASIC, sPref5gBasic);
-                sPrefSim1CapsuleStyle = prefs.getString(KEY_SIM1_CAPSULE_STYLE, sPrefCapsuleStyle);
-                sPrefSim14gRat = prefs.getString(KEY_SIM1_4G_RAT, sPref4gRat);
-                sPrefSim1AlwaysShowRat = prefs.getString(KEY_SIM1_ALWAYS_SHOW_RAT, sPrefAlwaysShowRat);
-                sPrefSim1VolteStyle = prefs.getString(KEY_SIM1_VOLTE_STYLE, sPrefVolteStyle);
-                sPrefSim1VowifiStyle = prefs.getString(KEY_SIM1_VOWIFI_STYLE, sPrefVowifiStyle);
-                sPrefSim1RoamingStyle = prefs.getString(KEY_SIM1_ROAMING_STYLE, sPrefRoamingStyle);
-                sPrefSim1VonrVisibility = prefs.getString(KEY_SIM1_VONR_VISIBILITY, sPrefVonrVisibility);
-                sPrefSim1WifiVolteVisibility = prefs.getString(KEY_SIM1_WIFI_VOLTE_VISIBILITY, sPrefWifiVolteVisibility);
-
-                sPrefSim25gCa = prefs.getString(KEY_SIM2_5G_CA, sPref5gCa);
-                sPrefSim25gBasic = prefs.getString(KEY_SIM2_5G_BASIC, sPref5gBasic);
-                sPrefSim2CapsuleStyle = prefs.getString(KEY_SIM2_CAPSULE_STYLE, sPrefCapsuleStyle);
-                sPrefSim24gRat = prefs.getString(KEY_SIM2_4G_RAT, sPref4gRat);
-                sPrefSim2AlwaysShowRat = prefs.getString(KEY_SIM2_ALWAYS_SHOW_RAT, sPrefAlwaysShowRat);
-                sPrefSim2VolteStyle = prefs.getString(KEY_SIM2_VOLTE_STYLE, sPrefVolteStyle);
-                sPrefSim2VowifiStyle = prefs.getString(KEY_SIM2_VOWIFI_STYLE, sPrefVowifiStyle);
-                sPrefSim2RoamingStyle = prefs.getString(KEY_SIM2_ROAMING_STYLE, sPrefRoamingStyle);
-                sPrefSim2VonrVisibility = prefs.getString(KEY_SIM2_VONR_VISIBILITY, sPrefVonrVisibility);
-                sPrefSim2WifiVolteVisibility = prefs.getString(KEY_SIM2_WIFI_VOLTE_VISIBILITY, sPrefWifiVolteVisibility);
-
+                final PrefsFile loaded = prefs;
+                sConfig = ConfigKeys.resolve(new ConfigKeys.Source() {
+                    @Override
+                    public String get(String key, String def) {
+                        return loaded.getString(key, def);
+                    }
+                });
                 sConfigLoaded = true;
-                XposedBridge.log(TAG + ": [v" + VERSION + "] Config loaded from XSharedPreferences (" + source + ") -> Mode: " + sPrefSimMode + ", Global CA: " + sPref5gCa + ", SIM1 CA: " + sPrefSim15gCa + ", SIM2 CA: " + sPrefSim25gCa);
+                HookEnv.log(TAG + ": [v" + VERSION + "] Config loaded from PrefsFile (" + source + ") -> " + sConfig);
                 return true;
             }
         } catch (Throwable ignored) {}
@@ -1213,36 +977,40 @@ public class MainHook implements IXposedHookLoadPackage {
             sContentObserver = new ContentObserver(targetHandler) {
                 @Override
                 public void onChange(boolean selfChange, Uri uri) {
-                    XposedBridge.log(TAG + ": [v" + VERSION + "] ContentObserver notified change: " + uri);
+                    HookEnv.log(TAG + ": [v" + VERSION + "] ContentObserver notified change: " + uri);
                     loadConfigFromProvider(context);
                     triggerStatusReload();
                 }
             };
             context.getContentResolver().registerContentObserver(CONFIG_URI, true, sContentObserver);
-            XposedBridge.log(TAG + ": [v" + VERSION + "] ContentObserver registered for " + CONFIG_URI);
+            HookEnv.log(TAG + ": [v" + VERSION + "] ContentObserver registered for " + CONFIG_URI);
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": Failed to register ContentObserver: " + t);
+            HookEnv.log(TAG + ": Failed to register ContentObserver: " + t);
         }
     }
 
     private static synchronized void registerReceiver(Context context) {
         if (sReceiverRegistered || context == null) return;
         try {
-            // 1. Module reload broadcast (exported for HyperIcons app)
+            // 1. Module reload / report requests, only accepted from the HyperIcons app.
+            //    Extras are ignored; values are always re-read from the provider.
             BroadcastReceiver reloadReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context ctx, Intent intent) {
-                    if (intent == null || !ACTION_RELOAD.equals(intent.getAction())) return;
-                    loadConfig(intent);
+                    if (intent == null) return;
+                    if (HookEnv.ACTION_REQUEST_REPORT.equals(intent.getAction())) {
+                        reportHooksLater(0);
+                        return;
+                    }
+                    if (!ACTION_RELOAD.equals(intent.getAction())) return;
+                    loadConfig();
                     triggerStatusReload();
+                    reportHooksLater(300);
                 }
             };
             IntentFilter reloadFilter = new IntentFilter(ACTION_RELOAD);
-            if (Build.VERSION.SDK_INT >= 33) {
-                context.registerReceiver(reloadReceiver, reloadFilter, Context.RECEIVER_EXPORTED);
-            } else {
-                context.registerReceiver(reloadReceiver, reloadFilter);
-            }
+            reloadFilter.addAction(HookEnv.ACTION_REQUEST_REPORT);
+            HookEnv.registerTrustedReceiver(context, reloadReceiver, reloadFilter);
 
             // 2. System boot & unlock lifecycle broadcasts
             BroadcastReceiver lifecycleReceiver = new BroadcastReceiver() {
@@ -1250,7 +1018,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 public void onReceive(Context ctx, Intent intent) {
                     if (intent == null) return;
                     String action = intent.getAction();
-                    XposedBridge.log(TAG + ": [v" + VERSION + "] System lifecycle broadcast received: " + action + ", refreshing config...");
+                    HookEnv.log(TAG + ": [v" + VERSION + "] System lifecycle broadcast received: " + action + ", refreshing config...");
                     if (loadConfigFromProvider(sContext)) {
                         triggerStatusReload();
                     }
@@ -1267,9 +1035,9 @@ public class MainHook implements IXposedHookLoadPackage {
             }
 
             sReceiverRegistered = true;
-            XposedBridge.log(TAG + ": [v" + VERSION + "] Live reload and boot/unlock broadcast receivers registered.");
+            HookEnv.log(TAG + ": [v" + VERSION + "] Live reload and boot/unlock broadcast receivers registered.");
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": Failed to register reload receiver: " + t);
+            HookEnv.log(TAG + ": Failed to register reload receiver: " + t);
         }
     }
 
@@ -1284,7 +1052,7 @@ public class MainHook implements IXposedHookLoadPackage {
             sDataSwitchObserver = new ContentObserver(targetHandler) {
                 @Override
                 public void onChange(boolean selfChange, Uri uri) {
-                    XposedBridge.log(TAG + ": [v" + VERSION + "] Data switch ContentObserver fired: " + uri);
+                    HookEnv.log(TAG + ": [v" + VERSION + "] Data switch ContentObserver fired: " + uri);
                     scheduleDataSwitchReload();
                 }
             };
@@ -1310,7 +1078,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 public void onReceive(Context ctx, Intent intent) {
                     if (intent == null) return;
                     String action = intent.getAction();
-                    XposedBridge.log(TAG + ": [v" + VERSION + "] Data switch Broadcast received: " + action);
+                    HookEnv.log(TAG + ": [v" + VERSION + "] Data switch Broadcast received: " + action);
                     scheduleDataSwitchReload();
                 }
             };
@@ -1338,20 +1106,20 @@ public class MainHook implements IXposedHookLoadPackage {
                     sSubChangedListener = new SubscriptionManager.OnSubscriptionsChangedListener() {
                         @Override
                         public void onSubscriptionsChanged() {
-                            XposedBridge.log(TAG + ": [v" + VERSION + "] OnSubscriptionsChangedListener fired");
+                            HookEnv.log(TAG + ": [v" + VERSION + "] OnSubscriptionsChangedListener fired");
                             scheduleDataSwitchReload();
                         }
                     };
                     sm.addOnSubscriptionsChangedListener(sSubChangedListener);
                 }
             } catch (Throwable t) {
-                XposedBridge.log(TAG + ": Failed to register OnSubscriptionsChangedListener: " + t);
+                HookEnv.log(TAG + ": Failed to register OnSubscriptionsChangedListener: " + t);
             }
 
             sDataSwitchListenerRegistered = true;
-            XposedBridge.log(TAG + ": [v" + VERSION + "] Data switch listeners successfully registered (ContentObserver + BroadcastReceiver + SubscriptionListener).");
+            HookEnv.log(TAG + ": [v" + VERSION + "] Data switch listeners successfully registered (ContentObserver + BroadcastReceiver + SubscriptionListener).");
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": Failed to register data switch listener: " + t);
+            HookEnv.log(TAG + ": Failed to register data switch listener: " + t);
         }
     }
 
@@ -1457,7 +1225,7 @@ public class MainHook implements IXposedHookLoadPackage {
                     continue;
                 }
                 try {
-                    int subId = XposedHelpers.getIntField(interactor, "subId");
+                    int subId = Reflect.getIntField(interactor, "subId");
                     int slotId = getSlotIdForSubId(subId);
                     IconConfig cfg = getConfigForSlot(slotId);
 
@@ -1471,21 +1239,21 @@ public class MainHook implements IXposedHookLoadPackage {
                     }
                     if (desired == null) continue;
 
-                    Object readonlyFlow = XposedHelpers.getObjectField(interactor, "carrierConfigShowVonr");
+                    Object readonlyFlow = Reflect.getObjectField(interactor, "carrierConfigShowVonr");
                     Object stateFlow = findStateFlowDelegate(readonlyFlow);
                     if (stateFlow == null) {
-                        XposedBridge.log(TAG + ": VoNR state flow delegate not found on " + readonlyFlow.getClass().getName());
+                        HookEnv.log(TAG + ": VoNR state flow delegate not found on " + readonlyFlow.getClass().getName());
                         continue;
                     }
 
-                    Object current = XposedHelpers.callMethod(stateFlow, "getValue");
+                    Object current = Reflect.callMethod(stateFlow, "getValue");
                     if (desired.equals(current)) continue;
 
-                    XposedHelpers.callMethod(stateFlow, "setValue", desired);
-                    XposedBridge.log(TAG + ": [v" + VERSION + "] [VoNR] Pushed carrierConfigShowVonr="
+                    Reflect.callMethod(stateFlow, "setValue", desired);
+                    HookEnv.log(TAG + ": [v" + VERSION + "] [VoNR] Pushed carrierConfigShowVonr="
                             + desired + " for subId=" + subId + " (slot=" + slotId + ")");
                 } catch (Throwable t) {
-                    XposedBridge.log(TAG + ": refreshVonrVisibilityOnInteractors failed: " + t);
+                    HookEnv.log(TAG + ": refreshVonrVisibilityOnInteractors failed: " + t);
                 }
             }
         }
@@ -1496,7 +1264,7 @@ public class MainHook implements IXposedHookLoadPackage {
         if (readonlyFlow == null) return null;
         Object stateFlow = null;
         try {
-            stateFlow = XposedHelpers.getObjectField(readonlyFlow, "$$delegate_0");
+            stateFlow = Reflect.getObjectField(readonlyFlow, "$$delegate_0");
         } catch (Throwable ignored) {}
         if (stateFlow == null) {
             for (java.lang.reflect.Field f : readonlyFlow.getClass().getDeclaredFields()) {
@@ -1558,7 +1326,7 @@ public class MainHook implements IXposedHookLoadPackage {
         if (vm == null || interactor == null) return;
         int subId;
         try {
-            subId = XposedHelpers.getIntField(interactor, "subId");
+            subId = Reflect.getIntField(interactor, "subId");
         } catch (Throwable t) {
             return;
         }
@@ -1571,7 +1339,7 @@ public class MainHook implements IXposedHookLoadPackage {
             }
         }
         if (added) {
-            XposedBridge.log(TAG + ": [v" + VERSION + "] [WiFiVoLTE] tracking VM subId=" + subId);
+            HookEnv.log(TAG + ": [v" + VERSION + "] [WiFiVoLTE] tracking VM subId=" + subId);
         }
         synchronized (sMobileIconInteractors) {
             for (int i = sMobileIconInteractors.size() - 1; i >= 0; i--) {
@@ -1591,8 +1359,8 @@ public class MainHook implements IXposedHookLoadPackage {
 
     private static Boolean readBooleanFlow(Object owner, String field) {
         try {
-            Object flow = XposedHelpers.getObjectField(owner, field);
-            Object value = XposedHelpers.callMethod(flow, "getValue");
+            Object flow = Reflect.getObjectField(owner, field);
+            Object value = Reflect.callMethod(flow, "getValue");
             if (value instanceof Boolean) return (Boolean) value;
         } catch (Throwable ignored) {}
         return null;
@@ -1603,9 +1371,9 @@ public class MainHook implements IXposedHookLoadPackage {
         String[] fields = {"miuiConfig", "miuiOpConfig"};
         for (String field : fields) {
             try {
-                Object flow = XposedHelpers.getObjectField(vm, field);
-                Object opConfig = XposedHelpers.callMethod(flow, "getValue");
-                if (opConfig != null) return XposedHelpers.getBooleanField(opConfig, flag);
+                Object flow = Reflect.getObjectField(vm, field);
+                Object opConfig = Reflect.callMethod(flow, "getValue");
+                if (opConfig != null) return Reflect.getBooleanField(opConfig, flag);
             } catch (Throwable ignored) {}
         }
         return false;
@@ -1617,9 +1385,9 @@ public class MainHook implements IXposedHookLoadPackage {
      */
     private static String getLambdaWifiVoltePref(int subId) {
         if (subId >= 0) return getConfigForSlot(getSlotIdForSubId(subId)).wifiVolte;
-        if (!"separate".equals(sPrefSimMode)) return sPrefWifiVolteVisibility;
-        String sim1 = sPrefSim1WifiVolteVisibility;
-        return sim1 != null && sim1.equals(sPrefSim2WifiVolteVisibility) ? sim1 : "default";
+        return IconPolicy.lambdaWifiVoltePref(pref(KEY_SIM_MODE), pref(KEY_WIFI_VOLTE_VISIBILITY),
+                pref(ConfigKeys.slotKey(KEY_WIFI_VOLTE_VISIBILITY, 0)),
+                pref(ConfigKeys.slotKey(KEY_WIFI_VOLTE_VISIBILITY, 1)));
     }
 
     /** Current VoLTE/VoNR-active state for a subscription, from the tracked interactor. */
@@ -1629,9 +1397,9 @@ public class MainHook implements IXposedHookLoadPackage {
                 Object interactor = sMobileIconInteractors.get(i).get();
                 if (interactor == null) continue;
                 try {
-                    if (XposedHelpers.getIntField(interactor, "subId") != subId) continue;
-                    Object volteFlow = XposedHelpers.getObjectField(interactor, "volte");
-                    Object value = XposedHelpers.callMethod(volteFlow, "getValue");
+                    if (Reflect.getIntField(interactor, "subId") != subId) continue;
+                    Object volteFlow = Reflect.getObjectField(interactor, "volte");
+                    Object value = Reflect.callMethod(volteFlow, "getValue");
                     if (value instanceof Boolean) return (Boolean) value;
                 } catch (Throwable ignored) {}
             }
@@ -1646,11 +1414,11 @@ public class MainHook implements IXposedHookLoadPackage {
                 Object interactor = sMobileIconInteractors.get(i).get();
                 if (interactor == null) continue;
                 try {
-                    if (XposedHelpers.getIntField(interactor, "subId") != subId) continue;
-                    Object opFlow = XposedHelpers.getObjectField(interactor, "miuiOpConfig");
-                    Object opConfig = XposedHelpers.callMethod(opFlow, "getValue");
+                    if (Reflect.getIntField(interactor, "subId") != subId) continue;
+                    Object opFlow = Reflect.getObjectField(interactor, "miuiOpConfig");
+                    Object opConfig = Reflect.callMethod(opFlow, "getValue");
                     return opConfig != null
-                            && XposedHelpers.getBooleanField(opConfig, "hideVolte");
+                            && Reflect.getBooleanField(opConfig, "hideVolte");
                 } catch (Throwable ignored) {}
             }
         }
@@ -1666,8 +1434,8 @@ public class MainHook implements IXposedHookLoadPackage {
         for (java.util.Map.Entry<Object, Integer> entry : snapshot.entrySet()) {
             if (entry.getValue().intValue() != subId) continue;
             try {
-                Object wifiFlow = XposedHelpers.getObjectField(entry.getKey(), "wifiAvailable");
-                Object value = XposedHelpers.callMethod(wifiFlow, "getValue");
+                Object wifiFlow = Reflect.getObjectField(entry.getKey(), "wifiAvailable");
+                Object value = Reflect.callMethod(wifiFlow, "getValue");
                 if (value instanceof Boolean) return (Boolean) value;
             } catch (Throwable ignored) {}
         }
@@ -1680,7 +1448,7 @@ public class MainHook implements IXposedHookLoadPackage {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 return SubscriptionManager.getSubscriptionId(slot);
             }
-            int[] subIds = (int[]) XposedHelpers.callStaticMethod(
+            int[] subIds = (int[]) Reflect.callStaticMethod(
                     SubscriptionManager.class, "getSubId", Integer.valueOf(slot));
             return subIds != null && subIds.length > 0 ? subIds[0] : -1;
         } catch (Throwable t) {
@@ -1694,7 +1462,7 @@ public class MainHook implements IXposedHookLoadPackage {
         while (parent != null) {
             try {
                 if (parent.getClass().getName().endsWith("MobileSignalAnimatorContainer")) {
-                    XposedHelpers.callMethod(parent, "setChildVisible", view, Boolean.valueOf(visible));
+                    Reflect.callMethod(parent, "setChildVisible", view, Boolean.valueOf(visible));
                     return;
                 }
             } catch (Throwable ignored) {}
@@ -1733,34 +1501,28 @@ public class MainHook implements IXposedHookLoadPackage {
 
                 // Stock MiuiCellularIconVM$volteVisibleGlobal$2:
                 // Pair(wifiAvailable && !showVolteWhenWifiOnAndDripEnd, volte && !hideVolte)
-                boolean first = wifi && !showWhenWifi;
-                boolean second = active.booleanValue() && !hideVolte;
-                if ("hide".equals(cfg.volte)) {
-                    second = false;
-                }
-                if ("show".equals(wifiPref)) {
-                    first = false;
-                } else if ("hide".equals(wifiPref) && wifi) {
-                    second = false;
-                }
+                boolean[] target = IconPolicy.volteVisiblePair(wifi && !showWhenWifi,
+                        active.booleanValue() && !hideVolte, cfg.volte, wifiPref, wifi);
+                boolean first = target[0];
+                boolean second = target[1];
 
-                Object stateFlow = findStateFlowDelegate(XposedHelpers.getObjectField(vm, "volteVisibleGlobal"));
+                Object stateFlow = findStateFlowDelegate(Reflect.getObjectField(vm, "volteVisibleGlobal"));
                 if (stateFlow == null) continue;
 
-                Object current = XposedHelpers.callMethod(stateFlow, "getValue");
+                Object current = Reflect.callMethod(stateFlow, "getValue");
                 Object currentFirst = null;
                 Object currentSecond = null;
                 try {
-                    currentFirst = XposedHelpers.callMethod(current, "getFirst");
-                    currentSecond = XposedHelpers.callMethod(current, "getSecond");
+                    currentFirst = Reflect.callMethod(current, "getFirst");
+                    currentSecond = Reflect.callMethod(current, "getSecond");
                 } catch (Throwable ignored) {}
                 if (!Boolean.valueOf(first).equals(currentFirst)
                         || !Boolean.valueOf(second).equals(currentSecond)) {
-                    Class<?> pairClz = XposedHelpers.findClass("kotlin.Pair", vm.getClass().getClassLoader());
-                    Object pair = XposedHelpers.newInstance(pairClz,
+                    Class<?> pairClz = Reflect.findClass("kotlin.Pair", vm.getClass().getClassLoader());
+                    Object pair = Reflect.newInstance(pairClz,
                             Boolean.valueOf(first), Boolean.valueOf(second));
-                    XposedHelpers.callMethod(stateFlow, "setValue", pair);
-                    XposedBridge.log(TAG + ": [v" + VERSION + "] [WiFiVoLTE] Pushed volteVisibleGlobal=("
+                    Reflect.callMethod(stateFlow, "setValue", pair);
+                    HookEnv.log(TAG + ": [v" + VERSION + "] [WiFiVoLTE] Pushed volteVisibleGlobal=("
                             + first + "," + second + ") for subId=" + subId + (restoring ? " (restored)" : ""));
                 }
                 if (restoring) {
@@ -1769,7 +1531,7 @@ public class MainHook implements IXposedHookLoadPackage {
                     sWifiVolteOverriddenVms.add(vm);
                 }
             } catch (Throwable t) {
-                XposedBridge.log(TAG + ": refreshWifiVolteVisibilityOnViewModels failed: " + t);
+                HookEnv.log(TAG + ": refreshWifiVolteVisibilityOnViewModels failed: " + t);
             }
         }
     }
@@ -1787,15 +1549,15 @@ public class MainHook implements IXposedHookLoadPackage {
     private static void performStatusReload() {
         if (sPolicyInstance != null) {
             try {
-                XposedHelpers.callMethod(sPolicyInstance, "initResource", "reload", null);
-                XposedBridge.log(TAG + ": [v" + VERSION + "] Triggered initResource(reload, null)");
+                Reflect.callMethod(sPolicyInstance, "initResource", "reload", null);
+                HookEnv.log(TAG + ": [v" + VERSION + "] Triggered initResource(reload, null)");
             } catch (Throwable ignored) {}
 
             try {
-                XposedHelpers.callMethod(sPolicyInstance, "updateMiuiOperatorConfig", -1);
-                XposedHelpers.callMethod(sPolicyInstance, "updateMiuiOperatorConfig", 0);
-                XposedHelpers.callMethod(sPolicyInstance, "updateMiuiOperatorConfig", 1);
-                XposedBridge.log(TAG + ": [v" + VERSION + "] Triggered updateMiuiOperatorConfig on slots -1, 0, 1");
+                Reflect.callMethod(sPolicyInstance, "updateMiuiOperatorConfig", -1);
+                Reflect.callMethod(sPolicyInstance, "updateMiuiOperatorConfig", 0);
+                Reflect.callMethod(sPolicyInstance, "updateMiuiOperatorConfig", 1);
+                HookEnv.log(TAG + ": [v" + VERSION + "] Triggered updateMiuiOperatorConfig on slots -1, 0, 1");
             } catch (Throwable ignored) {}
         }
 
@@ -1911,7 +1673,7 @@ public class MainHook implements IXposedHookLoadPackage {
                                     roamingView.setVisibility(View.GONE);
                                     if (parent.getParent() instanceof ViewGroup) {
                                         try {
-                                            XposedHelpers.callMethod(parent.getParent(), "setChildVisible", roamingView, false);
+                                            Reflect.callMethod(parent.getParent(), "setChildVisible", roamingView, false);
                                         } catch (Throwable ignored) {}
                                     }
                                 }
@@ -1921,7 +1683,7 @@ public class MainHook implements IXposedHookLoadPackage {
                                     roamingView.setVisibility(View.GONE);
                                     if (parent.getParent() instanceof ViewGroup) {
                                         try {
-                                            XposedHelpers.callMethod(parent.getParent(), "setChildVisible", roamingView, false);
+                                            Reflect.callMethod(parent.getParent(), "setChildVisible", roamingView, false);
                                         } catch (Throwable ignored) {}
                                     }
                                 }
@@ -1944,7 +1706,7 @@ public class MainHook implements IXposedHookLoadPackage {
                                         roamingView.setVisibility(View.VISIBLE);
                                         if (parent.getParent() instanceof ViewGroup) {
                                             try {
-                                                XposedHelpers.callMethod(parent.getParent(), "setChildVisible", roamingView, true);
+                                                Reflect.callMethod(parent.getParent(), "setChildVisible", roamingView, true);
                                             } catch (Throwable ignored) {}
                                         }
                                     }
@@ -1971,7 +1733,7 @@ public class MainHook implements IXposedHookLoadPackage {
 
                             if (radioType == RADIO_TYPE_5G || radioType == RADIO_TYPE_5G_CA) {
                                 boolean isCa = (radioType == RADIO_TYPE_5G_CA) || is5gCaText(text);
-                                Object viewCaObj = XposedHelpers.getAdditionalInstanceField(mobileTypeView, "isCaActive");
+                                Object viewCaObj = Reflect.getAdditionalInstanceField(mobileTypeView, "isCaActive");
                                 if (viewCaObj instanceof Boolean) {
                                     isCa = isCa || ((Boolean) viewCaObj).booleanValue();
                                 }
@@ -1989,9 +1751,9 @@ public class MainHook implements IXposedHookLoadPackage {
                                 mobileTypeView.setTag(text);
                                 if (d != null) {
                                     try {
-                                        XposedHelpers.setObjectField(d, "mMobileType", text);
-                                        XposedHelpers.setAdditionalInstanceField(d, "actualMobileType", text);
-                                        XposedHelpers.callMethod(d, "measure");
+                                        Reflect.setObjectField(d, "mMobileType", text);
+                                        Reflect.setAdditionalInstanceField(d, "actualMobileType", text);
+                                        Reflect.callMethod(d, "measure");
                                     } catch (Throwable ignored) {}
                                 }
                             } else if (radioType == RADIO_TYPE_4G || radioType == RADIO_TYPE_4G_CA || text.contains("4G") || text.contains("LTE") || text.contains("4.5G")) {
@@ -2017,9 +1779,9 @@ public class MainHook implements IXposedHookLoadPackage {
                                 mobileTypeView.setTag(text);
                                 if (d != null) {
                                     try {
-                                        XposedHelpers.setObjectField(d, "mMobileType", text);
-                                        XposedHelpers.setAdditionalInstanceField(d, "actualMobileType", text);
-                                        XposedHelpers.callMethod(d, "measure");
+                                        Reflect.setObjectField(d, "mMobileType", text);
+                                        Reflect.setAdditionalInstanceField(d, "actualMobileType", text);
+                                        Reflect.callMethod(d, "measure");
                                     } catch (Throwable ignored) {}
                                 }
                             }
@@ -2035,7 +1797,7 @@ public class MainHook implements IXposedHookLoadPackage {
                         }
                     }
                 } catch (Throwable t) {
-                    XposedBridge.log(TAG + ": Direct punch live reload error: " + t);
+                    HookEnv.log(TAG + ": Direct punch live reload error: " + t);
                 }
             }
         };
@@ -2046,8 +1808,7 @@ public class MainHook implements IXposedHookLoadPackage {
         }
     }
 
-    @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+    public void handleLoadPackage(LoadPackageParam lpparam) throws Throwable {
         if ("com.android.phone".equals(lpparam.packageName)) {
             CellularFeatureHook.init(lpparam);
             return;
@@ -2057,16 +1818,26 @@ public class MainHook implements IXposedHookLoadPackage {
             return;
         }
 
-        XposedBridge.log(TAG + ": [v" + VERSION + "] Initializing HyperIcons hook for com.android.systemui");
-        loadConfig(null);
+        HookEnv.log(TAG + ": [v" + VERSION + "] Initializing HyperIcons hook for com.android.systemui");
+        loadConfig();
 
-        hookSystemUIApplication(lpparam);
-        hookOperatorPolicy(lpparam);
-        hookMobileIconInteractor(lpparam);
-        hookSpecial5gViewModel(lpparam);
-        hookVolteViewModel(lpparam);
-        hookMobileIconBinder(lpparam);
-        hookCarrierConfigVonr(lpparam);
+        HookEnv.group("SystemUI application", () -> hookSystemUIApplication(lpparam));
+        HookEnv.group("Operator policy", () -> hookOperatorPolicy(lpparam));
+        HookEnv.group("Mobile icon interactor", () -> hookMobileIconInteractor(lpparam));
+        HookEnv.group("5G icon view model", () -> hookSpecial5gViewModel(lpparam));
+        HookEnv.group("VoLTE view model", () -> hookVolteViewModel(lpparam));
+        HookEnv.group("Mobile icon binder", () -> hookMobileIconBinder(lpparam));
+        HookEnv.group("VoNR carrier config", () -> hookCarrierConfigVonr(lpparam));
+    }
+
+    private static void reportHooksLater(long delayMs) {
+        Runnable report = () -> HookEnv.report(sContext, "systemui");
+        Handler handler = getMainHandler();
+        if (handler != null) {
+            handler.postDelayed(report, delayMs);
+        } else {
+            report.run();
+        }
     }
 
     /**
@@ -2076,16 +1847,16 @@ public class MainHook implements IXposedHookLoadPackage {
      * on every CARRIER_CONFIG_CHANGED emission. Returning a modified copy keeps the stock
      * cached bundle untouched and applies Default/Show/Hide without rebooting.
      */
-    private void hookCarrierConfigVonr(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookCarrierConfigVonr(LoadPackageParam lpparam) {
         try {
-            Class<?> ccmClz = XposedHelpers.findClassIfExists(
+            Class<?> ccmClz = Reflect.findClassIfExists(
                     "android.telephony.CarrierConfigManager", lpparam.classLoader);
             if (ccmClz == null) {
-                XposedBridge.log(TAG + ": CarrierConfigManager not found, VoNR override inactive");
+                HookEnv.log(TAG + ": CarrierConfigManager not found, VoNR override inactive");
                 return;
             }
 
-            XC_MethodHook overrideHook = new XC_MethodHook() {
+            MethodHook overrideHook = new MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
                     try {
@@ -2108,33 +1879,44 @@ public class MainHook implements IXposedHookLoadPackage {
                         copy.putBoolean("config_show_vonr_icon_in_statusbar", show);
                         param.setResult(copy);
                     } catch (Throwable t) {
-                        XposedBridge.log(TAG + ": VoNR carrier-config override failed: " + t);
+                        HookEnv.log(TAG + ": VoNR carrier-config override failed: " + t);
                     }
                 }
             };
 
             try {
-                XposedHelpers.findAndHookMethod(ccmClz, "getConfigForSubId", int.class, overrideHook);
+                HookEnv.findAndHookMethod(ccmClz, "getConfigForSubId", int.class, overrideHook);
             } catch (Throwable t) {
-                XposedBridge.log(TAG + ": Failed to hook getConfigForSubId(int): " + t);
+                HookEnv.log(TAG + ": Failed to hook getConfigForSubId(int): " + t);
             }
             // Newer frameworks also expose a key-filtered overload; hook it defensively.
             try {
-                XposedHelpers.findAndHookMethod(ccmClz, "getConfigForSubId",
+                HookEnv.findAndHookMethod(ccmClz, "getConfigForSubId",
                         int.class, String[].class, overrideHook);
             } catch (Throwable ignored) {}
 
-            XposedBridge.log(TAG + ": [v" + VERSION + "] CarrierConfig VoNR override hook installed");
+            HookEnv.log(TAG + ": [v" + VERSION + "] CarrierConfig VoNR override hook installed");
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": hookCarrierConfigVonr error: " + t);
+            HookEnv.log(TAG + ": hookCarrierConfigVonr error: " + t);
         }
     }
 
-    private void hookSystemUIApplication(XC_LoadPackage.LoadPackageParam lpparam) {
-        Class<?> appClz = XposedHelpers.findClassIfExists("com.android.systemui.SystemUIApplication", lpparam.classLoader);
+    private void hookSystemUIApplication(LoadPackageParam lpparam) {
+        // HyperOS 4.0 uses application.impl.SystemUIApplicationImpl; AOSP uses SystemUIApplication.
+        Class<?> appClz = null;
+        String[] candidates = {
+            lpparam.appClassName,
+            "com.android.systemui.application.impl.SystemUIApplicationImpl",
+            "com.android.systemui.SystemUIApplication",
+        };
+        for (String name : candidates) {
+            if (name == null) continue;
+            appClz = Reflect.findClassIfExists(name, lpparam.classLoader);
+            if (appClz != null) break;
+        }
         if (appClz != null) {
             // 1. Hook attachBaseContext for earliest context capture on cold boot
-            XposedHelpers.findAndHookMethod(appClz, "attachBaseContext", Context.class, new XC_MethodHook() {
+            HookEnv.findAndHookMethod(appClz, "attachBaseContext", Context.class, new MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     Context ctx = (Context) param.args[0];
@@ -2145,7 +1927,7 @@ public class MainHook implements IXposedHookLoadPackage {
             });
 
             // 2. Hook onCreate
-            XposedHelpers.findAndHookMethod(appClz, "onCreate", new XC_MethodHook() {
+            HookEnv.findAndHookMethod(appClz, "onCreate", new MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     Context ctx = (Context) param.thisObject;
@@ -2160,19 +1942,19 @@ public class MainHook implements IXposedHookLoadPackage {
         }
     }
 
-    private void hookOperatorPolicy(XC_LoadPackage.LoadPackageParam lpparam) {
-        Class<?> policyClz = XposedHelpers.findClassIfExists("com.android.systemui.MiuiOperatorCustomizedPolicy", lpparam.classLoader);
+    private void hookOperatorPolicy(LoadPackageParam lpparam) {
+        Class<?> policyClz = Reflect.findClassIfExists("com.android.systemui.MiuiOperatorCustomizedPolicy", lpparam.classLoader);
         if (policyClz == null) {
-            XposedBridge.log(TAG + ": MiuiOperatorCustomizedPolicy not found");
+            HookEnv.log(TAG + ": MiuiOperatorCustomizedPolicy not found");
             return;
         }
 
-        XposedHelpers.findAndHookMethod(policyClz, "start", new XC_MethodHook() {
+        HookEnv.findAndHookMethod(policyClz, "start", new MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 sPolicyInstance = param.thisObject;
                 try {
-                    Context ctx = (Context) XposedHelpers.getObjectField(param.thisObject, "mContext");
+                    Context ctx = (Context) Reflect.getObjectField(param.thisObject, "mContext");
                     if (ctx != null) {
                         updateContext(ctx);
                         if (!sConfigLoaded && loadConfigFromProvider(ctx)) {
@@ -2180,12 +1962,12 @@ public class MainHook implements IXposedHookLoadPackage {
                         }
                     }
                 } catch (Throwable t) {
-                    XposedBridge.log(TAG + ": Error getting mContext from policy: " + t);
+                    HookEnv.log(TAG + ": Error getting mContext from policy: " + t);
                 }
             }
         });
 
-        XposedHelpers.findAndHookMethod(policyClz, "getStatusBarVolteType", int.class, new XC_MethodHook() {
+        HookEnv.findAndHookMethod(policyClz, "getStatusBarVolteType", int.class, new MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 int slotId = (Integer) param.args[0];
@@ -2206,7 +1988,7 @@ public class MainHook implements IXposedHookLoadPackage {
             }
         });
 
-        XposedHelpers.findAndHookMethod(policyClz, "getMiuiOperatorConfig", int.class, new XC_MethodHook() {
+        HookEnv.findAndHookMethod(policyClz, "getMiuiOperatorConfig", int.class, new MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 Object opConfig = param.getResult();
@@ -2216,27 +1998,27 @@ public class MainHook implements IXposedHookLoadPackage {
 
                 // 1. Universal 5G-A detection & display support across all carriers
                 try {
-                    XposedHelpers.setBooleanField(opConfig, "support5GADisplay", true);
+                    Reflect.setBooleanField(opConfig, "support5GADisplay", true);
                 } catch (Throwable ignored) {}
 
                 // 2. Korean dynamic breathing 5G icon mode
                 try {
                     if ("korean".equals(cfg.capsule)) {
-                        XposedHelpers.setBooleanField(opConfig, "showSpecial5GIcon", true);
+                        Reflect.setBooleanField(opConfig, "showSpecial5GIcon", true);
                     } else {
-                        XposedHelpers.setBooleanField(opConfig, "showSpecial5GIcon", false);
+                        Reflect.setBooleanField(opConfig, "showSpecial5GIcon", false);
                     }
                 } catch (Throwable ignored) {}
 
                 // 3. Customize mobileTypeName list
                 try {
-                    Object listObj = XposedHelpers.getObjectField(opConfig, "mobileTypeName");
+                    Object listObj = Reflect.getObjectField(opConfig, "mobileTypeName");
                     if (listObj instanceof List) {
                         List<String> list = (List<String>) listObj;
                         if (list.size() >= 14) {
                             ArrayList<String> modified = new ArrayList<String>(list);
                             applyConfigToList(modified, cfg);
-                            XposedHelpers.setObjectField(opConfig, "mobileTypeName", modified);
+                            Reflect.setObjectField(opConfig, "mobileTypeName", modified);
                         }
                     }
                 } catch (Throwable ignored) {}
@@ -2244,13 +2026,13 @@ public class MainHook implements IXposedHookLoadPackage {
                 // 4. Always show RAT icon (showDataTypeDataDisconnected)
                 try {
                     boolean isIntl = isInternationalRom();
-                    if ("always".equals(cfg.alwaysRat)) {
-                        XposedHelpers.setBooleanField(opConfig, "showDataTypeDataDisconnected", true);
+                    if ("always".equals(cfg.alwaysRat) || "data_sim".equals(cfg.alwaysRat)) {
+                        Reflect.setBooleanField(opConfig, "showDataTypeDataDisconnected", true);
                     } else if ("wifi_hide".equals(cfg.alwaysRat)) {
-                        XposedHelpers.setBooleanField(opConfig, "showDataTypeDataDisconnected", false);
+                        Reflect.setBooleanField(opConfig, "showDataTypeDataDisconnected", false);
                     } else {
                         // "default": restore system default (!isIntl)
-                        XposedHelpers.setBooleanField(opConfig, "showDataTypeDataDisconnected", !isIntl);
+                        Reflect.setBooleanField(opConfig, "showDataTypeDataDisconnected", !isIntl);
                     }
                 } catch (Throwable ignored) {}
 
@@ -2258,15 +2040,15 @@ public class MainHook implements IXposedHookLoadPackage {
                 try {
                     initVolteResourceIds(sContext);
                     if ("hide".equals(cfg.volte)) {
-                        XposedHelpers.setBooleanField(opConfig, "hideVolte", true);
-                        XposedHelpers.setIntField(opConfig, "volteResId", 0);
-                        XposedHelpers.setIntField(opConfig, "vonrResId", 0);
+                        Reflect.setBooleanField(opConfig, "hideVolte", true);
+                        Reflect.setIntField(opConfig, "volteResId", 0);
+                        Reflect.setIntField(opConfig, "vonrResId", 0);
                     } else if (!"default".equals(cfg.volte)) {
-                        XposedHelpers.setBooleanField(opConfig, "hideVolte", false);
+                        Reflect.setBooleanField(opConfig, "hideVolte", false);
                         int volteRes = getVolteResForStyle(cfg.volte, false);
                         int vonrRes = getVolteResForStyle(cfg.volte, true);
-                        if (volteRes != 0) XposedHelpers.setIntField(opConfig, "volteResId", volteRes);
-                        if (vonrRes != 0) XposedHelpers.setIntField(opConfig, "vonrResId", vonrRes);
+                        if (volteRes != 0) Reflect.setIntField(opConfig, "volteResId", volteRes);
+                        if (vonrRes != 0) Reflect.setIntField(opConfig, "vonrResId", vonrRes);
                     }
                 } catch (Throwable ignored) {}
 
@@ -2274,13 +2056,13 @@ public class MainHook implements IXposedHookLoadPackage {
                 try {
                     initVowifiResourceIds(sContext);
                     if ("hide".equals(cfg.vowifi)) {
-                        XposedHelpers.setBooleanField(opConfig, "hideVowifi", true);
-                        XposedHelpers.setIntField(opConfig, "vowifiResId", 0);
+                        Reflect.setBooleanField(opConfig, "hideVowifi", true);
+                        Reflect.setIntField(opConfig, "vowifiResId", 0);
                     } else if (!"default".equals(cfg.vowifi)) {
-                        XposedHelpers.setBooleanField(opConfig, "hideVowifi", false);
+                        Reflect.setBooleanField(opConfig, "hideVowifi", false);
                         int vowifiRes = getVowifiResForStyle(cfg.vowifi, slotId);
                         if (vowifiRes != 0) {
-                            XposedHelpers.setIntField(opConfig, "vowifiResId", vowifiRes);
+                            Reflect.setIntField(opConfig, "vowifiResId", vowifiRes);
                         }
                     }
                 } catch (Throwable ignored) {}
@@ -2288,7 +2070,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 // 7. Roaming icon customization
                 try {
                     if ("hide".equals(cfg.roaming) || "small".equals(cfg.roaming)) {
-                        XposedHelpers.setBooleanField(opConfig, "hideNationalRoaming", true);
+                        Reflect.setBooleanField(opConfig, "hideNationalRoaming", true);
                     }
                 } catch (Throwable ignored) {}
             }
@@ -2296,76 +2078,29 @@ public class MainHook implements IXposedHookLoadPackage {
     }
 
     private static void applyConfigToList(List<String> list, IconConfig cfg) {
-        String caText = getTarget5gCaText(cfg);
-        if (!TextUtils.isEmpty(caText)) {
-            list.set(12, caText);
-            list.set(13, caText);
-        } else {
-            list.set(12, "5G+");
-            list.set(13, "5GA");
-        }
-
-        String basic = cfg != null ? cfg.basic : sPref5gBasic;
-        if ("follow_ca".equals(basic)) {
-            String basicText = getEffective5gBasicText(cfg);
-            list.set(10, basicText);
-            list.set(11, basicText);
-        } else {
-            list.set(10, "5G");
-            list.set(11, "5G");
-        }
-
-        String rat = cfg != null ? cfg.rat : sPref4gRat;
-        if ("force_4g".equals(rat)) {
-            list.set(6, "4G");
-            list.set(9, "4G");
-            list.set(7, "4G+");
-            list.set(8, "4G+");
-        } else if ("force_lte".equals(rat)) {
-            list.set(6, "LTE");
-            list.set(9, "LTE");
-            list.set(7, "LTE+");
-            list.set(8, "LTE+");
-        } else if ("force_4g_lte".equals(rat)) {
-            list.set(6, "4G LTE");
-            list.set(9, "4G LTE");
-            list.set(7, "4G LTE+");
-            list.set(8, "4G LTE+");
-        } else if ("force_45g".equals(rat)) {
-            list.set(6, "4.5G");
-            list.set(9, "4.5G");
-            list.set(7, "4.5G+");
-            list.set(8, "4.5G+");
-        } else if ("force_ltea".equals(rat)) {
-            list.set(6, "LTE");
-            list.set(9, "LTE");
-            list.set(7, "LTE-A");
-            list.set(8, "LTE-A");
-        } else {
-            list.set(6, "4G");
-            list.set(9, "LTE");
-            list.set(7, "4G+");
-            list.set(8, "LTE+");
-        }
+        IconPolicy.applyMobileTypeNames(list,
+                cfg != null ? cfg.ca : pref(KEY_5G_CA),
+                cfg != null ? cfg.basic : pref(KEY_5G_BASIC),
+                cfg != null ? cfg.rat : pref(KEY_4G_RAT));
     }
 
     private static void applyConfigToList(List<String> list) {
         applyConfigToList(list, null);
     }
 
-    private void hookMobileIconInteractor(XC_LoadPackage.LoadPackageParam lpparam) {
-        Class<?> interactorClz = XposedHelpers.findClassIfExists(
+    private void hookMobileIconInteractor(LoadPackageParam lpparam) {
+        Class<?> interactorClz = Reflect.findClassIfExists(
             "com.android.systemui.statusbar.pipeline.mobile.domain.interactor.MiuiMobileIconInteractorImpl",
             lpparam.classLoader
         );
         if (interactorClz == null) {
-            XposedBridge.log(TAG + ": MiuiMobileIconInteractorImpl not found");
+            HookEnv.log(TAG + ": MiuiMobileIconInteractorImpl not found");
             return;
         }
 
         // Track live interactors so the VoNR preference can be pushed instantly.
         try {
-            XposedBridge.hookAllConstructors(interactorClz, new XC_MethodHook() {
+            HookEnv.hookAllConstructors(interactorClz, new MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
                     synchronized (sMobileIconInteractors) {
@@ -2377,16 +2112,16 @@ public class MainHook implements IXposedHookLoadPackage {
                 }
             });
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": Failed to hook MiuiMobileIconInteractorImpl constructor: " + t);
+            HookEnv.log(TAG + ": Failed to hook MiuiMobileIconInteractorImpl constructor: " + t);
         }
 
-        XposedHelpers.findAndHookMethod(interactorClz, "getMobileTypeName", int.class, new XC_MethodHook() {
+        HookEnv.findAndHookMethod(interactorClz, "getMobileTypeName", int.class, new MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 int index = (Integer) param.args[0];
                 int subId = -1;
                 try {
-                    subId = XposedHelpers.getIntField(param.thisObject, "subId");
+                    subId = Reflect.getIntField(param.thisObject, "subId");
                 } catch (Throwable ignored) {}
                 int slotId = getSlotIdForSubId(subId);
                 IconConfig cfg = getConfigForSlot(slotId);
@@ -2500,7 +2235,7 @@ public class MainHook implements IXposedHookLoadPackage {
 
                 int subId = -1;
                 try {
-                    subId = XposedHelpers.getIntField(param.thisObject, "subId");
+                    subId = Reflect.getIntField(param.thisObject, "subId");
                 } catch (Throwable ignored) {}
                 int slotId = getSlotIdForSubId(subId);
                 IconConfig cfg = getConfigForSlot(slotId);
@@ -2529,20 +2264,20 @@ public class MainHook implements IXposedHookLoadPackage {
         });
     }
 
-    private void hookSpecial5gViewModel(XC_LoadPackage.LoadPackageParam lpparam) {
-        Class<?> special5gLambda = XposedHelpers.findClassIfExists(
+    private void hookSpecial5gViewModel(LoadPackageParam lpparam) {
+        Class<?> special5gLambda = Reflect.findClassIfExists(
             "com.android.systemui.statusbar.pipeline.mobile.ui.viewmodel.MiuiCellularIconVM$showSpecial5GIcon$2",
             lpparam.classLoader
         );
         if (special5gLambda != null) {
-            XposedHelpers.findAndHookMethod(special5gLambda, "invokeSuspend", Object.class, new XC_MethodHook() {
+            HookEnv.findAndHookMethod(special5gLambda, "invokeSuspend", Object.class, new MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     try {
                         // Native Xiaomi logic: return Boolean.valueOf(this.Z$0 && this.Z$1);
                         // this.Z$0: showSpecial5GIcon opConfig flag
                         // this.Z$1: fiveGConnected (true if truly on 5G network; false on 4G/3G/2G)
-                        boolean is5GConnected = XposedHelpers.getBooleanField(param.thisObject, "Z$1");
+                        boolean is5GConnected = Reflect.getBooleanField(param.thisObject, "Z$1");
                         sIs5GConnected = is5GConnected;
 
                         if (!is5GConnected) {
@@ -2554,7 +2289,7 @@ public class MainHook implements IXposedHookLoadPackage {
                         // Connected to 5G:
                         int subId = -1;
                         try {
-                            subId = XposedHelpers.getIntField(param.thisObject, "subId");
+                            subId = Reflect.getIntField(param.thisObject, "subId");
                         } catch (Throwable ignored) {}
                         int slotId = getSlotIdForSubId(subId);
                         IconConfig cfg = getConfigForSlot(slotId);
@@ -2567,23 +2302,23 @@ public class MainHook implements IXposedHookLoadPackage {
                         // Capsule Mode on 5G: allow special 5G icon flow
                         param.setResult(Boolean.TRUE);
                     } catch (Throwable t) {
-                        XposedBridge.log(TAG + ": hookSpecial5gViewModel error: " + t);
+                        HookEnv.log(TAG + ": hookSpecial5gViewModel error: " + t);
                     }
                 }
             });
         }
     }
 
-    private void hookVolteViewModel(final XC_LoadPackage.LoadPackageParam lpparam) {
+    private void hookVolteViewModel(final LoadPackageParam lpparam) {
         // Track each MiuiCellularIconVM with its subscription so the VoLTE/VoNR
         // Wi-Fi preference can be pushed into its live state flow.
-        Class<?> cellularVmClz = XposedHelpers.findClassIfExists(
+        Class<?> cellularVmClz = Reflect.findClassIfExists(
             "com.android.systemui.statusbar.pipeline.mobile.ui.viewmodel.MiuiCellularIconVM",
             lpparam.classLoader
         );
         if (cellularVmClz != null) {
             try {
-                XposedBridge.hookAllConstructors(cellularVmClz, new XC_MethodHook() {
+                HookEnv.hookAllConstructors(cellularVmClz, new MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
                         try {
@@ -2598,42 +2333,42 @@ public class MainHook implements IXposedHookLoadPackage {
                     }
                 });
             } catch (Throwable t) {
-                XposedBridge.log(TAG + ": Failed to hook MiuiCellularIconVM constructor: " + t);
+                HookEnv.log(TAG + ": Failed to hook MiuiCellularIconVM constructor: " + t);
             }
         }
 
-        Class<?> vmImplClz = XposedHelpers.findClassIfExists(
+        Class<?> vmImplClz = Reflect.findClassIfExists(
             "com.android.systemui.statusbar.pipeline.mobile.ui.viewmodel.MiuiMobileIconVMImpl",
             lpparam.classLoader
         );
         if (vmImplClz != null) {
             try {
-                XposedBridge.hookAllMethods(vmImplClz, "getCellProvider", new XC_MethodHook() {
+                HookEnv.hookAllMethods(vmImplClz, "getCellProvider", new MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
                         try {
                             trackCellularVm(param.getResult(),
-                                    XposedHelpers.getObjectField(param.thisObject, "iconInteractor"));
+                                    Reflect.getObjectField(param.thisObject, "iconInteractor"));
                         } catch (Throwable ignored) {}
                     }
                 });
             } catch (Throwable t) {
-                XposedBridge.log(TAG + ": Failed to hook MiuiMobileIconVMImpl.getCellProvider: " + t);
+                HookEnv.log(TAG + ": Failed to hook MiuiMobileIconVMImpl.getCellProvider: " + t);
             }
         }
 
         // 1. Hook volteVisibleGlobal to cleanly hide when pref is 'hide'
-        Class<?> volteVisibleLambda = XposedHelpers.findClassIfExists(
+        Class<?> volteVisibleLambda = Reflect.findClassIfExists(
             "com.android.systemui.statusbar.pipeline.mobile.ui.viewmodel.MiuiCellularIconVM$volteVisibleGlobal$2",
             lpparam.classLoader
         );
         if (volteVisibleLambda != null) {
-            XposedHelpers.findAndHookMethod(volteVisibleLambda, "invokeSuspend", Object.class, new XC_MethodHook() {
+            HookEnv.findAndHookMethod(volteVisibleLambda, "invokeSuspend", Object.class, new MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     int subId = -1;
                     try {
-                        subId = XposedHelpers.getIntField(param.thisObject, "subId");
+                        subId = Reflect.getIntField(param.thisObject, "subId");
                     } catch (Throwable ignored) {}
                     int slotId = getSlotIdForSubId(subId);
                     IconConfig cfg = getConfigForSlot(slotId);
@@ -2644,44 +2379,34 @@ public class MainHook implements IXposedHookLoadPackage {
                     Object first;
                     Object second;
                     try {
-                        first = XposedHelpers.callMethod(res, "getFirst");
-                        second = XposedHelpers.callMethod(res, "getSecond");
+                        first = Reflect.callMethod(res, "getFirst");
+                        second = Reflect.callMethod(res, "getSecond");
                     } catch (Throwable t) {
                         return;
                     }
 
-                    boolean changed = false;
-
-                    if ("hide".equals(cfg.volte)) {
-                        second = Boolean.FALSE;
-                        changed = true;
-                    }
-
                     String wifiPref = getLambdaWifiVoltePref(subId);
-                    if (!"default".equals(wifiPref)) {
-                        boolean wifi;
+                    boolean wifi = false;
+                    if ("hide".equals(wifiPref)) {
                         try {
-                            wifi = XposedHelpers.getBooleanField(param.thisObject, "Z$0");
+                            wifi = Reflect.getBooleanField(param.thisObject, "Z$0");
                         } catch (Throwable t) {
                             wifi = isWifiConnected();
                         }
-                        if ("hide".equals(wifiPref) && wifi) {
-                            second = Boolean.FALSE;
-                            changed = true;
-                        } else if ("show".equals(wifiPref) && !"hide".equals(cfg.volte)) {
-                            // Disable the native Wi-Fi hide term; VoLTE/VoNR stays
-                            // visible whenever the modem reports it as active.
-                            first = Boolean.FALSE;
-                            changed = true;
-                        }
                     }
+                    boolean stockFirst = Boolean.TRUE.equals(first);
+                    boolean stockSecond = Boolean.TRUE.equals(second);
+                    boolean[] pair = IconPolicy.volteVisiblePair(stockFirst, stockSecond, cfg.volte, wifiPref, wifi);
+                    boolean changed = pair[0] != stockFirst || pair[1] != stockSecond;
+                    first = Boolean.valueOf(pair[0]);
+                    second = Boolean.valueOf(pair[1]);
 
                     if (changed) {
                         try {
-                            Class<?> pairClz = XposedHelpers.findClass("kotlin.Pair", lpparam.classLoader);
-                            param.setResult(XposedHelpers.newInstance(pairClz, first, second));
+                            Class<?> pairClz = Reflect.findClass("kotlin.Pair", lpparam.classLoader);
+                            param.setResult(Reflect.newInstance(pairClz, first, second));
                         } catch (Throwable t) {
-                            XposedBridge.log(TAG + ": Error modifying volteVisibleGlobal: " + t);
+                            HookEnv.log(TAG + ": Error modifying volteVisibleGlobal: " + t);
                         }
                     }
                 }
@@ -2689,17 +2414,17 @@ public class MainHook implements IXposedHookLoadPackage {
         }
 
         // 2. Hook volteId stateflow combiner to dynamically switch drawable id
-        Class<?> volteIdLambda = XposedHelpers.findClassIfExists(
+        Class<?> volteIdLambda = Reflect.findClassIfExists(
             "com.android.systemui.statusbar.pipeline.mobile.ui.viewmodel.MiuiCellularIconVM$volteId$3",
             lpparam.classLoader
         );
         if (volteIdLambda != null) {
-            XposedHelpers.findAndHookMethod(volteIdLambda, "invokeSuspend", Object.class, new XC_MethodHook() {
+            HookEnv.findAndHookMethod(volteIdLambda, "invokeSuspend", Object.class, new MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     int subId = -1;
                     try {
-                        subId = XposedHelpers.getIntField(param.thisObject, "subId");
+                        subId = Reflect.getIntField(param.thisObject, "subId");
                     } catch (Throwable ignored) {}
                     int slotId = getSlotIdForSubId(subId);
                     IconConfig cfg = getConfigForSlot(slotId);
@@ -2734,7 +2459,7 @@ public class MainHook implements IXposedHookLoadPackage {
     private static Class<?> findEmitCollectorClass(ClassLoader cl) {
         if (cl == null) return null;
         // 1. Direct match on standard HyperOS class name
-        Class<?> direct = XposedHelpers.findClassIfExists(
+        Class<?> direct = Reflect.findClassIfExists(
             "com.android.systemui.statusbar.pipeline.mobile.ui.binder.MiuiMobileIconBinder$bind$1$1$13$1",
             cl
         );
@@ -2745,9 +2470,9 @@ public class MainHook implements IXposedHookLoadPackage {
         // 2. Proactive heuristic scan across potential R8 numbered inner classes
         for (int i = 1; i <= 30; i++) {
             String name = "com.android.systemui.statusbar.pipeline.mobile.ui.binder.MiuiMobileIconBinder$bind$1$1$" + i + "$1";
-            Class<?> candidate = XposedHelpers.findClassIfExists(name, cl);
+            Class<?> candidate = Reflect.findClassIfExists(name, cl);
             if (candidate != null && hasCollectorFields(candidate)) {
-                XposedBridge.log(TAG + ": [v" + VERSION + "] Dynamically discovered collector class: " + name);
+                HookEnv.log(TAG + ": [v" + VERSION + "] Dynamically discovered collector class: " + name);
                 return candidate;
             }
         }
@@ -2769,7 +2494,7 @@ public class MainHook implements IXposedHookLoadPackage {
 
     private static Class<?> findMobileGroupCollectorClass(ClassLoader cl) {
         if (cl == null) return null;
-        Class<?> direct = XposedHelpers.findClassIfExists(
+        Class<?> direct = Reflect.findClassIfExists(
             "com.android.systemui.statusbar.pipeline.mobile.ui.binder.MiuiMobileIconBinder$bind$1$1$11$1",
             cl
         );
@@ -2778,9 +2503,9 @@ public class MainHook implements IXposedHookLoadPackage {
         }
         for (int i = 1; i <= 30; i++) {
             String name = "com.android.systemui.statusbar.pipeline.mobile.ui.binder.MiuiMobileIconBinder$bind$1$1$" + i + "$1";
-            Class<?> candidate = XposedHelpers.findClassIfExists(name, cl);
+            Class<?> candidate = Reflect.findClassIfExists(name, cl);
             if (candidate != null && hasMobileGroupFields(candidate)) {
-                XposedBridge.log(TAG + ": [v" + VERSION + "] Dynamically discovered mobileGroup collector class: " + name);
+                HookEnv.log(TAG + ": [v" + VERSION + "] Dynamically discovered mobileGroup collector class: " + name);
                 return candidate;
             }
         }
@@ -2800,36 +2525,36 @@ public class MainHook implements IXposedHookLoadPackage {
         return hasGroup && hasClassId;
     }
 
-    private void hookMobileIconBinder(XC_LoadPackage.LoadPackageParam lpparam) {
-        Class<?> binderClz = XposedHelpers.findClassIfExists(
+    private void hookMobileIconBinder(LoadPackageParam lpparam) {
+        Class<?> binderClz = Reflect.findClassIfExists(
             "com.android.systemui.statusbar.pipeline.mobile.ui.binder.MiuiMobileIconBinder",
             lpparam.classLoader
         );
         if (binderClz == null) return;
 
         // Early SubId tagging on bind
-        Class<?> locVMClz = XposedHelpers.findClassIfExists(
+        Class<?> locVMClz = Reflect.findClassIfExists(
             "com.android.systemui.statusbar.pipeline.mobile.ui.viewmodel.LocationBasedMobileViewModel",
             lpparam.classLoader
         );
-        Class<?> miuiVMClz = XposedHelpers.findClassIfExists(
+        Class<?> miuiVMClz = Reflect.findClassIfExists(
             "com.android.systemui.statusbar.pipeline.mobile.ui.viewmodel.MiuiMobileIconViewModel",
             lpparam.classLoader
         );
-        Class<?> loggerClz = XposedHelpers.findClassIfExists(
+        Class<?> loggerClz = Reflect.findClassIfExists(
             "com.android.systemui.statusbar.pipeline.mobile.ui.MobileViewLogger",
             lpparam.classLoader
         );
 
         if (locVMClz != null && miuiVMClz != null && loggerClz != null) {
-            XposedHelpers.findAndHookMethod(
+            HookEnv.findAndHookMethod(
                 binderClz,
                 "bind",
                 ViewGroup.class,
                 locVMClz,
                 miuiVMClz,
                 loggerClz,
-                new XC_MethodHook() {
+                new MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         try {
@@ -2843,14 +2568,14 @@ public class MainHook implements IXposedHookLoadPackage {
 
                             int subId = -1;
                             try {
-                                Object commonImpl = XposedHelpers.getObjectField(locationVM, "commonImpl");
+                                Object commonImpl = Reflect.getObjectField(locationVM, "commonImpl");
                                 if (commonImpl != null) {
-                                    subId = XposedHelpers.getIntField(commonImpl, "subscriptionId");
+                                    subId = Reflect.getIntField(commonImpl, "subscriptionId");
                                 }
                             } catch (Throwable ignored) {}
                             if (subId < 0) {
                                 try {
-                                    subId = XposedHelpers.getIntField(viewGroup, "subId");
+                                    subId = Reflect.getIntField(viewGroup, "subId");
                                 } catch (Throwable ignored) {}
                             }
                             if (subId < 0) return;
@@ -2858,18 +2583,18 @@ public class MainHook implements IXposedHookLoadPackage {
                             int slotId = getSlotIdForSubId(subId);
                             if (slotId < 0) {
                                 try {
-                                    slotId = XposedHelpers.getIntField(viewGroup, "slotId");
+                                    slotId = Reflect.getIntField(viewGroup, "slotId");
                                 } catch (Throwable ignored) {}
                             }
                             if (slotId < 0) {
                                 try {
-                                    slotId = XposedHelpers.getIntField(viewGroup, "mSlotId");
+                                    slotId = Reflect.getIntField(viewGroup, "mSlotId");
                                 } catch (Throwable ignored) {}
                             }
 
-                            XposedHelpers.setAdditionalInstanceField(viewGroup, "subId", Integer.valueOf(subId));
+                            Reflect.setAdditionalInstanceField(viewGroup, "subId", Integer.valueOf(subId));
                             if (slotId >= 0) {
-                                XposedHelpers.setAdditionalInstanceField(viewGroup, "slotId", Integer.valueOf(slotId));
+                                Reflect.setAdditionalInstanceField(viewGroup, "slotId", Integer.valueOf(slotId));
                             }
 
                             int containerId = viewGroup.getResources().getIdentifier("mobile_signal_container", "id", "com.android.systemui");
@@ -2878,9 +2603,9 @@ public class MainHook implements IXposedHookLoadPackage {
                                 int typeId = viewGroup.getResources().getIdentifier("mobile_type", "id", "com.android.systemui");
                                 ImageView mobileType = typeId != 0 ? (ImageView) container.findViewById(typeId) : null;
                                 if (mobileType != null) {
-                                    XposedHelpers.setAdditionalInstanceField(mobileType, "subId", Integer.valueOf(subId));
+                                    Reflect.setAdditionalInstanceField(mobileType, "subId", Integer.valueOf(subId));
                                     if (slotId >= 0) {
-                                        XposedHelpers.setAdditionalInstanceField(mobileType, "slotId", Integer.valueOf(slotId));
+                                        Reflect.setAdditionalInstanceField(mobileType, "slotId", Integer.valueOf(slotId));
                                     }
                                     trackActiveView(mobileType);
                                 }
@@ -2888,9 +2613,9 @@ public class MainHook implements IXposedHookLoadPackage {
                                 int special5gId = viewGroup.getResources().getIdentifier("mobile_special_5G", "id", "com.android.systemui");
                                 ImageView special5G = special5gId != 0 ? (ImageView) container.findViewById(special5gId) : null;
                                 if (special5G != null) {
-                                    XposedHelpers.setAdditionalInstanceField(special5G, "subId", Integer.valueOf(subId));
+                                    Reflect.setAdditionalInstanceField(special5G, "subId", Integer.valueOf(subId));
                                     if (slotId >= 0) {
-                                        XposedHelpers.setAdditionalInstanceField(special5G, "slotId", Integer.valueOf(slotId));
+                                        Reflect.setAdditionalInstanceField(special5G, "slotId", Integer.valueOf(slotId));
                                     }
                                 }
                             }
@@ -2898,58 +2623,58 @@ public class MainHook implements IXposedHookLoadPackage {
                             int volteId = viewGroup.getResources().getIdentifier("mobile_volte", "id", "com.android.systemui");
                             ImageView volteView = volteId != 0 ? (ImageView) viewGroup.findViewById(volteId) : null;
                             if (volteView != null) {
-                                XposedHelpers.setAdditionalInstanceField(volteView, "subId", Integer.valueOf(subId));
+                                Reflect.setAdditionalInstanceField(volteView, "subId", Integer.valueOf(subId));
                                 if (slotId >= 0) {
-                                    XposedHelpers.setAdditionalInstanceField(volteView, "slotId", Integer.valueOf(slotId));
+                                    Reflect.setAdditionalInstanceField(volteView, "slotId", Integer.valueOf(slotId));
                                 }
                             }
 
                             int vowifiId = viewGroup.getResources().getIdentifier("mobile_vowifi", "id", "com.android.systemui");
                             ImageView vowifiView = vowifiId != 0 ? (ImageView) viewGroup.findViewById(vowifiId) : null;
                             if (vowifiView != null) {
-                                XposedHelpers.setAdditionalInstanceField(vowifiView, "subId", Integer.valueOf(subId));
+                                Reflect.setAdditionalInstanceField(vowifiView, "subId", Integer.valueOf(subId));
                                 if (slotId >= 0) {
-                                    XposedHelpers.setAdditionalInstanceField(vowifiView, "slotId", Integer.valueOf(slotId));
+                                    Reflect.setAdditionalInstanceField(vowifiView, "slotId", Integer.valueOf(slotId));
                                 }
                             }
 
                             int roamingId = viewGroup.getResources().getIdentifier("mobile_roaming", "id", "com.android.systemui");
                             ImageView roamingView = roamingId != 0 ? (ImageView) viewGroup.findViewById(roamingId) : null;
                             if (roamingView != null) {
-                                XposedHelpers.setAdditionalInstanceField(roamingView, "subId", Integer.valueOf(subId));
+                                Reflect.setAdditionalInstanceField(roamingView, "subId", Integer.valueOf(subId));
                                 if (slotId >= 0) {
-                                    XposedHelpers.setAdditionalInstanceField(roamingView, "slotId", Integer.valueOf(slotId));
+                                    Reflect.setAdditionalInstanceField(roamingView, "slotId", Integer.valueOf(slotId));
                                 }
                             }
 
                             int smallRoamId = viewGroup.getResources().getIdentifier("mobile_small_roam", "id", "com.android.systemui");
                             ImageView smallRoamView = smallRoamId != 0 ? (ImageView) viewGroup.findViewById(smallRoamId) : null;
                             if (smallRoamView != null) {
-                                XposedHelpers.setAdditionalInstanceField(smallRoamView, "subId", Integer.valueOf(subId));
+                                Reflect.setAdditionalInstanceField(smallRoamView, "subId", Integer.valueOf(subId));
                                 if (slotId >= 0) {
-                                    XposedHelpers.setAdditionalInstanceField(smallRoamView, "slotId", Integer.valueOf(slotId));
+                                    Reflect.setAdditionalInstanceField(smallRoamView, "slotId", Integer.valueOf(slotId));
                                 }
                             }
                         } catch (Throwable t) {
-                            XposedBridge.log(TAG + ": bind hook error: " + t);
+                            HookEnv.log(TAG + ": bind hook error: " + t);
                         }
                     }
                 }
             );
         }
-        Class<?> drawableClz = XposedHelpers.findClassIfExists(
+        Class<?> drawableClz = Reflect.findClassIfExists(
             "com.miui.systemui.statusbar.views.MobileTypeDrawable",
             lpparam.classLoader
         );
         if (drawableClz == null) return;
 
         // 0. Hook getIntrinsicHeight and getIntrinsicWidth to eliminate ImageView fitCenter matrix translation offset
-        XposedHelpers.findAndHookMethod(drawableClz, "getIntrinsicHeight", new XC_MethodHook() {
+        HookEnv.findAndHookMethod(drawableClz, "getIntrinsicHeight", new MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 Drawable drawable = (Drawable) param.thisObject;
                 String mobileType = getDrawableMobileType(drawable);
-                View v = (View) XposedHelpers.getAdditionalInstanceField(drawable, "view");
+                View v = (View) Reflect.getAdditionalInstanceField(drawable, "view");
                 int slotId = getSlotIdForView(v);
                 IconConfig cfg = getConfigForSlot(slotId);
                 if ("korean".equals(cfg.capsule) && isCapsuleTargetText(mobileType)) {
@@ -2958,16 +2683,16 @@ public class MainHook implements IXposedHookLoadPackage {
             }
         });
 
-        XposedHelpers.findAndHookMethod(drawableClz, "getIntrinsicWidth", new XC_MethodHook() {
+        HookEnv.findAndHookMethod(drawableClz, "getIntrinsicWidth", new MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 Drawable drawable = (Drawable) param.thisObject;
                 String mobileType = getDrawableMobileType(drawable);
-                View v = (View) XposedHelpers.getAdditionalInstanceField(drawable, "view");
+                View v = (View) Reflect.getAdditionalInstanceField(drawable, "view");
                 int slotId = getSlotIdForView(v);
                 IconConfig cfg = getConfigForSlot(slotId);
                 if ("korean".equals(cfg.capsule) && isCapsuleTargetText(mobileType)) {
-                    Paint textPaint = (Paint) XposedHelpers.getObjectField(drawable, "mMobileTypeTextPaint");
+                    Paint textPaint = (Paint) Reflect.getObjectField(drawable, "mMobileTypeTextPaint");
                     textPaint.setTextSize(dpToPx(6.1f));
                     float measuredW = textPaint.measureText(mobileType);
                     float padX = dpToPx(2.5f);
@@ -2976,16 +2701,16 @@ public class MainHook implements IXposedHookLoadPackage {
             }
         });
 
-        XposedHelpers.findAndHookMethod(drawableClz, "measure", new XC_MethodHook() {
+        HookEnv.findAndHookMethod(drawableClz, "measure", new MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 Drawable drawable = (Drawable) param.thisObject;
                 String mobileType = getDrawableMobileType(drawable);
-                View v = (View) XposedHelpers.getAdditionalInstanceField(drawable, "view");
+                View v = (View) Reflect.getAdditionalInstanceField(drawable, "view");
                 int slotId = getSlotIdForView(v);
                 IconConfig cfg = getConfigForSlot(slotId);
-                Paint textPaint = (Paint) XposedHelpers.getObjectField(drawable, "mMobileTypeTextPaint");
-                int mMobileTypeSize = XposedHelpers.getIntField(drawable, "mMobileTypeSize");
+                Paint textPaint = (Paint) Reflect.getObjectField(drawable, "mMobileTypeTextPaint");
+                int mMobileTypeSize = Reflect.getIntField(drawable, "mMobileTypeSize");
                 if ("korean".equals(cfg.capsule) && isCapsuleTargetText(mobileType)) {
                     textPaint.setTextSize(dpToPx(6.1f));
                 } else if (mMobileTypeSize > 0) {
@@ -2995,13 +2720,13 @@ public class MainHook implements IXposedHookLoadPackage {
         });
 
         // 1. View layout params update hook (Per-slot isolated mutual exclusion & Vertical alignment calibration)
-        XposedHelpers.findAndHookMethod(
+        HookEnv.findAndHookMethod(
             binderClz,
             "updateMobileTypeLayoutParams",
             drawableClz,
             String.class,
             ImageView.class,
-            new XC_MethodHook() {
+            new MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     try {
@@ -3015,8 +2740,8 @@ public class MainHook implements IXposedHookLoadPackage {
 
                         // Associate mobileTypeView with drawable
                         if (drawable != null) {
-                            XposedHelpers.setAdditionalInstanceField(drawable, "view", mobileTypeView);
-                            XposedHelpers.setAdditionalInstanceField(drawable, "actualMobileType", str);
+                            Reflect.setAdditionalInstanceField(drawable, "view", mobileTypeView);
+                            Reflect.setAdditionalInstanceField(drawable, "actualMobileType", str);
                         }
 
                         int subId = getSubIdForView(mobileTypeView);
@@ -3033,7 +2758,7 @@ public class MainHook implements IXposedHookLoadPackage {
                                 sSubIdIs5GCa.put(subId, Boolean.TRUE);
                                 sSubIdRadioType.put(subId, Integer.valueOf(rType));
                             }
-                            XposedHelpers.setAdditionalInstanceField(mobileTypeView, "isCaActive", Boolean.TRUE);
+                            Reflect.setAdditionalInstanceField(mobileTypeView, "isCaActive", Boolean.TRUE);
                         } else if ("5G".equals(str)) {
                             rType = RADIO_TYPE_5G;
                             sIs5GConnected = true;
@@ -3046,7 +2771,7 @@ public class MainHook implements IXposedHookLoadPackage {
                                 if (subId >= 0) {
                                     sSubIdIs5GCa.put(subId, Boolean.FALSE);
                                 }
-                                XposedHelpers.setAdditionalInstanceField(mobileTypeView, "isCaActive", Boolean.FALSE);
+                                Reflect.setAdditionalInstanceField(mobileTypeView, "isCaActive", Boolean.FALSE);
                             }
                         } else if (str.contains("+") || str.contains("-A")) {
                             rType = RADIO_TYPE_4G_CA;
@@ -3055,7 +2780,7 @@ public class MainHook implements IXposedHookLoadPackage {
                                 sSubIdIs5GCa.put(subId, Boolean.FALSE);
                                 sSubIdRadioType.put(subId, Integer.valueOf(rType));
                             }
-                            XposedHelpers.setAdditionalInstanceField(mobileTypeView, "isCaActive", Boolean.FALSE);
+                            Reflect.setAdditionalInstanceField(mobileTypeView, "isCaActive", Boolean.FALSE);
                         } else if (str.contains("4G") || str.contains("LTE") || str.contains("4.5G")) {
                             rType = RADIO_TYPE_4G;
                             if (subId >= 0) {
@@ -3063,7 +2788,7 @@ public class MainHook implements IXposedHookLoadPackage {
                                 sSubIdIs5GCa.put(subId, Boolean.FALSE);
                                 sSubIdRadioType.put(subId, Integer.valueOf(rType));
                             }
-                            XposedHelpers.setAdditionalInstanceField(mobileTypeView, "isCaActive", Boolean.FALSE);
+                            Reflect.setAdditionalInstanceField(mobileTypeView, "isCaActive", Boolean.FALSE);
                         } else if (!TextUtils.isEmpty(str)) {
                             rType = RADIO_TYPE_2G_3G;
                             if (subId >= 0) {
@@ -3071,11 +2796,11 @@ public class MainHook implements IXposedHookLoadPackage {
                                 sSubIdIs5GCa.put(subId, Boolean.FALSE);
                                 sSubIdRadioType.put(subId, Integer.valueOf(rType));
                             }
-                            XposedHelpers.setAdditionalInstanceField(mobileTypeView, "isCaActive", Boolean.FALSE);
+                            Reflect.setAdditionalInstanceField(mobileTypeView, "isCaActive", Boolean.FALSE);
                         }
 
                         if (rType != RADIO_TYPE_UNKNOWN) {
-                            XposedHelpers.setAdditionalInstanceField(mobileTypeView, "radioType", Integer.valueOf(rType));
+                            Reflect.setAdditionalInstanceField(mobileTypeView, "radioType", Integer.valueOf(rType));
                         }
 
                         trackActiveView(mobileTypeView);
@@ -3088,7 +2813,7 @@ public class MainHook implements IXposedHookLoadPackage {
 
                         syncViewVisibility(mobileTypeView, special5gView, str, cfg);
                     } catch (Throwable t) {
-                        XposedBridge.log(TAG + ": updateMobileTypeLayoutParams hook error: " + t);
+                        HookEnv.log(TAG + ": updateMobileTypeLayoutParams hook error: " + t);
                     }
                 }
             }
@@ -3097,18 +2822,18 @@ public class MainHook implements IXposedHookLoadPackage {
         // 2. Coroutine visibility emission hook (Per-slot atomic mutual exclusion, NEVER kill views on uninitialized empty text)
         Class<?> emitCollectorClz = findEmitCollectorClass(lpparam.classLoader);
         if (emitCollectorClz != null) {
-            XposedBridge.log(TAG + ": [v" + VERSION + "] Hooking emitCollector on " + emitCollectorClz.getName());
-            XposedHelpers.findAndHookMethod(
+            HookEnv.log(TAG + ": [v" + VERSION + "] Hooking emitCollector on " + emitCollectorClz.getName());
+            HookEnv.findAndHookMethod(
                 emitCollectorClz,
                 "emit",
                 Object.class,
                 "kotlin.coroutines.Continuation",
-                new XC_MethodHook() {
+                new MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         try {
-                            int classId = XposedHelpers.getIntField(param.thisObject, "$r8$classId");
-                            ImageView targetView = (ImageView) XposedHelpers.getObjectField(param.thisObject, "$satellite");
+                            int classId = Reflect.getIntField(param.thisObject, "$r8$classId");
+                            ImageView targetView = (ImageView) Reflect.getObjectField(param.thisObject, "$satellite");
                             if (targetView == null) return;
 
                             Context ctx = targetView.getContext();
@@ -3177,7 +2902,7 @@ public class MainHook implements IXposedHookLoadPackage {
                                 param.args[0] = Boolean.valueOf(isVisible);
                             }
                         } catch (Throwable t) {
-                            XposedBridge.log(TAG + ": emit collector hook error: " + t);
+                            HookEnv.log(TAG + ": emit collector hook error: " + t);
                         }
                     }
                 }
@@ -3187,17 +2912,17 @@ public class MainHook implements IXposedHookLoadPackage {
         // 2b. MobileGroup roaming/vowifi visibility collector hook
         Class<?> groupCollectorClz = findMobileGroupCollectorClass(lpparam.classLoader);
         if (groupCollectorClz != null) {
-            XposedBridge.log(TAG + ": [v" + VERSION + "] Hooking groupCollector on " + groupCollectorClz.getName());
-            XposedHelpers.findAndHookMethod(
+            HookEnv.log(TAG + ": [v" + VERSION + "] Hooking groupCollector on " + groupCollectorClz.getName());
+            HookEnv.findAndHookMethod(
                 groupCollectorClz,
                 "emit",
                 Object.class,
                 "kotlin.coroutines.Continuation",
-                new XC_MethodHook() {
+                new MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         try {
-                            ImageView targetView = (ImageView) XposedHelpers.getObjectField(param.thisObject, "$voWifi");
+                            ImageView targetView = (ImageView) Reflect.getObjectField(param.thisObject, "$voWifi");
                             if (targetView == null) return;
                             Context ctx = targetView.getContext();
                             if (ctx == null) return;
@@ -3213,7 +2938,7 @@ public class MainHook implements IXposedHookLoadPackage {
                                     isRoam = ((Boolean) param.args[0]).booleanValue();
                                 } else if (param.args[0] != null) {
                                     try {
-                                        Object sec = XposedHelpers.callMethod(param.args[0], "getSecond");
+                                        Object sec = Reflect.callMethod(param.args[0], "getSecond");
                                         if (sec instanceof Boolean) isRoam = ((Boolean) sec).booleanValue();
                                     } catch (Throwable ignored) {}
                                 }
@@ -3227,7 +2952,7 @@ public class MainHook implements IXposedHookLoadPackage {
                                     } else if (param.args[0] != null) {
                                         try {
                                             Class<?> pClz = param.args[0].getClass();
-                                            param.args[0] = XposedHelpers.newInstance(pClz, Boolean.FALSE, Boolean.FALSE);
+                                            param.args[0] = Reflect.newInstance(pClz, Boolean.FALSE, Boolean.FALSE);
                                         } catch (Throwable ignored) {}
                                     }
                                     targetView.setVisibility(View.GONE);
@@ -3244,20 +2969,20 @@ public class MainHook implements IXposedHookLoadPackage {
                                     } else if (param.args[0] != null) {
                                         try {
                                             Class<?> pClz = param.args[0].getClass();
-                                            param.args[0] = XposedHelpers.newInstance(pClz, Boolean.FALSE, Boolean.FALSE);
+                                            param.args[0] = Reflect.newInstance(pClz, Boolean.FALSE, Boolean.FALSE);
                                         } catch (Throwable ignored) {}
                                     }
                                     targetView.setVisibility(View.GONE);
                                 }
                             }
                         } catch (Throwable t) {
-                            XposedBridge.log(TAG + ": groupCollector emit before hook error: " + t);
+                            HookEnv.log(TAG + ": groupCollector emit before hook error: " + t);
                         }
                     }
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         try {
-                            ImageView targetView = (ImageView) XposedHelpers.getObjectField(param.thisObject, "$voWifi");
+                            ImageView targetView = (ImageView) Reflect.getObjectField(param.thisObject, "$voWifi");
                             if (targetView == null) return;
                             Context ctx = targetView.getContext();
                             if (ctx == null) return;
@@ -3268,9 +2993,9 @@ public class MainHook implements IXposedHookLoadPackage {
                                 IconConfig cfg = getConfigForSlot(slotId);
                                 if ("hide".equals(cfg.roaming) || "small".equals(cfg.roaming)) {
                                     targetView.setVisibility(View.GONE);
-                                    Object group = XposedHelpers.getObjectField(param.thisObject, "$mobileGroup");
+                                    Object group = Reflect.getObjectField(param.thisObject, "$mobileGroup");
                                     if (group != null) {
-                                        XposedHelpers.callMethod(group, "setChildVisible", targetView, false);
+                                        Reflect.callMethod(group, "setChildVisible", targetView, false);
                                     }
                                 }
                             }
@@ -3281,14 +3006,14 @@ public class MainHook implements IXposedHookLoadPackage {
                                 IconConfig cfg = getConfigForSlot(slotId);
                                 if ("hide".equals(cfg.vowifi)) {
                                     targetView.setVisibility(View.GONE);
-                                    Object group = XposedHelpers.getObjectField(param.thisObject, "$mobileGroup");
+                                    Object group = Reflect.getObjectField(param.thisObject, "$mobileGroup");
                                     if (group != null) {
-                                        XposedHelpers.callMethod(group, "setChildVisible", targetView, false);
+                                        Reflect.callMethod(group, "setChildVisible", targetView, false);
                                     }
                                 }
                             }
                         } catch (Throwable t) {
-                            XposedBridge.log(TAG + ": groupCollector emit after hook error: " + t);
+                            HookEnv.log(TAG + ": groupCollector emit after hook error: " + t);
                         }
                     }
                 }
@@ -3296,17 +3021,17 @@ public class MainHook implements IXposedHookLoadPackage {
         }
 
         // 2c. MobileSignalAnimatorContainer child visibility enforcement hook
-        Class<?> animatorContainerClz = XposedHelpers.findClassIfExists(
+        Class<?> animatorContainerClz = Reflect.findClassIfExists(
             "com.android.systemui.statusbar.views.MobileSignalAnimatorContainer",
             lpparam.classLoader
         );
         if (animatorContainerClz != null) {
-            XposedHelpers.findAndHookMethod(
+            HookEnv.findAndHookMethod(
                 animatorContainerClz,
                 "setChildVisible",
                 View.class,
                 boolean.class,
-                new XC_MethodHook() {
+                new MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         try {
@@ -3346,8 +3071,7 @@ public class MainHook implements IXposedHookLoadPackage {
                                 int slotId = getSlotIdForView(child);
                                 IconConfig cfg = getConfigForSlot(slotId);
                                 String wifiPref = cfg.wifiVolte;
-                                if (!"hide".equals(cfg.volte)
-                                        && ("show".equals(wifiPref) || "hide".equals(wifiPref))) {
+                                if (IconPolicy.overridesVolteOnWifi(cfg.volte, wifiPref)) {
                                     int subId = getSubIdForView(child);
                                     if (subId < 0 && child.getParent() instanceof ViewGroup) {
                                         ViewGroup childParent = (ViewGroup) child.getParent();
@@ -3361,21 +3085,22 @@ public class MainHook implements IXposedHookLoadPackage {
                                     if (subId < 0) subId = getSubIdForSlot(slotId);
                                     Boolean wifi = getWifiAvailableForSubId(subId);
                                     boolean wifiOn = wifi != null ? wifi.booleanValue() : isWifiConnected();
-                                    if (wifiOn) {
-                                        if ("hide".equals(wifiPref)) {
-                                            param.args[1] = Boolean.FALSE;
-                                            child.setVisibility(View.GONE);
-                                        } else if ("show".equals(wifiPref)) {
-                                            Boolean active = getVolteActiveForSubId(subId);
-                                            if (active != null && active.booleanValue() && !isVoltePolicyHidden(subId)) {
-                                                param.args[1] = Boolean.TRUE;
-                                            }
-                                        }
+                                    boolean active = false;
+                                    boolean policyHidden = false;
+                                    if (wifiOn && "show".equals(wifiPref)) {
+                                        active = Boolean.TRUE.equals(getVolteActiveForSubId(subId));
+                                        policyHidden = active && isVoltePolicyHidden(subId);
+                                    }
+                                    Boolean forced = IconPolicy.volteChildVisibleOverride(
+                                            cfg.volte, wifiPref, wifiOn, active, policyHidden);
+                                    if (forced != null) {
+                                        param.args[1] = forced;
+                                        if (!forced.booleanValue()) child.setVisibility(View.GONE);
                                     }
                                 }
                             }
                         } catch (Throwable t) {
-                            XposedBridge.log(TAG + ": setChildVisible before hook error: " + t);
+                            HookEnv.log(TAG + ": setChildVisible before hook error: " + t);
                         }
                     }
                 }
@@ -3383,23 +3108,23 @@ public class MainHook implements IXposedHookLoadPackage {
         }
 
         // 3. Network activity flow collector hook (Drives real-time breathing for 5G CA)
-        Class<?> special5gResCollectorClz = XposedHelpers.findClassIfExists(
+        Class<?> special5gResCollectorClz = Reflect.findClassIfExists(
             "com.android.systemui.statusbar.pipeline.mobile.ui.binder.MiuiMobileIconBinder$bind$1$1$9$1",
             lpparam.classLoader
         );
         if (special5gResCollectorClz != null) {
-            XposedHelpers.findAndHookMethod(
+            HookEnv.findAndHookMethod(
                 special5gResCollectorClz,
                 "invokeSuspend",
                 Object.class,
-                new XC_MethodHook() {
+                new MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         try {
-                            ImageView special5gView = (ImageView) XposedHelpers.getObjectField(param.thisObject, "$special5G");
+                            ImageView special5gView = (ImageView) Reflect.getObjectField(param.thisObject, "$special5G");
                             if (special5gView == null) return;
 
-                            int resId = XposedHelpers.getIntField(param.thisObject, "I$0");
+                            int resId = Reflect.getIntField(param.thisObject, "I$0");
                             boolean isDataActive = false;
                             try {
                                 String name = special5gView.getResources().getResourceEntryName(resId);
@@ -3419,11 +3144,11 @@ public class MainHook implements IXposedHookLoadPackage {
 
                             Drawable d = mobileTypeView.getDrawable();
                             if (d != null) {
-                                XposedHelpers.setAdditionalInstanceField(d, "isDataActive", Boolean.valueOf(isDataActive));
+                                Reflect.setAdditionalInstanceField(d, "isDataActive", Boolean.valueOf(isDataActive));
                                 d.invalidateSelf();
                             }
                         } catch (Throwable t) {
-                            XposedBridge.log(TAG + ": special5gResCollector hook error: " + t);
+                            HookEnv.log(TAG + ": special5gResCollector hook error: " + t);
                         }
                     }
                 }
@@ -3431,11 +3156,11 @@ public class MainHook implements IXposedHookLoadPackage {
         }
 
         // 4. Hook MobileTypeDrawable.draw for Option A Korean Capsule Breathing (Exclusively for 5GA & 5G+)
-        XposedHelpers.findAndHookMethod(
+        HookEnv.findAndHookMethod(
             drawableClz,
             "draw",
             Canvas.class,
-            new XC_MethodHook() {
+            new MethodHook() {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                     try {
@@ -3443,7 +3168,7 @@ public class MainHook implements IXposedHookLoadPackage {
                         String mobileType = getDrawableMobileType(drawable);
                         if (TextUtils.isEmpty(mobileType)) return;
 
-                        View v = (View) XposedHelpers.getAdditionalInstanceField(drawable, "view");
+                        View v = (View) Reflect.getAdditionalInstanceField(drawable, "view");
                         int slotId = getSlotIdForView(v);
                         IconConfig cfg = getConfigForSlot(slotId);
                         boolean isCapsuleMode = "korean".equals(cfg.capsule);
@@ -3458,7 +3183,7 @@ public class MainHook implements IXposedHookLoadPackage {
                         Canvas canvas = (Canvas) param.args[0];
                         drawCapsuleBreath(canvas, drawable, mobileType);
                     } catch (Throwable t) {
-                        XposedBridge.log(TAG + ": draw hook error: " + t);
+                        HookEnv.log(TAG + ": draw hook error: " + t);
                     }
                 }
             }
@@ -3467,8 +3192,8 @@ public class MainHook implements IXposedHookLoadPackage {
 
     private static void drawCapsuleBreath(Canvas canvas, Drawable drawable, String mobileType) {
         try {
-            Paint textPaint = (Paint) XposedHelpers.getObjectField(drawable, "mMobileTypeTextPaint");
-            int baseColor = XposedHelpers.getIntField(drawable, "mMobileTypeColor");
+            Paint textPaint = (Paint) Reflect.getObjectField(drawable, "mMobileTypeTextPaint");
+            int baseColor = Reflect.getIntField(drawable, "mMobileTypeColor");
 
             // Strictly align font size with native Korean 5G pill (cap-height 4.40dp / 8.0dp = 55% ratio)
             textPaint.setTextSize(dpToPx(6.1f));
@@ -3476,12 +3201,12 @@ public class MainHook implements IXposedHookLoadPackage {
 
             // Resolve real-time data active state
             boolean isDataActive = false;
-            Object activeObj = XposedHelpers.getAdditionalInstanceField(drawable, "isDataActive");
+            Object activeObj = Reflect.getAdditionalInstanceField(drawable, "isDataActive");
             if (activeObj instanceof Boolean) {
                 isDataActive = ((Boolean) activeObj).booleanValue();
             } else {
                 // Fallback: check tag of special5GView in same parent
-                ImageView mobileTypeView = (ImageView) XposedHelpers.getAdditionalInstanceField(drawable, "view");
+                ImageView mobileTypeView = (ImageView) Reflect.getAdditionalInstanceField(drawable, "view");
                 if (mobileTypeView != null && mobileTypeView.getParent() instanceof ViewGroup) {
                     ViewGroup parent = (ViewGroup) mobileTypeView.getParent();
                     int special5gId = parent.getResources().getIdentifier("mobile_special_5G", "id", "com.android.systemui");
@@ -3548,7 +3273,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 canvas.drawText(mobileType, textX, textY, textPaint);
             }
         } catch (Throwable t) {
-            XposedBridge.log(TAG + ": drawCapsuleBreath error: " + t);
+            HookEnv.log(TAG + ": drawCapsuleBreath error: " + t);
         }
     }
 }

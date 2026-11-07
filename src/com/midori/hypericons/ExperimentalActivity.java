@@ -63,6 +63,57 @@ public class ExperimentalActivity extends Activity {
         }
 
         updateUiState(enabled);
+
+        View btnRestartPhone = findViewById(R.id.btn_restart_phone);
+        if (btnRestartPhone != null) {
+            btnRestartPhone.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    confirmRestartPhone();
+                }
+            });
+        }
+    }
+
+    private void confirmRestartPhone() {
+        new android.app.AlertDialog.Builder(this)
+                .setTitle(R.string.dialog_restart_phone_title)
+                .setMessage(R.string.dialog_restart_phone_message)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.btn_restart_phone_text, new android.content.DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(android.content.DialogInterface dialog, int which) {
+                        restartPhoneProcess();
+                    }
+                })
+                .show();
+    }
+
+    /** Kills the persistent com.android.phone process; the system restarts it and the hooks load again. */
+    private void restartPhoneProcess() {
+        android.widget.Toast.makeText(this, R.string.toast_restart_phone_requesting, android.widget.Toast.LENGTH_SHORT).show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                boolean success;
+                try {
+                    Process process = Runtime.getRuntime().exec(new String[]{
+                            "su", "-c", "pid=$(pidof com.android.phone) && kill $pid"});
+                    success = process.waitFor() == 0;
+                } catch (Throwable t) {
+                    success = false;
+                }
+                final boolean ok = success;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        android.widget.Toast.makeText(ExperimentalActivity.this,
+                                ok ? R.string.toast_restart_phone_success : R.string.toast_restart_phone_failed,
+                                ok ? android.widget.Toast.LENGTH_SHORT : android.widget.Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        }).start();
     }
 
     @Override

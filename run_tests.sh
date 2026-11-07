@@ -2,3 +2,4 @@
 set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 python3 "$DIR/tests/test_matrix.py"
+python3 "$DIR/tests/test_java_policy.py"

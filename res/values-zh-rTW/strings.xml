@@ -41,6 +41,7 @@
     <string name="sec_always_show_rat_desc">控制連線 Wi-Fi 時是否依然在狀態列顯示行動數據網路類型圖示 (RAT)</string>
     <string name="opt_always_show_rat_default">系統預設</string>
     <string name="opt_always_show_rat_always">始終顯示數據圖示</string>
+    <string name="opt_always_show_rat_data_sim">僅行動數據卡顯示數據圖示</string>
     <string name="opt_always_show_rat_wifi_hide">連線 Wi-Fi 時隱藏</string>
 
     <string name="sec_volte_title">VoLTE / VoNR 圖示樣式</string>
@@ -86,7 +87,7 @@
 
     <string name="btn_refresh_text">立即同步並重新整理狀態列</string>
     <string name="btn_restart_sysui_text">一鍵重新啟動 SystemUI</string>
-    <string name="tip_footer">設定即選即存。點擊上方「立即同步」即可 0 毫秒熱生效（無需重新啟動 SystemUI，避免觸發螢幕鎖定重載）。僅在必要時點擊下方重新啟動。</string>
+    <string name="tip_footer">設定會立即生效。只有圖示沒有更新時才需要重新啟動 SystemUI。</string>
     <string name="footer_license">基於 Apache License 2.0 協議開源</string>
 
     <string name="toast_refresh_success">重新整理成功</string>
@@ -114,4 +115,32 @@
     <string name="experimental_explain_content">【痛點背景】\n雙卡槽+eSIM 裝置（如小米 17 系列國際版等）在透過撥號盤輸入 *#*#7469542#*#* 開啟隱藏偵錯選單後，可在「系統設定 -&gt; 開發人員選項 -&gt; 行動網路 / 5G+特性中心」中針對卡槽配置 3GPP 協定版本、5G-A、VoNR 高畫質通話、雙卡雙通 (DSDA) 以及強制 APN 編輯等高級參數。但在 SIM 2 / eSIM (Slot 1) 執行互相切換時，底層高通基頻進行 UICC 斷電與重新列舉，會將揮發性暫存器重設，導致 3GPP 協定版本被強制打回預設的 R16，且 5G-A、1024QAM 高階調變 (HOM)、超級上行 (SWUL)、全功率發射、VoNR、雙卡雙通以及強制 APN 編輯等已調配的開關狀態均會被沖掉重設。\n\n【實現原理】\n開啟本功能後，模組將在電話服務底層（com.android.phone）智慧監聽 SIM 2 / eSIM (Slot 1) 就緒與電信業者設定載入事件。模組會持續記憶您在隱藏偵錯選單及系統設定中所儲存的各項偏好，在卡槽切換後基頻狀態機就緒的毫秒時間內，採用多階段自癒引擎自動向高通基頻及電話框架重寫您原有的全部設定值（嚴格尊重使用者原設定：原先設定的 3GPP 協定版本精準回寫，原先開啟的開關自動恢復開啟，原先關閉的開關保持關閉），實現無縫平滑接力。\n\n【免重新啟動說明】\nSIM 2 / eSIM (Slot 1) 切換時基頻已完成協定堆疊與無線通道重建，模組在卡槽初始化時即刻向基頻更新並生效原設定，隨後在初始附著 (RRC Attach) 中直接按您預設的參數與基地台協商，徹底免去手動重新輸入暗碼進入開發人員選項重新調配，更無需重新啟動手機。</string>
     <string name="experimental_tip_active">運作中：電話底層攔截已就緒，SIM 2 / eSIM (Slot 1) 切換時將自動按原有設定鎖定保活各項特性。</string>
     <string name="experimental_tip_inactive">已關閉：保持系統原生行為，SIM 2 / eSIM (Slot 1) 切換時遵循基頻初始預設值。</string>
+    <string name="section_network">網路類型</string>
+    <string name="section_calls">語音與通話</string>
+    <string name="section_indicators">其他圖示</string>
+    <string name="status_title_ok">模組運作中</string>
+    <string name="status_title_partial">部分功能無法使用</string>
+    <string name="status_title_restart">重新啟動 SystemUI 後更新生效</string>
+    <string name="status_title_inactive">模組未運作</string>
+    <string name="status_detail_processes">SystemUI %1$d/%2$d · 電話 %3$d/%4$d</string>
+    <string name="status_detail_phone_missing">SystemUI %1$d/%2$d · 電話未載入</string>
+    <string name="status_detail_restart">正在執行 v%1$s，已安裝 v%2$s</string>
+    <string name="status_detail_inactive">SystemUI 沒有回應。請在 LSPosed 中啟用 HyperIcons，然後重新啟動 SystemUI</string>
+    <string name="dialog_hooks_title">Hook 狀態</string>
+    <string name="dialog_hooks_framework">%1$s %2$s · API %3$s</string>
+    <string name="dialog_hooks_systemui">SystemUI</string>
+    <string name="dialog_hooks_phone">電話</string>
+    <string name="dialog_hooks_not_loaded">未載入</string>
+    <string name="dialog_hooks_points">已掛載 %1$d / %2$d 個 Hook 點</string>
+    <string name="btn_restart_phone_text">重新啟動電話程序</string>
+    <string name="restart_phone_desc">不必重新開機即可重新載入電話程序的 Hook。行動網路會中斷幾秒。</string>
+    <string name="dialog_restart_phone_title">要重新啟動電話程序嗎？</string>
+    <string name="dialog_restart_phone_message">com.android.phone 重新啟動期間，行動數據和通話會中斷幾秒，進行中的通話會被掛斷。</string>
+    <string name="toast_restart_phone_requesting">正在請求 Root 權限重新啟動電話程序…</string>
+    <string name="toast_restart_phone_success">電話程序已重新啟動</string>
+    <string name="toast_restart_phone_failed">無法重新啟動電話程序，請確認已授予 Root 權限。</string>
+    <string name="status_title_checking">正在檢查模組狀態…</string>
+    <string name="status_title_restart_phone">重新啟動電話程序後更新生效</string>
+    <string name="card_state_expanded">已展開</string>
+    <string name="card_state_collapsed">已收合</string>
 </resources>

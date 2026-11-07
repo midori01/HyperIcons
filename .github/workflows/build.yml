@@ -23,6 +23,12 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Run Dual-Model Oracle Specification Test Engine
         run: |
           bash run_tests.sh
@@ -55,7 +61,7 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: HyperIcons-v5.3.5
+          name: HyperIcons-v6.0.0
           path: HyperIcons.apk
 
       - name: Create GitHub Release

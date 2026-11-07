@@ -41,6 +41,7 @@
     <string name="sec_always_show_rat_desc">Wi-Fi 연결 중에도 모바일 데이터 네트워크 유형 아이콘(RAT)을 계속 표시할지 설정</string>
     <string name="opt_always_show_rat_default">시스템 기본값</string>
     <string name="opt_always_show_rat_always">항상 데이터 아이콘 표시</string>
+    <string name="opt_always_show_rat_data_sim">데이터 SIM에만 표시</string>
     <string name="opt_always_show_rat_wifi_hide">Wi-Fi 연결 시 숨기기</string>
 
     <string name="sec_volte_title">VoLTE / VoNR 아이콘 스타일</string>
@@ -86,7 +87,7 @@
 
     <string name="btn_refresh_text">상태표시줄 즉시 동기화 및 새로고침</string>
     <string name="btn_restart_sysui_text">SystemUI 재시작</string>
-    <string name="tip_footer">설정이 즉시 저장됩니다. 상단의 \'즉시 동기화\'를 누르면 SystemUI 재부팅 없이 즉시 적용됩니다 (잠금 화면 재로드 방지). 필요한 경우에만 아래 재시작을 이용하세요.</string>
+    <string name="tip_footer">설정은 바로 적용됩니다. 아이콘이 갱신되지 않을 때만 SystemUI를 재시작하세요.</string>
     <string name="footer_license">Apache License 2.0 기반 오픈소스</string>
 
     <string name="toast_refresh_success">새로고침 완료</string>
@@ -114,4 +115,32 @@
     <string name="experimental_explain_content">【문제 배경】\n듀얼 SIM 슬롯 + eSIM 기기(예: Xiaomi 17 시리즈 글로벌 버전 등)에서 다이얼러에 *#*#7469542#*#*를 입력하여 숨겨진 디버그 메뉴를 활성화하면 「시스템 설정 -&gt; 개발자 옵션 -&gt; 셀룰러 네트워크 / 5G+ 특성 센터」에서 3GPP 프로토콜 버전, 5G-A, VoNR 고음질 통화, DSDA(듀얼 SIM 듀얼 액티브), 강제 APN 편집 등의 고급 매개변수를 슬롯별로 구성할 수 있습니다. 그러나 SIM 2 / eSIM (Slot 1) 간 전환 시 퀄컴 모뎀이 UICC 전원 리셋 및 재열거를 수행하여 휘발성 레지스터를 초기화합니다. 이로 인해 3GPP 프로토콜 버전이 기본값인 R16으로 강제 복원되고, 5G-A, 1024QAM(HOM), 슈퍼 업링크(SWUL), 풀 파워 모드, VoNR, DSDA, 강제 APN 편집 등 설정해 둔 스위치가 모두 초기화됩니다.\n\n【구현 원리】\n이 기능을 켜면 모듈이 전화 서비스 계층(com.android.phone)에서 SIM 2 / eSIM (Slot 1) 활성화 및 통신사 구성 로드 이벤트를 감지합니다. 모듈은 숨겨진 개발자 메뉴와 시스템 설정에서 구성된 사용자의 기본 설정을 지속적으로 기억하며, 슬롯 전환 직후 모뎀 상태 머신이 준비되는 밀리초 단위의 타이밍에 다단계 자가 치유 엔진이 퀄컴 모뎀 및 전화 프레임워크에 기존 설정을 자동으로 다시 주입합니다 (사용자의 기존 설정을 엄격히 존중: 이전에 설정한 3GPP 프로토콜 버전을 정밀하게 다시 적용하고, 켜져 있던 스위치는 다시 켜며, 꺼져 있던 항목은 꺼진 상태를 유지).\n\n【재부팅 불필요 안내】\nSIM 2 / eSIM (Slot 1) 전환 시 모뎀은 이미 무선 프로토콜 스택과 채널을 재구축하므로, 슬롯 초기화 시 모뎀에 직접 기존 설정을 업데이트하면 초기 접속(RRC Attach) 시 사전 설정된 매개변수로 기지국과 직접 협상되어 즉시 적용됩니다. 히든 메뉴에 진입하기 위해 코드를 다시 입력하거나 휴대폰을 재부팅할 필요가 없습니다.</string>
     <string name="experimental_tip_active">실행 중: 전화 저수준 후킹이 준비되었습니다. SIM 2 / eSIM (Slot 1) 전환 시 기존 설정을 기반으로 모든 특성이 자동으로 유지됩니다.</string>
     <string name="experimental_tip_inactive">비활성화됨: 시스템 기본 동작을 유지하며, SIM 2 / eSIM (Slot 1) 전환 시 모뎀 기본값에 따릅니다.</string>
+    <string name="section_network">네트워크 유형</string>
+    <string name="section_calls">음성 통화</string>
+    <string name="section_indicators">기타 아이콘</string>
+    <string name="status_title_ok">모듈 작동 중</string>
+    <string name="status_title_partial">일부 기능을 사용할 수 없음</string>
+    <string name="status_title_restart">SystemUI를 재시작하면 업데이트가 적용됩니다</string>
+    <string name="status_title_inactive">모듈이 실행되지 않음</string>
+    <string name="status_detail_processes">SystemUI %1$d/%2$d · 전화 %3$d/%4$d</string>
+    <string name="status_detail_phone_missing">SystemUI %1$d/%2$d · 전화 미로드</string>
+    <string name="status_detail_restart">실행 중 v%1$s, 설치됨 v%2$s</string>
+    <string name="status_detail_inactive">SystemUI의 응답이 없습니다. LSPosed에서 HyperIcons를 활성화한 뒤 SystemUI를 재시작하세요</string>
+    <string name="dialog_hooks_title">후크 상태</string>
+    <string name="dialog_hooks_framework">%1$s %2$s · API %3$s</string>
+    <string name="dialog_hooks_systemui">SystemUI</string>
+    <string name="dialog_hooks_phone">전화</string>
+    <string name="dialog_hooks_not_loaded">로드되지 않음</string>
+    <string name="dialog_hooks_points">후크 지점 %2$d개 중 %1$d개 적용됨</string>
+    <string name="btn_restart_phone_text">전화 프로세스 재시작</string>
+    <string name="restart_phone_desc">기기를 재부팅하지 않고 전화 프로세스의 후크를 다시 불러옵니다. 모바일 네트워크가 몇 초간 끊깁니다.</string>
+    <string name="dialog_restart_phone_title">전화 프로세스를 재시작할까요?</string>
+    <string name="dialog_restart_phone_message">com.android.phone이 재시작되는 동안 모바일 데이터와 통화가 몇 초간 중단되며, 진행 중인 통화는 종료됩니다.</string>
+    <string name="toast_restart_phone_requesting">Root 권한으로 전화 프로세스를 재시작하는 중…</string>
+    <string name="toast_restart_phone_success">전화 프로세스를 재시작했습니다</string>
+    <string name="toast_restart_phone_failed">전화 프로세스를 재시작하지 못했습니다. Root 권한을 허용했는지 확인하세요.</string>
+    <string name="status_title_checking">모듈 상태 확인 중…</string>
+    <string name="status_title_restart_phone">전화 프로세스를 재시작하면 업데이트가 적용됩니다</string>
+    <string name="card_state_expanded">펼침</string>
+    <string name="card_state_collapsed">접힘</string>
 </resources>

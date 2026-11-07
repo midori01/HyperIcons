@@ -275,6 +275,9 @@ public class MainHook {
             java.util.Collections.synchronizedMap(new java.util.WeakHashMap<Object, Integer>());
     private static final java.util.Set<Object> sWifiVolteOverriddenVms = java.util.Collections.newSetFromMap(
             java.util.Collections.synchronizedMap(new java.util.WeakHashMap<Object, Boolean>()));
+    /** Live mobile_volte ImageViews, tagged with their subId on bind. */
+    private static final java.util.List<WeakReference<ImageView>> sTrackedVolteViews =
+            new java.util.ArrayList<WeakReference<ImageView>>();
     private static final ThreadLocal<Boolean> sVonrStockRead = new ThreadLocal<Boolean>();
     private static volatile boolean sReceiverRegistered = false;
     private static volatile ContentObserver sContentObserver = null;
@@ -420,6 +423,43 @@ public class MainHook {
             }
         }
         sTrackedViews.add(new WeakReference<ImageView>(view));
+    }
+
+    private static synchronized void trackVolteView(ImageView view) {
+        if (view == null) return;
+        for (int i = sTrackedVolteViews.size() - 1; i >= 0; i--) {
+            ImageView v = sTrackedVolteViews.get(i).get();
+            if (v == null) {
+                sTrackedVolteViews.remove(i);
+            } else if (v == view) {
+                return;
+            }
+        }
+        sTrackedVolteViews.add(new WeakReference<ImageView>(view));
+        while (sTrackedVolteViews.size() > 8) {
+            sTrackedVolteViews.remove(0);
+        }
+    }
+
+    /**
+     * Finds a view by id in the closest ancestor of {@code anchor} that owns it.
+     * On current HyperOS the mobile_type view sits inside mobile_signal_container,
+     * while mobile_volte/mobile_vowifi are siblings of that container inside the
+     * per-SIM mobile_group, so a plain getParent().findViewById() misses them.
+     */
+    private static ImageView findViewInAncestors(View anchor, int id) {
+        if (anchor == null || id == 0) return null;
+        View curr = anchor;
+        while (curr != null) {
+            View found = curr.findViewById(id);
+            if (found instanceof ImageView) return (ImageView) found;
+            if (curr.getParent() instanceof View) {
+                curr = (View) curr.getParent();
+            } else {
+                break;
+            }
+        }
+        return null;
     }
 
     private static String getTarget5gCaText(IconConfig cfg) {
@@ -1328,6 +1368,7 @@ public class MainHook {
         try {
             subId = Reflect.getIntField(interactor, "subId");
         } catch (Throwable t) {
+            trackInteractor(interactor);
             return;
         }
         boolean added = false;
@@ -1341,6 +1382,11 @@ public class MainHook {
         if (added) {
             HookEnv.log(TAG + ": [v" + VERSION + "] [WiFiVoLTE] tracking VM subId=" + subId);
         }
+        trackInteractor(interactor);
+    }
+
+    private static void trackInteractor(Object interactor) {
+        if (interactor == null) return;
         synchronized (sMobileIconInteractors) {
             for (int i = sMobileIconInteractors.size() - 1; i >= 0; i--) {
                 Object known = sMobileIconInteractors.get(i).get();
@@ -1392,37 +1438,49 @@ public class MainHook {
 
     /** Current VoLTE/VoNR-active state for a subscription, from the tracked interactor. */
     private static Boolean getVolteActiveForSubId(int subId) {
+        Boolean fallback = null;
+        int count = 0;
         synchronized (sMobileIconInteractors) {
             for (int i = sMobileIconInteractors.size() - 1; i >= 0; i--) {
                 Object interactor = sMobileIconInteractors.get(i).get();
                 if (interactor == null) continue;
                 try {
-                    if (Reflect.getIntField(interactor, "subId") != subId) continue;
+                    int interactorSubId = Reflect.getIntField(interactor, "subId");
                     Object volteFlow = Reflect.getObjectField(interactor, "volte");
                     Object value = Reflect.callMethod(volteFlow, "getValue");
-                    if (value instanceof Boolean) return (Boolean) value;
+                    if (!(value instanceof Boolean)) continue;
+                    count++;
+                    if (interactorSubId == subId) return (Boolean) value;
+                    if (fallback == null) fallback = (Boolean) value;
                 } catch (Throwable ignored) {}
             }
         }
-        return null;
+        // Older/newer ROMs occasionally leave subId as -1 until the first
+        // telephony update; with a single live interactor its value is unambiguous.
+        return (subId < 0 || count == 1) ? fallback : null;
     }
 
     /** Whether the operator policy asks SystemUI to hide the VoLTE/VoNR icon. */
     private static boolean isVoltePolicyHidden(int subId) {
+        Boolean fallback = null;
+        int count = 0;
         synchronized (sMobileIconInteractors) {
             for (int i = sMobileIconInteractors.size() - 1; i >= 0; i--) {
                 Object interactor = sMobileIconInteractors.get(i).get();
                 if (interactor == null) continue;
                 try {
-                    if (Reflect.getIntField(interactor, "subId") != subId) continue;
+                    int interactorSubId = Reflect.getIntField(interactor, "subId");
                     Object opFlow = Reflect.getObjectField(interactor, "miuiOpConfig");
                     Object opConfig = Reflect.callMethod(opFlow, "getValue");
-                    return opConfig != null
-                            && Reflect.getBooleanField(opConfig, "hideVolte");
+                    if (opConfig == null) continue;
+                    boolean hidden = Reflect.getBooleanField(opConfig, "hideVolte");
+                    count++;
+                    if (interactorSubId == subId) return hidden;
+                    if (fallback == null) fallback = Boolean.valueOf(hidden);
                 } catch (Throwable ignored) {}
             }
         }
-        return false;
+        return (subId < 0 || count == 1) && Boolean.TRUE.equals(fallback);
     }
 
     /** Whether the view model considers Wi-Fi the default connection for a subscription. */
@@ -1431,12 +1489,36 @@ public class MainHook {
         synchronized (sCellularIconVmSubIds) {
             snapshot = new java.util.HashMap<Object, Integer>(sCellularIconVmSubIds);
         }
+        Boolean fallback = null;
+        int count = 0;
         for (java.util.Map.Entry<Object, Integer> entry : snapshot.entrySet()) {
-            if (entry.getValue().intValue() != subId) continue;
             try {
                 Object wifiFlow = Reflect.getObjectField(entry.getKey(), "wifiAvailable");
                 Object value = Reflect.callMethod(wifiFlow, "getValue");
-                if (value instanceof Boolean) return (Boolean) value;
+                if (!(value instanceof Boolean)) continue;
+                count++;
+                if (entry.getValue().intValue() == subId) return (Boolean) value;
+                if (fallback == null) fallback = (Boolean) value;
+            } catch (Throwable ignored) {}
+        }
+        return (subId < 0 || count == 1) ? fallback : null;
+    }
+
+    /** Current volteVisibleGlobal second flag for a subscription (volte && !hideVolte). */
+    private static Boolean getVolteVisibleSecondForSubId(int subId) {
+        java.util.Map<Object, Integer> snapshot;
+        synchronized (sCellularIconVmSubIds) {
+            snapshot = new java.util.HashMap<Object, Integer>(sCellularIconVmSubIds);
+        }
+        for (java.util.Map.Entry<Object, Integer> entry : snapshot.entrySet()) {
+            if (entry.getValue().intValue() != subId) continue;
+            try {
+                Object stateFlow = findStateFlowDelegate(
+                        Reflect.getObjectField(entry.getKey(), "volteVisibleGlobal"));
+                if (stateFlow == null) continue;
+                Object current = Reflect.callMethod(stateFlow, "getValue");
+                Object second = Reflect.callMethod(current, "getSecond");
+                if (second instanceof Boolean) return (Boolean) second;
             } catch (Throwable ignored) {}
         }
         return null;
@@ -1472,6 +1554,58 @@ public class MainHook {
     }
 
     /**
+     * Immediately apply the per-SIM Wi-Fi preference to a live mobile_volte view.
+     * This is independent of the state-flow push, so a preference change is visible
+     * even when no upstream telephony flow re-emits.
+     */
+    private static void applyWifiVolteVisibility(ImageView volteView, IconConfig cfg, int subId) {
+        if (volteView == null || cfg == null) return;
+        String wifiPref = cfg.wifiVolte;
+        if (!IconPolicy.overridesVolteOnWifi(cfg.volte, wifiPref)) return;
+
+        if (subId < 0) subId = getSubIdForView(volteView);
+        if (subId < 0) subId = getSubIdForSlot(getSlotIdForView(volteView));
+        Boolean wifiState = getWifiAvailableForSubId(subId);
+        boolean wifiOn = wifiState != null ? wifiState.booleanValue() : isWifiConnected();
+        boolean currentlyVisible = volteView.getVisibility() == View.VISIBLE;
+        if (!wifiOn) {
+            // Leaving Wi-Fi: undo a previous "hide on Wi-Fi" so the icon returns
+            // to the stock mobile-network visibility immediately.
+            if ("hide".equals(wifiPref)) {
+                Boolean active = getVolteActiveForSubId(subId);
+                if (active != null) {
+                    boolean visible = active.booleanValue() && !isVoltePolicyHidden(subId);
+                    if (visible != currentlyVisible) {
+                        HookEnv.log(TAG + ": [v" + VERSION + "] [WiFiVoLTE] restore subId=" + subId
+                                + " active=" + active + " -> visible=" + visible);
+                    }
+                    applyVolteChildVisible(volteView, visible);
+                }
+            }
+            return;
+        }
+
+        if ("hide".equals(wifiPref)) {
+            if (currentlyVisible) {
+                HookEnv.log(TAG + ": [v" + VERSION + "] [WiFiVoLTE] hide on Wi-Fi subId=" + subId);
+            }
+            applyVolteChildVisible(volteView, false);
+            return;
+        }
+
+        Boolean active = getVolteActiveForSubId(subId);
+        if (active == null) active = getVolteVisibleSecondForSubId(subId);
+        if (active != null) {
+            boolean visible = active.booleanValue() && !isVoltePolicyHidden(subId);
+            if (visible != currentlyVisible) {
+                HookEnv.log(TAG + ": [v" + VERSION + "] [WiFiVoLTE] show on Wi-Fi subId=" + subId
+                        + " active=" + active + " -> visible=" + visible);
+            }
+            applyVolteChildVisible(volteView, visible);
+        }
+    }
+
+    /**
      * Push the per-SIM Wi-Fi preference into each live MiuiCellularIconVM's
      * volteVisibleGlobal state flow so it applies without waiting for the next
      * upstream emission. System Default leaves the flow untouched, apart from
@@ -1492,9 +1626,18 @@ public class MainHook {
                 if (restoring && !sWifiVolteOverriddenVms.contains(vm)) continue;
 
                 Boolean wifiState = readBooleanFlow(vm, "wifiAvailable");
+                boolean wifi = wifiState != null ? wifiState.booleanValue() : isWifiConnected();
                 Boolean active = getVolteActiveForSubId(subId);
-                if (wifiState == null || active == null) continue;
-                boolean wifi = wifiState.booleanValue();
+                if (active == null && !"hide".equals(wifiPref)) {
+                    // If this VM was never overridden, its second flag is still stock.
+                    if (!sWifiVolteOverriddenVms.contains(vm)) {
+                        active = getVolteVisibleSecondForSubId(subId);
+                    }
+                }
+                if (active == null && "hide".equals(wifiPref)) {
+                    active = Boolean.FALSE;
+                }
+                if (active == null) continue;
                 boolean showWhenWifi = readVmOperatorFlag(vm, "showVolteWhenWifiOnAndDripEnd");
                 Boolean hideState = readBooleanFlow(vm, "hideVolte");
                 boolean hideVolte = hideState != null ? hideState.booleanValue() : readVmOperatorFlag(vm, "hideVolte");
@@ -1507,7 +1650,10 @@ public class MainHook {
                 boolean second = target[1];
 
                 Object stateFlow = findStateFlowDelegate(Reflect.getObjectField(vm, "volteVisibleGlobal"));
-                if (stateFlow == null) continue;
+                if (stateFlow == null) {
+                    HookEnv.log(TAG + ": [WiFiVoLTE] no state-flow delegate for subId=" + subId);
+                    continue;
+                }
 
                 Object current = Reflect.callMethod(stateFlow, "getValue");
                 Object currentFirst = null;
@@ -1523,7 +1669,9 @@ public class MainHook {
                             Boolean.valueOf(first), Boolean.valueOf(second));
                     Reflect.callMethod(stateFlow, "setValue", pair);
                     HookEnv.log(TAG + ": [v" + VERSION + "] [WiFiVoLTE] Pushed volteVisibleGlobal=("
-                            + first + "," + second + ") for subId=" + subId + (restoring ? " (restored)" : ""));
+                            + first + "," + second + ") for subId=" + subId
+                            + " pref=" + wifiPref + " wifi=" + wifi
+                            + (restoring ? " (restored)" : ""));
                 }
                 if (restoring) {
                     sWifiVolteOverriddenVms.remove(vm);
@@ -1586,58 +1734,28 @@ public class MainHook {
                             IconConfig cfg = getConfigForSlot(slotId);
 
                             int volteViewId = parent.getResources().getIdentifier("mobile_volte", "id", "com.android.systemui");
-                            ImageView volteView = volteViewId != 0 ? (ImageView) parent.findViewById(volteViewId) : null;
+                            ImageView volteView = findViewInAncestors(mobileTypeView, volteViewId);
                             if (volteView != null) {
-                                boolean volteStyleHidden = "hide".equals(cfg.volte);
-                                if (volteStyleHidden) {
+                                trackVolteView(volteView);
+                                if ("hide".equals(cfg.volte)) {
                                     volteView.setVisibility(View.GONE);
-                                } else if (!"default".equals(cfg.volte)) {
-                                    initVolteResourceIds(parent.getContext());
-                                    int targetRes = getVolteResForStyle(cfg.volte, false);
-                                    if (targetRes != 0) {
-                                        volteView.setImageResource(targetRes);
-                                    }
-                                    volteView.setVisibility(View.VISIBLE);
-                                    volteView.invalidate();
-                                    volteView.requestLayout();
                                 }
+                                // Never overwrite the VoLTE/VoNR drawable or force the
+                                // icon visible here: the operator-config update and the
+                                // volteId flow hook already pick the correct VoNR/VoLTE
+                                // resource, and forcing VISIBLE makes a stale icon
+                                // survive a Wi-Fi/IMS state change.
 
-                                // VoLTE/VoNR on Wi-Fi override
-                                String wifiVoltePref = cfg.wifiVolte;
-                                if (!volteStyleHidden
-                                        && ("show".equals(wifiVoltePref) || "hide".equals(wifiVoltePref))) {
-                                    int volteSubId = getSubIdForView(mobileTypeView);
-                                    Boolean wifiState = getWifiAvailableForSubId(volteSubId);
-                                    boolean wifiOn = wifiState != null ? wifiState.booleanValue() : isWifiConnected();
-                                    if (wifiOn) {
-                                        if ("hide".equals(wifiVoltePref)) {
-                                            applyVolteChildVisible(volteView, false);
-                                        } else {
-                                            Boolean active = getVolteActiveForSubId(volteSubId);
-                                            if (active != null) {
-                                                applyVolteChildVisible(volteView,
-                                                        active.booleanValue() && !isVoltePolicyHidden(volteSubId));
-                                            }
-                                        }
-                                    }
-                                }
+                                // VoLTE/VoNR on Wi-Fi override (instant, no modem event needed)
+                                applyWifiVolteVisibility(volteView, cfg, getSubIdForView(mobileTypeView));
                             }
 
                             int vowifiViewId = parent.getResources().getIdentifier("mobile_vowifi", "id", "com.android.systemui");
-                            ImageView vowifiView = vowifiViewId != 0 ? (ImageView) parent.findViewById(vowifiViewId) : null;
-                            if (vowifiView != null) {
-                                if ("hide".equals(cfg.vowifi)) {
-                                    vowifiView.setVisibility(View.GONE);
-                                } else if (!"default".equals(cfg.vowifi)) {
-                                    initVowifiResourceIds(parent.getContext());
-                                    int targetRes = getVowifiResForStyle(cfg.vowifi, slotId);
-                                    if (targetRes != 0) {
-                                        vowifiView.setImageResource(targetRes);
-                                    }
-                                    vowifiView.setVisibility(View.VISIBLE);
-                                    vowifiView.invalidate();
-                                    vowifiView.requestLayout();
-                                }
+                            ImageView vowifiView = findViewInAncestors(mobileTypeView, vowifiViewId);
+                            if (vowifiView != null && "hide".equals(cfg.vowifi)) {
+                                // Style/visibility is driven by the operator config and
+                                // the native vowifiVisible flow. Only "hide" is forced.
+                                vowifiView.setVisibility(View.GONE);
                             }
 
                             int roamingViewId = parent.getResources().getIdentifier("mobile_roaming", "id", "com.android.systemui");
@@ -1794,6 +1912,23 @@ public class MainHook {
                                 parent.requestLayout();
                                 parent.invalidate();
                             }
+                        }
+                    }
+
+                    // Independent pass over the live mobile_volte views: this
+                    // applies the Wi-Fi preference immediately even when the
+                    // mobile_type views could not be tracked on this ROM.
+                    synchronized (sTrackedVolteViews) {
+                        for (int i = sTrackedVolteViews.size() - 1; i >= 0; i--) {
+                            ImageView volteView = sTrackedVolteViews.get(i).get();
+                            if (volteView == null) {
+                                sTrackedVolteViews.remove(i);
+                                continue;
+                            }
+                            if (volteView.getParent() == null) continue;
+                            int slotId = getSlotIdForView(volteView);
+                            IconConfig cfg = getConfigForSlot(slotId);
+                            applyWifiVolteVisibility(volteView, cfg, getSubIdForView(volteView));
                         }
                     }
                 } catch (Throwable t) {
@@ -2566,6 +2701,18 @@ public class MainHook {
                                 updateContext(viewGroup.getContext());
                             }
 
+                            // Track the VoLTE child even if the subscription id is not
+                            // resolved yet; the direct Wi-Fi pass can still resolve it
+                            // from the view tags on the next reload.
+                            int earlyVolteId = viewGroup.getResources().getIdentifier(
+                                    "mobile_volte", "id", "com.android.systemui");
+                            if (earlyVolteId != 0) {
+                                View maybeVolte = viewGroup.findViewById(earlyVolteId);
+                                if (maybeVolte instanceof ImageView) {
+                                    trackVolteView((ImageView) maybeVolte);
+                                }
+                            }
+
                             int subId = -1;
                             try {
                                 Object commonImpl = Reflect.getObjectField(locationVM, "commonImpl");
@@ -2595,6 +2742,29 @@ public class MainHook {
                             Reflect.setAdditionalInstanceField(viewGroup, "subId", Integer.valueOf(subId));
                             if (slotId >= 0) {
                                 Reflect.setAdditionalInstanceField(viewGroup, "slotId", Integer.valueOf(slotId));
+                            }
+
+                            // Bind gives us the exact wrapper VM and interactor for
+                            // this subscription. Track both here so the instant
+                            // Wi-Fi/VoLTE push works even when the VM and interactor
+                            // constructors were removed by the ROM optimizer.
+                            Object miuiVm = param.args.length > 2 ? param.args[2] : null;
+                            if (miuiVm != null) {
+                                Object interactor = null;
+                                try {
+                                    interactor = Reflect.getObjectField(miuiVm, "iconInteractor");
+                                } catch (Throwable ignored) {}
+                                Object cellVm = null;
+                                try {
+                                    cellVm = Reflect.callMethod(miuiVm, "getCellProvider");
+                                } catch (Throwable ignored) {}
+                                if (interactor != null) {
+                                    if (cellVm != null) {
+                                        trackCellularVm(cellVm, interactor);
+                                    } else {
+                                        trackInteractor(interactor);
+                                    }
+                                }
                             }
 
                             int containerId = viewGroup.getResources().getIdentifier("mobile_signal_container", "id", "com.android.systemui");
@@ -2627,6 +2797,7 @@ public class MainHook {
                                 if (slotId >= 0) {
                                     Reflect.setAdditionalInstanceField(volteView, "slotId", Integer.valueOf(slotId));
                                 }
+                                trackVolteView(volteView);
                             }
 
                             int vowifiId = viewGroup.getResources().getIdentifier("mobile_vowifi", "id", "com.android.systemui");

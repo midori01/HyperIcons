@@ -41,7 +41,7 @@ import java.util.Map;
 
 public class MainHook {
     private static final String TAG = "HyperIconsHook";
-    public static final String VERSION = "6.0.0";
+    public static final String VERSION = BuildConfig.VERSION_NAME;
     public static final String ACTION_RELOAD = "com.midori.hypericons.ACTION_RELOAD";
     public static final String PREF_PACKAGE = "com.midori.hypericons";
     public static final String PREF_FILE = "hyper_icons_config";

@@ -1,6 +1,6 @@
 # HyperIcons
 
-[![Version](https://img.shields.io/badge/version-v6.0.0%20(Build%2033)-blue.svg)](https://github.com/midori01/HyperIcons/releases)
+[![Version](https://img.shields.io/github/v/release/midori01/HyperIcons?label=version)](https://github.com/midori01/HyperIcons/releases)
 [![Target OS](https://img.shields.io/badge/HyperOS-3%20%7C%204-orange.svg)](#)
 [![Android](https://img.shields.io/badge/Android-17%20(API%2037)-green.svg)](#)
 [![Framework](https://img.shields.io/badge/Framework-LSPosed-purple.svg)](#)

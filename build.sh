@@ -23,17 +23,33 @@ if [ ! -f debug.keystore ]; then
     keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 fi
 
+read -r APP_VERSION_NAME APP_VERSION_CODE < <(bash version.sh)
+[ -n "$APP_VERSION_CODE" ] || exit 1
+echo "[i] Version $APP_VERSION_NAME (code $APP_VERSION_CODE)"
+
 echo "=== [1/6] Cleaning up and creating build directories ==="
 rm -rf gen classes dex compiled_res.zip base.apk unaligned.apk aligned.apk HyperIcons.apk HyperIcons.apk.idsig
-mkdir -p gen classes dex
+mkdir -p gen/com/midori/hypericons classes dex
+cat > gen/com/midori/hypericons/BuildConfig.java <<JAVA
+package com.midori.hypericons;
+
+public final class BuildConfig {
+    public static final String VERSION_NAME = "$APP_VERSION_NAME";
+    public static final int VERSION_CODE = $APP_VERSION_CODE;
+
+    private BuildConfig() {}
+}
+JAVA
 
 echo "=== [2/6] Compiling resources with aapt2 and generating R.java ==="
 aapt2 compile --dir res -o compiled_res.zip
-aapt2 link -I "$ANDROID_JAR" --manifest AndroidManifest.xml --java gen/ -o base.apk compiled_res.zip
+aapt2 link -I "$ANDROID_JAR" --manifest AndroidManifest.xml --java gen/ -o base.apk \
+    --version-name "$APP_VERSION_NAME" --version-code "$APP_VERSION_CODE" --replace-version \
+    compiled_res.zip
 
 echo "=== [3/6] Compiling Java sources with javac ==="
 javac -cp "$ANDROID_JAR:libs/api-102.jar" -d classes -source 8 -target 8 \
-    gen/com/midori/hypericons/R.java \
+    gen/com/midori/hypericons/R.java gen/com/midori/hypericons/BuildConfig.java \
     $(find src -name '*.java' | sort)
 
 echo "=== [4/6] Compiling DEX with d8 ==="

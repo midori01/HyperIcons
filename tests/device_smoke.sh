@@ -30,7 +30,7 @@ bundle_value() {
     sed -n "s/.*[{ ]$1=\([^,}]*\).*/\1/p" | head -n1
 }
 
-expected_version=$(sed -n 's/.*android:versionName="\([^"]*\)".*/\1/p' "$DIR/AndroidManifest.xml" | head -n1)
+expected_version=$(bash "$DIR/version.sh" | cut -d' ' -f1)
 installed_version=$(sh_ dumpsys package com.midori.hypericons | sed -n 's/.*versionName=//p' | head -n1)
 if [ "$installed_version" = "$expected_version" ]; then
     pass "installed version $installed_version"

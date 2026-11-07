@@ -28,8 +28,8 @@ import android.widget.Toast;
 import java.io.File;
 
 public class MainActivity extends Activity {
-    public static final String VERSION_NAME = "6.0.0";
-    public static final int VERSION_CODE = 32;
+    public static final String VERSION_NAME = BuildConfig.VERSION_NAME;
+    public static final int VERSION_CODE = BuildConfig.VERSION_CODE;
     public static final String PREF_NAME = "hyper_icons_config";
     public static final String ACTION_RELOAD = "com.midori.hypericons.ACTION_RELOAD";
     public static final String PROJECT_URL = "https://github.com/midori01/HyperIcons";

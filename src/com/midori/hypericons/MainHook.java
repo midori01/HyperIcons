@@ -416,22 +416,34 @@ public class MainHook {
 
     // HyperOS only shows the small roaming R natively while the data type is hidden, so the
     // R glyph shares the top-left corner of the signal bars with the data type label and
-    // the 5G pill. While the R is visible, push whichever of them is shown to its left,
-    // and next to a flat text label put the R on the label's baseline.
+    // the 5G pill. While both are shown, the label and the R are placed as one label by
+    // SystemUI's own rule for mobile_type, so a longer pair reaches further into the bars
+    // like any long label. The R sits on the label's baseline, flat or capsule, and is
+    // centred on the 5G pill.
     // Geometry comes from the stat_sys_data_connected_roam_small and signal_5g_off vectors.
     private static final float SMALL_ROAM_WIDTH_DP = 24f;
-    private static final float SMALL_ROAM_GLYPH_FROM_END_DP = 24f - 4.618f;
     private static final float SMALL_ROAM_HEIGHT_DP = 20f;
+    private static final float SMALL_ROAM_GLYPH_LEFT_DP = 4.618f;
+    private static final float SMALL_ROAM_GLYPH_RIGHT_DP = 8.78f;
+    private static final float SMALL_ROAM_GLYPH_TOP_DP = 2.432f;
     private static final float SMALL_ROAM_GLYPH_BOTTOM_DP = 7.695f;
     private static final float SPECIAL_5G_WIDTH_DP = 25f;
-    private static final float SPECIAL_5G_PILL_FROM_END_DP = 25f - 12f;
+    private static final float SPECIAL_5G_HEIGHT_DP = 20f;
+    private static final float SPECIAL_5G_PILL_TOP_DP = 1.6f;
+    private static final float SPECIAL_5G_PILL_BOTTOM_DP = 7.6f;
+    private static final float SPECIAL_5G_PILL_LEFT_DP = 3f;
+    private static final float SPECIAL_5G_PILL_RIGHT_DP = 12f;
     private static final float SIGNAL_WIDTH_DP = 20f;
-    private static final float SMALL_ROAM_GAP_DP = 1.0f;
+    private static final float SMALL_ROAM_GAP_DP = 0.8f;
+    private static final float TYPE_HALF_MARGIN_END_OFFSET_DP = -1.8f;
+    private static final float TYPE_AVAILABLE_HALF_OFFSET_DP = -10.7f;
 
     private static int sIdSmallRoam = 0;
     private static int sIdSignal = 0;
     private static int sIdMobileType = 0;
     private static int sIdSpecial5g = 0;
+    private static int sIdTypeHalfOffset = 0;
+    private static int sIdTypeAvailableOffset = 0;
 
     private static void installSmallRoamClearance(final ViewGroup container) {
         if (container == null) return;
@@ -470,53 +482,92 @@ public class MainHook {
             sIdSignal = res.getIdentifier("mobile_signal", "id", "com.android.systemui");
             sIdMobileType = res.getIdentifier("mobile_type", "id", "com.android.systemui");
             sIdSpecial5g = res.getIdentifier("mobile_special_5G", "id", "com.android.systemui");
+            sIdTypeHalfOffset = res.getIdentifier(
+                    "status_bar_mobile_type_half_margin_end_offset", "dimen", "com.android.systemui");
+            sIdTypeAvailableOffset = res.getIdentifier(
+                    "status_bar_mobile_type_available_half_offset", "dimen", "com.android.systemui");
         }
         if (sIdSmallRoam == 0) return false;
         float density = res.getDisplayMetrics().density;
         View smallRoam = container.findViewById(sIdSmallRoam);
-        boolean roamShown = smallRoam != null && smallRoam.getVisibility() == View.VISIBLE;
-        float roamWidth = smallRoam != null && smallRoam.getWidth() > 0
-                ? smallRoam.getWidth() : SMALL_ROAM_WIDTH_DP * density;
-        // Distance from the shared end edge to where the R glyph starts, plus a gap.
-        float clearFromEnd = roamWidth * (SMALL_ROAM_GLYPH_FROM_END_DP / SMALL_ROAM_WIDTH_DP)
-                + SMALL_ROAM_GAP_DP * density;
-        boolean changed = false;
-
         View type = sIdMobileType != 0 ? container.findViewById(sIdMobileType) : null;
-        if (type != null) {
-            View signal = sIdSignal != 0 ? container.findViewById(sIdSignal) : null;
-            float signalWidth = signal != null && signal.getWidth() > 0
-                    ? signal.getWidth() : SIGNAL_WIDTH_DP * density;
-            // mobile_type ends at the start of mobile_signal minus its end margin.
-            int minMarginEnd = (int) Math.ceil(clearFromEnd - signalWidth);
-            changed |= applyClearanceMargin(type,
-                    roamShown && type.getVisibility() == View.VISIBLE, minMarginEnd);
+        View pill = sIdSpecial5g != 0 ? container.findViewById(sIdSpecial5g) : null;
+        View signal = sIdSignal != 0 ? container.findViewById(sIdSignal) : null;
+        boolean roamShown = smallRoam != null && smallRoam.getVisibility() == View.VISIBLE;
+        boolean typeShown = type != null && type.getVisibility() == View.VISIBLE;
+        boolean pillShown = !typeShown && pill != null && pill.getVisibility() == View.VISIBLE;
+
+        // All positions below are measured from the start of mobile_signal. mobile_type ends
+        // at -marginEnd; mobile_small_roam and mobile_special_5G end where mobile_signal ends.
+        float signalWidth = signal != null && signal.getWidth() > 0
+                ? signal.getWidth() : SIGNAL_WIDTH_DP * density;
+        float roamScale = (smallRoam != null && smallRoam.getWidth() > 0
+                ? smallRoam.getWidth() : SMALL_ROAM_WIDTH_DP * density) / SMALL_ROAM_WIDTH_DP;
+        float pillScale = (pill != null && pill.getWidth() > 0
+                ? pill.getWidth() : SPECIAL_5G_WIDTH_DP * density) / SPECIAL_5G_WIDTH_DP;
+        float glyphWidth = (SMALL_ROAM_GLYPH_RIGHT_DP - SMALL_ROAM_GLYPH_LEFT_DP) * roamScale;
+        float glyphStart = signalWidth - (SMALL_ROAM_WIDTH_DP - SMALL_ROAM_GLYPH_LEFT_DP) * roamScale;
+        float pillEnd = signalWidth - (SPECIAL_5G_WIDTH_DP - SPECIAL_5G_PILL_RIGHT_DP) * pillScale;
+        float gap = SMALL_ROAM_GAP_DP * density;
+
+        int typeMarginEnd = 0;
+        int pillMarginEnd = 0;
+        float shiftX = 0f;
+        if (roamShown && (typeShown || pillShown)) {
+            float labelWidth;
+            if (typeShown) {
+                ViewGroup.LayoutParams lp = type.getLayoutParams();
+                labelWidth = lp != null && lp.width > 0 ? lp.width : type.getWidth();
+            } else {
+                labelWidth = (SPECIAL_5G_PILL_RIGHT_DP - SPECIAL_5G_PILL_LEFT_DP) * pillScale;
+            }
+            float halfOffset = TYPE_HALF_MARGIN_END_OFFSET_DP * density;
+            float availableOffset = TYPE_AVAILABLE_HALF_OFFSET_DP * density;
+            try {
+                if (sIdTypeHalfOffset != 0) halfOffset = res.getDimensionPixelSize(sIdTypeHalfOffset);
+                if (sIdTypeAvailableOffset != 0) availableOffset = res.getDimensionPixelSize(sIdTypeAvailableOffset);
+            } catch (Throwable ignored) {}
+            // SystemUI's mobile_type end margin, applied to the label and the R together.
+            float comboWidth = labelWidth + gap + glyphWidth;
+            float comboEnd = -Math.max(-comboWidth / 2f + halfOffset, availableOffset);
+            int labelEnd = Math.round(comboEnd - glyphWidth - gap);
+            if (typeShown) {
+                typeMarginEnd = -labelEnd;
+            } else {
+                pillMarginEnd = Math.round(pillEnd - labelEnd);
+            }
+            shiftX = Math.round(labelEnd + gap - glyphStart);
         }
 
-        View pill = sIdSpecial5g != 0 ? container.findViewById(sIdSpecial5g) : null;
+        boolean changed = false;
+        if (type != null) {
+            changed |= applyClearanceMargin(type, roamShown && typeShown, typeMarginEnd);
+        }
         if (pill != null) {
-            float pillWidth = pill.getWidth() > 0 ? pill.getWidth() : SPECIAL_5G_WIDTH_DP * density;
-            int minMarginEnd = (int) Math.ceil(clearFromEnd
-                    - pillWidth * (SPECIAL_5G_PILL_FROM_END_DP / SPECIAL_5G_WIDTH_DP));
-            changed |= applyClearanceMargin(pill,
-                    roamShown && pill.getVisibility() == View.VISIBLE, minMarginEnd);
+            changed |= applyClearanceMargin(pill, roamShown && pillShown, pillMarginEnd);
         }
 
         if (smallRoam != null) {
+            if (smallRoam.getTranslationX() != shiftX) {
+                smallRoam.setTranslationX(shiftX);
+            }
+
             float shiftY = 0f;
-            if (roamShown && type instanceof ImageView && type.getVisibility() == View.VISIBLE
-                    && type.getHeight() > 0 && smallRoam.getHeight() > 0) {
-                Drawable d = ((ImageView) type).getDrawable();
-                int textHeight = -1;
-                try {
-                    if (d != null) textHeight = Reflect.getIntField(d, "mHeight");
-                } catch (Throwable ignored) {}
-                // Flat text: SystemUI sizes the box to the label and draws it on the box's
-                // bottom edge, so sit the R on the same baseline.
-                if (textHeight > 0 && textHeight == type.getHeight()) {
-                    float glyphBottom = smallRoam.getTop() + smallRoam.getHeight()
-                            * (SMALL_ROAM_GLYPH_BOTTOM_DP / SMALL_ROAM_HEIGHT_DP);
-                    shiftY = Math.round(type.getBottom() - glyphBottom);
+            if (roamShown && smallRoam.getHeight() > 0) {
+                float roamScaleY = smallRoam.getHeight() / SMALL_ROAM_HEIGHT_DP;
+                if (typeShown && type instanceof ImageView && type.getHeight() > 0) {
+                    float baseline = labelBaseline((ImageView) type);
+                    if (!Float.isNaN(baseline)) {
+                        shiftY = Math.round(baseline
+                                - (smallRoam.getTop() + SMALL_ROAM_GLYPH_BOTTOM_DP * roamScaleY));
+                    }
+                } else if (pillShown && pill.getHeight() > 0) {
+                    float pillScaleY = pill.getHeight() / SPECIAL_5G_HEIGHT_DP;
+                    float pillCenter = pill.getTop()
+                            + (SPECIAL_5G_PILL_TOP_DP + SPECIAL_5G_PILL_BOTTOM_DP) / 2f * pillScaleY;
+                    float glyphCenter = smallRoam.getTop()
+                            + (SMALL_ROAM_GLYPH_TOP_DP + SMALL_ROAM_GLYPH_BOTTOM_DP) / 2f * roamScaleY;
+                    shiftY = Math.round(pillCenter - glyphCenter);
                 }
             }
             if (smallRoam.getTranslationY() != shiftY) {
@@ -526,7 +577,30 @@ public class MainHook {
         return changed;
     }
 
-    private static boolean applyClearanceMargin(View view, boolean active, int minMarginEnd) {
+    private static final Paint sCapsuleMetricsPaint = new Paint();
+
+    // Baseline of the label drawn in mobile_type, in its parent's coordinates, or NaN.
+    private static float labelBaseline(ImageView type) {
+        Drawable d = type.getDrawable();
+        if (d == null) return Float.NaN;
+        try {
+            // Flat text: SystemUI sizes the box to the label and draws it on the bottom edge.
+            int textHeight = Reflect.getIntField(d, "mHeight");
+            if (textHeight > 0 && textHeight == type.getHeight()) return type.getBottom();
+            // Capsule: drawCapsuleBreath centres the text in the 0.6dp to 8.6dp pill.
+            IconConfig cfg = getConfigForSlot(getSlotIdForView(type));
+            if ("korean".equals(cfg.capsule) && isCapsuleTargetText(getDrawableMobileType(d), cfg)) {
+                sCapsuleMetricsPaint.set((Paint) Reflect.getObjectField(d, "mMobileTypeTextPaint"));
+                sCapsuleMetricsPaint.setTextSize(dpToPx(6.1f));
+                Paint.FontMetrics fm = sCapsuleMetricsPaint.getFontMetrics();
+                float pillCenter = (dpToPx(0.6f) + dpToPx(8.6f)) / 2f;
+                return type.getTop() + pillCenter - (fm.descent + fm.ascent) / 2f;
+            }
+        } catch (Throwable ignored) {}
+        return Float.NaN;
+    }
+
+    private static boolean applyClearanceMargin(View view, boolean active, int marginEnd) {
         ViewGroup.LayoutParams lp = view.getLayoutParams();
         if (!(lp instanceof ViewGroup.MarginLayoutParams)) return false;
         ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) lp;
@@ -536,7 +610,7 @@ public class MainHook {
         // A margin that differs from the one we last set was written by SystemUI.
         int nativeMarginEnd = (applied instanceof Integer && saved instanceof Integer
                 && current == ((Integer) applied).intValue()) ? ((Integer) saved).intValue() : current;
-        int target = active ? Math.max(nativeMarginEnd, minMarginEnd) : nativeMarginEnd;
+        int target = active ? marginEnd : nativeMarginEnd;
         Reflect.setAdditionalInstanceField(view, "hiNativeMarginEnd", Integer.valueOf(nativeMarginEnd));
         Reflect.setAdditionalInstanceField(view, "hiRoamMarginEnd", Integer.valueOf(target));
         if (target == current) return false;

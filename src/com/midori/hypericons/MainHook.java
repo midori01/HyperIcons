@@ -414,6 +414,137 @@ public class MainHook {
         }
     }
 
+    // HyperOS only shows the small roaming R natively while the data type is hidden, so the
+    // R glyph shares the top-left corner of the signal bars with the data type label and
+    // the 5G pill. While the R is visible, push whichever of them is shown to its left,
+    // and next to a flat text label put the R on the label's baseline.
+    // Geometry comes from the stat_sys_data_connected_roam_small and signal_5g_off vectors.
+    private static final float SMALL_ROAM_WIDTH_DP = 24f;
+    private static final float SMALL_ROAM_GLYPH_FROM_END_DP = 24f - 4.618f;
+    private static final float SMALL_ROAM_HEIGHT_DP = 20f;
+    private static final float SMALL_ROAM_GLYPH_BOTTOM_DP = 7.695f;
+    private static final float SPECIAL_5G_WIDTH_DP = 25f;
+    private static final float SPECIAL_5G_PILL_FROM_END_DP = 25f - 12f;
+    private static final float SIGNAL_WIDTH_DP = 20f;
+    private static final float SMALL_ROAM_GAP_DP = 1.0f;
+
+    private static int sIdSmallRoam = 0;
+    private static int sIdSignal = 0;
+    private static int sIdMobileType = 0;
+    private static int sIdSpecial5g = 0;
+
+    private static void installSmallRoamClearance(final ViewGroup container) {
+        if (container == null) return;
+        if (Reflect.getAdditionalInstanceField(container, "hiSmallRoamClearance") != null) return;
+        final android.view.ViewTreeObserver.OnPreDrawListener listener = new android.view.ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                try {
+                    return !applySmallRoamClearance(container);
+                } catch (Throwable t) {
+                    return true;
+                }
+            }
+        };
+        Reflect.setAdditionalInstanceField(container, "hiSmallRoamClearance", listener);
+        container.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(View v) {
+                v.getViewTreeObserver().addOnPreDrawListener(listener);
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(View v) {
+                v.getViewTreeObserver().removeOnPreDrawListener(listener);
+            }
+        });
+        if (container.isAttachedToWindow()) {
+            container.getViewTreeObserver().addOnPreDrawListener(listener);
+        }
+    }
+
+    private static boolean applySmallRoamClearance(ViewGroup container) {
+        android.content.res.Resources res = container.getResources();
+        if (sIdSmallRoam == 0) {
+            sIdSmallRoam = res.getIdentifier("mobile_small_roam", "id", "com.android.systemui");
+            sIdSignal = res.getIdentifier("mobile_signal", "id", "com.android.systemui");
+            sIdMobileType = res.getIdentifier("mobile_type", "id", "com.android.systemui");
+            sIdSpecial5g = res.getIdentifier("mobile_special_5G", "id", "com.android.systemui");
+        }
+        if (sIdSmallRoam == 0) return false;
+        float density = res.getDisplayMetrics().density;
+        View smallRoam = container.findViewById(sIdSmallRoam);
+        boolean roamShown = smallRoam != null && smallRoam.getVisibility() == View.VISIBLE;
+        float roamWidth = smallRoam != null && smallRoam.getWidth() > 0
+                ? smallRoam.getWidth() : SMALL_ROAM_WIDTH_DP * density;
+        // Distance from the shared end edge to where the R glyph starts, plus a gap.
+        float clearFromEnd = roamWidth * (SMALL_ROAM_GLYPH_FROM_END_DP / SMALL_ROAM_WIDTH_DP)
+                + SMALL_ROAM_GAP_DP * density;
+        boolean changed = false;
+
+        View type = sIdMobileType != 0 ? container.findViewById(sIdMobileType) : null;
+        if (type != null) {
+            View signal = sIdSignal != 0 ? container.findViewById(sIdSignal) : null;
+            float signalWidth = signal != null && signal.getWidth() > 0
+                    ? signal.getWidth() : SIGNAL_WIDTH_DP * density;
+            // mobile_type ends at the start of mobile_signal minus its end margin.
+            int minMarginEnd = (int) Math.ceil(clearFromEnd - signalWidth);
+            changed |= applyClearanceMargin(type,
+                    roamShown && type.getVisibility() == View.VISIBLE, minMarginEnd);
+        }
+
+        View pill = sIdSpecial5g != 0 ? container.findViewById(sIdSpecial5g) : null;
+        if (pill != null) {
+            float pillWidth = pill.getWidth() > 0 ? pill.getWidth() : SPECIAL_5G_WIDTH_DP * density;
+            int minMarginEnd = (int) Math.ceil(clearFromEnd
+                    - pillWidth * (SPECIAL_5G_PILL_FROM_END_DP / SPECIAL_5G_WIDTH_DP));
+            changed |= applyClearanceMargin(pill,
+                    roamShown && pill.getVisibility() == View.VISIBLE, minMarginEnd);
+        }
+
+        if (smallRoam != null) {
+            float shiftY = 0f;
+            if (roamShown && type instanceof ImageView && type.getVisibility() == View.VISIBLE
+                    && type.getHeight() > 0 && smallRoam.getHeight() > 0) {
+                Drawable d = ((ImageView) type).getDrawable();
+                int textHeight = -1;
+                try {
+                    if (d != null) textHeight = Reflect.getIntField(d, "mHeight");
+                } catch (Throwable ignored) {}
+                // Flat text: SystemUI sizes the box to the label and draws it on the box's
+                // bottom edge, so sit the R on the same baseline.
+                if (textHeight > 0 && textHeight == type.getHeight()) {
+                    float glyphBottom = smallRoam.getTop() + smallRoam.getHeight()
+                            * (SMALL_ROAM_GLYPH_BOTTOM_DP / SMALL_ROAM_HEIGHT_DP);
+                    shiftY = Math.round(type.getBottom() - glyphBottom);
+                }
+            }
+            if (smallRoam.getTranslationY() != shiftY) {
+                smallRoam.setTranslationY(shiftY);
+            }
+        }
+        return changed;
+    }
+
+    private static boolean applyClearanceMargin(View view, boolean active, int minMarginEnd) {
+        ViewGroup.LayoutParams lp = view.getLayoutParams();
+        if (!(lp instanceof ViewGroup.MarginLayoutParams)) return false;
+        ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) lp;
+        int current = mlp.getMarginEnd();
+        Object applied = Reflect.getAdditionalInstanceField(view, "hiRoamMarginEnd");
+        Object saved = Reflect.getAdditionalInstanceField(view, "hiNativeMarginEnd");
+        // A margin that differs from the one we last set was written by SystemUI.
+        int nativeMarginEnd = (applied instanceof Integer && saved instanceof Integer
+                && current == ((Integer) applied).intValue()) ? ((Integer) saved).intValue() : current;
+        int target = active ? Math.max(nativeMarginEnd, minMarginEnd) : nativeMarginEnd;
+        Reflect.setAdditionalInstanceField(view, "hiNativeMarginEnd", Integer.valueOf(nativeMarginEnd));
+        Reflect.setAdditionalInstanceField(view, "hiRoamMarginEnd", Integer.valueOf(target));
+        if (target == current) return false;
+        mlp.setMarginEnd(target);
+        view.setLayoutParams(mlp);
+        return true;
+    }
+
     private static final List<WeakReference<ImageView>> sTrackedViews = new ArrayList<WeakReference<ImageView>>();
 
     private static synchronized void trackActiveView(ImageView view) {
@@ -1266,9 +1397,38 @@ public class MainHook {
                     mobileTypeView.setScaleType(ImageView.ScaleType.FIT_XY);
                 } else {
                     mobileTypeView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    restoreNativeTypeLayout(mobileTypeView, d, currentText);
                 }
                 if (d != null) d.invalidateSelf();
             }
+        }
+    }
+
+    private static Class<?> sBinderClz = null;
+    private static boolean sRestoringTypeLayout = false;
+
+    // SystemUI sizes mobile_type to the drawable only when its own label changes. A capsule
+    // left behind after switching to flat text, or a rewritten label, leaves a box that
+    // FIT_CENTER scales the text into, so re-run SystemUI's sizing when the box is stale.
+    private static void restoreNativeTypeLayout(ImageView view, Drawable d, String text) {
+        if (d == null || sBinderClz == null || sRestoringTypeLayout) return;
+        ViewGroup.LayoutParams lp = view.getLayoutParams();
+        if (lp == null) return;
+        int height;
+        try {
+            height = Reflect.getIntField(d, "mHeight");
+        } catch (Throwable t) {
+            return;
+        }
+        if (lp.width == d.getIntrinsicWidth() && lp.height == height) return;
+        sRestoringTypeLayout = true;
+        try {
+            Reflect.callStaticMethod(sBinderClz, "updateMobileTypeLayoutParams",
+                    d, text != null ? text : "", view);
+        } catch (Throwable t) {
+            HookEnv.log(TAG + ": restoreNativeTypeLayout error: " + t);
+        } finally {
+            sRestoringTypeLayout = false;
         }
     }
 
@@ -1804,6 +1964,8 @@ public class MainHook {
                                     smallRoamView = (ImageView) parent.getRootView().findViewById(smallRoamViewId);
                                 }
                             }
+
+                            installSmallRoamClearance(parent);
 
                             int subId = getSubIdForView(mobileTypeView);
                             boolean isRoaming = isSubIdRoaming(subId, parent.getContext());
@@ -2690,6 +2852,7 @@ public class MainHook {
             lpparam.classLoader
         );
         if (binderClz == null) return;
+        sBinderClz = binderClz;
 
         // Early SubId tagging on bind
         Class<?> locVMClz = Reflect.findClassIfExists(
@@ -2848,6 +3011,9 @@ public class MainHook {
                                 Reflect.setAdditionalInstanceField(smallRoamView, "subId", Integer.valueOf(subId));
                                 if (slotId >= 0) {
                                     Reflect.setAdditionalInstanceField(smallRoamView, "slotId", Integer.valueOf(slotId));
+                                }
+                                if (smallRoamView.getParent() instanceof ViewGroup) {
+                                    installSmallRoamClearance((ViewGroup) smallRoamView.getParent());
                                 }
                             }
                         } catch (Throwable t) {

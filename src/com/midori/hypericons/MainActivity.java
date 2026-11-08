@@ -4,19 +4,26 @@ import android.animation.LayoutTransition;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.InputFilter;
+import android.text.InputType;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.TextWatcher;
 import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
@@ -47,6 +54,8 @@ public class MainActivity extends Activity {
     // Per-SIM option keys (see ConfigKeys for the slot overrides)
     public static final String KEY_5G_CA = ConfigKeys.KEY_5G_CA;
     public static final String KEY_5G_BASIC = ConfigKeys.KEY_5G_BASIC;
+    public static final String KEY_5G_CA_TEXT = ConfigKeys.KEY_5G_CA_TEXT;
+    public static final String KEY_5G_BASIC_TEXT = ConfigKeys.KEY_5G_BASIC_TEXT;
     public static final String KEY_CAPSULE_STYLE = ConfigKeys.KEY_CAPSULE_STYLE;
     public static final String KEY_4G_RAT = ConfigKeys.KEY_4G_RAT;
     public static final String KEY_ALWAYS_SHOW_RAT = ConfigKeys.KEY_ALWAYS_SHOW_RAT;
@@ -114,6 +123,8 @@ public class MainActivity extends Activity {
     private RadioGroup mRgCapsuleStyle;
     private RadioGroup mRg5gCa;
     private RadioGroup mRg5gBasic;
+    private RadioButton mRbCaCustom;
+    private RadioButton mRbBasicCustom;
     private RadioGroup mRg4gRat;
     private RadioGroup mRgAlwaysShowRat;
     private RadioGroup mRgVolteStyle;
@@ -206,6 +217,8 @@ public class MainActivity extends Activity {
         mRgCapsuleStyle = findViewById(R.id.rg_capsule_style);
         mRg5gCa = findViewById(R.id.rg_5g_ca);
         mRg5gBasic = findViewById(R.id.rg_5g_basic);
+        mRbCaCustom = findViewById(R.id.rb_ca_custom);
+        mRbBasicCustom = findViewById(R.id.rb_basic_custom);
         mRg4gRat = findViewById(R.id.rg_4g_rat);
         mRgAlwaysShowRat = findViewById(R.id.rg_always_show_rat);
         mRgVolteStyle = findViewById(R.id.rg_volte_style);
@@ -502,25 +515,166 @@ public class MainActivity extends Activity {
     }
 
     private void saveConfigValue(String baseKey, String val) {
+        saveConfigValues(new String[] { baseKey }, new String[] { val });
+    }
+
+    private void saveConfigValues(String[] baseKeys, String[] vals) {
         SharedPreferences.Editor editor = mPrefs.edit();
-        if (VAL_SIM_MODE_BOTH.equals(mCurrentSimMode)) {
-            editor.putString(KEY_SIM_MODE, VAL_SIM_MODE_BOTH);
-            editor.putString(baseKey, val);
-            // Synchronize to slot keys so switching modes remains consistent
-            editor.putString(getSlot1Key(baseKey), val);
-            editor.putString(getSlot2Key(baseKey), val);
-        } else {
-            editor.putString(KEY_SIM_MODE, VAL_SIM_MODE_SEPARATE);
-            if (TAB_SIM2.equals(mCurrentSubSlot)) {
+        for (int i = 0; i < baseKeys.length; i++) {
+            String baseKey = baseKeys[i];
+            String val = vals[i];
+            if (VAL_SIM_MODE_BOTH.equals(mCurrentSimMode)) {
+                editor.putString(KEY_SIM_MODE, VAL_SIM_MODE_BOTH);
+                editor.putString(baseKey, val);
+                // Synchronize to slot keys so switching modes remains consistent
+                editor.putString(getSlot1Key(baseKey), val);
                 editor.putString(getSlot2Key(baseKey), val);
             } else {
-                editor.putString(getSlot1Key(baseKey), val);
+                editor.putString(KEY_SIM_MODE, VAL_SIM_MODE_SEPARATE);
+                if (TAB_SIM2.equals(mCurrentSubSlot)) {
+                    editor.putString(getSlot2Key(baseKey), val);
+                } else {
+                    editor.putString(getSlot1Key(baseKey), val);
+                }
             }
         }
         editor.commit();
         fixFilePermissions();
         updateBadges();
         sendReloadBroadcast(false);
+    }
+
+    private void updateCustomOptionLabels() {
+        setCustomOptionLabel(mRbCaCustom, KEY_5G_CA_TEXT);
+        setCustomOptionLabel(mRbBasicCustom, KEY_5G_BASIC_TEXT);
+    }
+
+    private void setCustomOptionLabel(RadioButton button, String textKey) {
+        if (button == null) return;
+        String text = IconPolicy.customText(getEffectiveConfigValue(textKey));
+        button.setText(text.isEmpty() ? getString(R.string.opt_custom) : getString(R.string.opt_custom_value, text));
+    }
+
+    /** Message explaining why a custom label cannot be saved for the current SIM tab, or 0. */
+    private int customTextError(boolean ca, String raw) {
+        switch (IconPolicy.checkCustomText(raw)) {
+            case IconPolicy.CUSTOM_TEXT_EMPTY:
+                return R.string.custom_err_empty;
+            case IconPolicy.CUSTOM_TEXT_TOO_LONG:
+                return R.string.custom_err_long;
+            case IconPolicy.CUSTOM_TEXT_BAD_CHAR:
+                return R.string.custom_err_chars;
+            case IconPolicy.CUSTOM_TEXT_RESERVED:
+                return R.string.custom_err_reserved;
+            default:
+                break;
+        }
+        String text = IconPolicy.trimLabel(raw);
+        if (ca) {
+            String basicCustom = IconPolicy.CUSTOM.equals(getEffectiveConfigValue(KEY_5G_BASIC))
+                    ? IconPolicy.customText(getEffectiveConfigValue(KEY_5G_BASIC_TEXT)) : "";
+            if (text.equals(basicCustom)) return R.string.custom_err_same_as_basic;
+        } else if (IconPolicy.is5gCaLabel(text, getEffectiveConfigValue(KEY_5G_CA),
+                getEffectiveConfigValue(KEY_5G_CA_TEXT))) {
+            return R.string.custom_err_same_as_ca;
+        }
+        return 0;
+    }
+
+    private void showCustomTextDialog(final boolean ca) {
+        final String modeKey = ca ? KEY_5G_CA : KEY_5G_BASIC;
+        final String textKey = ca ? KEY_5G_CA_TEXT : KEY_5G_BASIC_TEXT;
+        final String stockLabel = ca ? "5G+" : "5G";
+        String saved = IconPolicy.customText(getEffectiveConfigValue(textKey));
+
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(24), dp(12), dp(24), 0);
+
+        final TextView preview = new TextView(this, null, 0, R.style.ValueChip);
+        preview.setTypeface(Typeface.DEFAULT_BOLD);
+        LinearLayout.LayoutParams previewLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        previewLp.gravity = Gravity.CENTER_HORIZONTAL;
+        previewLp.bottomMargin = dp(12);
+        box.addView(preview, previewLp);
+
+        final EditText input = new EditText(this);
+        input.setSingleLine(true);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        input.setFilters(new InputFilter[] { new InputFilter.LengthFilter(IconPolicy.CUSTOM_TEXT_MAX_LENGTH) });
+        input.setHint(R.string.custom_text_hint);
+        input.setText(saved);
+        input.setSelection(input.getText().length());
+        box.addView(input, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        final TextView helper = new TextView(this);
+        helper.setTextSize(12);
+        helper.setPadding(0, dp(4), 0, dp(4));
+        box.addView(helper, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(ca ? R.string.dialog_custom_ca_title : R.string.dialog_custom_basic_title)
+                .setView(box)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface d, int which) {
+                        String raw = input.getText().toString();
+                        if (customTextError(ca, raw) != 0) return;
+                        saveConfigValues(new String[] { textKey, modeKey },
+                                new String[] { IconPolicy.trimLabel(raw), IconPolicy.CUSTOM });
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .create();
+        // Cancel, back and OK all land here: re-sync the radio with what is stored.
+        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface d) {
+                loadUiFromPrefs();
+            }
+        });
+
+        final Runnable refresh = new Runnable() {
+            @Override
+            public void run() {
+                String raw = input.getText().toString();
+                String shown = IconPolicy.trimLabel(raw);
+                preview.setText(shown.isEmpty() ? stockLabel : shown);
+                preview.setAlpha(shown.isEmpty() ? 0.4f : 1f);
+                int err = customTextError(ca, raw);
+                boolean showError = err != 0 && !shown.isEmpty();
+                helper.setText(showError ? getString(err) : getString(R.string.custom_text_help));
+                helper.setTextColor(getColor(showError ? R.color.status_error : R.color.text_caption));
+                Button ok = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                if (ok != null) ok.setEnabled(err == 0);
+            }
+        };
+        input.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                refresh.run();
+            }
+        });
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface d) {
+                refresh.run();
+            }
+        });
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        }
+        dialog.show();
+        input.requestFocus();
     }
 
     private void switchMode(String mode) {
@@ -578,6 +732,8 @@ public class MainActivity extends Activity {
             mRg5gCa.check(R.id.rb_ca_5g_plus_plus_6rx);
         } else if (VAL_5GUWB_6RX.equals(caVal)) {
             mRg5gCa.check(R.id.rb_ca_5guwb_6rx);
+        } else if (IconPolicy.CUSTOM.equals(caVal)) {
+            mRg5gCa.check(R.id.rb_ca_custom);
         } else {
             mRg5gCa.check(R.id.rb_ca_default);
         }
@@ -585,6 +741,8 @@ public class MainActivity extends Activity {
         String basicVal = getEffectiveConfigValue(KEY_5G_BASIC);
         if (VAL_5G_FOLLOW_CA.equals(basicVal)) {
             mRg5gBasic.check(R.id.rb_basic_follow_ca);
+        } else if (IconPolicy.CUSTOM.equals(basicVal)) {
+            mRg5gBasic.check(R.id.rb_basic_custom);
         } else {
             mRg5gBasic.check(R.id.rb_basic_default);
         }
@@ -720,7 +878,7 @@ public class MainActivity extends Activity {
         mRg5gCa.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (mIsInitializing) return;
+                if (mIsInitializing || checkedId == R.id.rb_ca_custom) return;
                 String val = VAL_DEFAULT;
                 if (checkedId == R.id.rb_ca_5ga) val = VAL_5GA;
                 else if (checkedId == R.id.rb_ca_5g_plus) val = VAL_5G_PLUS;
@@ -738,9 +896,23 @@ public class MainActivity extends Activity {
         mRg5gBasic.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (mIsInitializing) return;
+                if (mIsInitializing || checkedId == R.id.rb_basic_custom) return;
                 String val = (checkedId == R.id.rb_basic_follow_ca) ? VAL_5G_FOLLOW_CA : VAL_DEFAULT;
                 saveConfigValue(KEY_5G_BASIC, val);
+            }
+        });
+
+        mRbCaCustom.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showCustomTextDialog(true);
+            }
+        });
+
+        mRbBasicCustom.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showCustomTextDialog(false);
             }
         });
 
@@ -1039,14 +1211,22 @@ public class MainActivity extends Activity {
             else if (VAL_5G_6RX.equals(caVal)) text = "5G 6Rx";
             else if (VAL_5G_PLUS_PLUS_6RX.equals(caVal)) text = "5G++ 6Rx";
             else if (VAL_5GUWB_6RX.equals(caVal)) text = "5GUWB 6Rx";
+            else if (IconPolicy.CUSTOM.equals(caVal)) {
+                String custom = IconPolicy.custom5gCaText(caVal, getEffectiveConfigValue(KEY_5G_CA_TEXT));
+                if (!custom.isEmpty()) text = custom;
+            }
             mBadge5gCa.setText(text);
         }
 
         String basicVal = getEffectiveConfigValue(KEY_5G_BASIC);
         if (mBadge5gBasic != null) {
             String text = VAL_5G_FOLLOW_CA.equals(basicVal) ? getString(R.string.opt_5g_follow_ca) : getString(R.string.opt_5g_default);
+            String custom = IconPolicy.custom5gBasicText(basicVal, getEffectiveConfigValue(KEY_5G_BASIC_TEXT),
+                    caVal, getEffectiveConfigValue(KEY_5G_CA_TEXT));
+            if (!custom.isEmpty()) text = custom;
             mBadge5gBasic.setText(text);
         }
+        updateCustomOptionLabels();
 
         String ratVal = getEffectiveConfigValue(KEY_4G_RAT);
         if (mBadge4gRat != null) {

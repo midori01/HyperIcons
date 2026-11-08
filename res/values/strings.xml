@@ -22,6 +22,18 @@
     <string name="sec_5g_basic_desc">Badge style when on single-carrier standard 5G</string>
     <string name="opt_5g_default">System Default (5G)</string>
     <string name="opt_5g_follow_ca">Follow 5G CA Icon</string>
+    <string name="opt_custom">Custom…</string>
+    <string name="opt_custom_value">Custom: %1$s</string>
+    <string name="dialog_custom_ca_title">Custom 5G CA label</string>
+    <string name="dialog_custom_basic_title">Custom 5G label</string>
+    <string name="custom_text_hint">e.g. 5G UC</string>
+    <string name="custom_text_help">Up to 10 characters. The status bar font may not have every symbol.</string>
+    <string name="custom_err_empty">Enter a label</string>
+    <string name="custom_err_long">Up to 10 characters</string>
+    <string name="custom_err_chars">Line breaks and invisible characters are not allowed</string>
+    <string name="custom_err_reserved">This label is used for another network type</string>
+    <string name="custom_err_same_as_ca">Same as the 5G CA label. Choose Follow 5G CA Icon instead.</string>
+    <string name="custom_err_same_as_basic">Same as the custom 5G label</string>
 
     <string name="sec_capsule_style_title">Icon Capsule Badge Style</string>
     <string name="sec_capsule_style_desc">Enclose 5G/4G network icons in a 9.0dp rounded capsule badge. Dual-carrier CA icons pulse with breathing glow</string>

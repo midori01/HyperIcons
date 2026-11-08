@@ -22,6 +22,18 @@
     <string name="sec_5g_basic_desc">일반 단일 대역 5G 연결 시 아이콘 표시 스타일</string>
     <string name="opt_5g_default">시스템 기본값 (5G)</string>
     <string name="opt_5g_follow_ca">5G CA 아이콘 따름</string>
+    <string name="opt_custom">사용자 지정…</string>
+    <string name="opt_custom_value">사용자 지정: %1$s</string>
+    <string name="dialog_custom_ca_title">5G CA 사용자 지정 표시</string>
+    <string name="dialog_custom_basic_title">5G 사용자 지정 표시</string>
+    <string name="custom_text_hint">예: 5G UC</string>
+    <string name="custom_text_help">최대 10자. 상태표시줄 글꼴에 없는 기호는 표시되지 않을 수 있습니다.</string>
+    <string name="custom_err_empty">표시할 문자를 입력하세요</string>
+    <string name="custom_err_long">최대 10자입니다</string>
+    <string name="custom_err_chars">줄바꿈이나 보이지 않는 문자는 사용할 수 없습니다</string>
+    <string name="custom_err_reserved">다른 네트워크 유형에서 쓰는 표시입니다</string>
+    <string name="custom_err_same_as_ca">5G CA 표시와 같습니다. \'5G CA 아이콘 따름\'을 선택하세요.</string>
+    <string name="custom_err_same_as_basic">5G 사용자 지정 표시와 같습니다</string>
 
     <string name="sec_capsule_style_title">아이콘 캡슐 배지 스타일</string>
     <string name="sec_capsule_style_desc">5G/4G 아이콘을 9.0dp 둥근 캡슐 배지로 통합하고, CA 연결 시 브리딩 발광 효과 적용</string>

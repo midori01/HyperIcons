@@ -1,3 +1,4 @@
+import com.midori.hypericons.ConfigKeys;
 import com.midori.hypericons.IconPolicy;
 
 import java.util.ArrayList;
@@ -17,9 +18,16 @@ public class PolicyProbe {
 
     public static void main(String[] args) {
         Map<String, List<String>> opts = new HashMap<String, List<String>>();
+        List<String> checks = new ArrayList<String>();
         for (String arg : args) {
             int eq = arg.indexOf('=');
-            opts.put(arg.substring(0, eq), Arrays.asList(arg.substring(eq + 1).split(",", -1)));
+            String name = arg.substring(0, eq);
+            if ("check".equals(name)) {
+                // Raw custom labels may contain commas or control characters: one per argument.
+                checks.add(arg.substring(eq + 1));
+            } else {
+                opts.put(name, Arrays.asList(arg.substring(eq + 1).split(",", -1)));
+            }
         }
         StringBuilder out = new StringBuilder();
 
@@ -40,7 +48,7 @@ public class PolicyProbe {
                 for (String rat : opts.get("rat")) {
                     List<String> names = new ArrayList<String>();
                     for (int i = 0; i < 14; i++) names.add("x" + i);
-                    IconPolicy.applyMobileTypeNames(names, ca, basic, rat);
+                    IconPolicy.applyMobileTypeNames(names, mode(ca), label(ca), mode(basic), label(basic), rat);
                     line(out, "NAMES", ca, basic, rat, join(names));
                 }
             }
@@ -48,6 +56,44 @@ public class PolicyProbe {
 
         for (String text : opts.get("text")) {
             line(out, "RADIO", text, String.valueOf(IconPolicy.radioTypeForText(text)));
+        }
+
+        for (String ca : opts.get("ca")) {
+            for (String basic : opts.get("basic")) {
+                String caCustom = IconPolicy.custom5gCaText(mode(ca), label(ca));
+                String basicCustom = IconPolicy.custom5gBasicText(mode(basic), label(basic), mode(ca), label(ca));
+                for (String text : opts.get("text")) {
+                    line(out, "CRADIO", ca, basic, text,
+                            String.valueOf(IconPolicy.radioTypeForText(text, caCustom, basicCustom)),
+                            b(IconPolicy.is5gCaText(text, caCustom, basicCustom)),
+                            b(IconPolicy.isCapsuleTargetText(text, caCustom, basicCustom)),
+                            b(IconPolicy.usesNativeBase5gPill(mode(basic), basicCustom)));
+                }
+            }
+        }
+
+        // Stored: a global CA label and a SIM 2 override; the base label is never set.
+        final Map<String, String> stored = new HashMap<String, String>();
+        stored.put(ConfigKeys.KEY_5G_CA_TEXT, "G");
+        stored.put(ConfigKeys.slotKey(ConfigKeys.KEY_5G_CA_TEXT, 1), "S2");
+        Map<String, String> resolved = ConfigKeys.resolve(new ConfigKeys.Source() {
+            @Override
+            public String get(String key, String def) {
+                return stored.containsKey(key) ? stored.get(key) : def;
+            }
+        });
+        List<String> writable = ConfigKeys.allStringKeys();
+        for (String base : new String[] { ConfigKeys.KEY_5G_CA_TEXT, ConfigKeys.KEY_5G_BASIC_TEXT }) {
+            for (int slot = -1; slot <= 1; slot++) {
+                String key = ConfigKeys.slotKey(base, slot);
+                line(out, "CONFIG", key, resolved.get(key), b(writable.contains(key)));
+            }
+        }
+
+        for (int i = 0; i < checks.size(); i++) {
+            String raw = checks.get(i);
+            line(out, "CHECK", String.valueOf(i), String.valueOf(IconPolicy.checkCustomText(raw)),
+                    escape(IconPolicy.customText(raw)));
         }
 
         for (String volte : opts.get("volte")) {
@@ -98,6 +144,27 @@ public class PolicyProbe {
 
     private static String b(boolean v) {
         return v ? "1" : "0";
+    }
+
+    /** "custom:<label>" options select the custom mode; others are plain option values. */
+    private static String mode(String option) {
+        return option.startsWith("custom:") ? IconPolicy.CUSTOM : option;
+    }
+
+    private static String label(String option) {
+        return option.startsWith("custom:") ? option.substring("custom:".length()) : null;
+    }
+
+    /** Code points as U+XXXX so labels with tabs or newlines stay on one probe line. */
+    private static String escape(String s) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < s.length(); ) {
+            int cp = s.codePointAt(i);
+            if (sb.length() > 0) sb.append(' ');
+            sb.append(String.format("U+%04X", cp));
+            i += Character.charCount(cp);
+        }
+        return sb.toString();
     }
 
     private static String join(List<String> items) {

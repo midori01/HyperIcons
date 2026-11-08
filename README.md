@@ -24,12 +24,14 @@ When the device is connected to a 5G network with active Carrier Aggregation (CA
 - **5G 6Rx**: Force the Qualcomm Snapdragon 8 Elite flagship 6-receive antenna indicator (`ic_5g_6rx_mobiledata`).
 - **5G++ 6Rx**: Force the composite stacked dual-plus and 6Rx antenna badge (`ic_5g_plus_plus_6rx_mobiledata`).
 - **5GUWB 6Rx**: Force the composite Ultra Wideband and 6Rx antenna badge (`ic_5g_uwb_6rx_mobiledata`).
+- **Custom**: Show your own label of up to 10 characters (for example `5G UC`). Labels that SystemUI uses for other network types (such as `LTE` or `4G+`) are rejected.
 
 ### 2) Basic 5G Display Mode (Single-Carrier NSA / SA)
 Configures status bar presentation when connected to standard single-carrier 5G without Carrier Aggregation:
 - **Default**: System standard 5G indicator.
 - **Korean Dynamic Pulsation**: Activates the Korean-variant dynamic `$special5G` badge, illuminating during active upstream/downstream traffic (`signal_5g_on`) and dimming when idle (`signal_5g_off`).
 - **Follow 5G CA**: Mirrors the visual styling configured for 5G Carrier Aggregation regardless of active carrier aggregation state.
+- **Custom**: Show your own label of up to 10 characters (for example `NR`). It must differ from what 5G CA shows. With the capsule style on, the label is drawn in the module's capsule instead of the native Korean pill, and like the pill it turns solid while data is active and hollow when idle.
 
 ### 3) 4G / LTE RAT Styles
 Forces specific cellular network radio access technology badges and carrier aggregation indicators:
@@ -100,8 +102,8 @@ Forces specific cellular network radio access technology badges and carrier aggr
 bash run_tests.sh
 ```
 
-- **Dual-Model Oracle** (`tests/test_matrix.py`): 1,897,519 Cartesian combinations across single-SIM, dual-SIM, cross-slot independent controls, VoWiFi, Roaming, and VoLTE / VoNR on Wi-Fi states, checked against an independent Ground Truth Oracle (0 mismatches).
-- **Real Java rules** (`tests/test_java_policy.py`): the presentation rules in `IconPolicy.java` are the exact code SystemUI runs. `tests/java/PolicyProbe.java` executes them on a plain JVM for every input combination (1,080 cases), and each result is compared with the same oracle. Requires a JDK.
+- **Dual-Model Oracle** (`tests/test_matrix.py`): 6,256,479 Cartesian combinations across single-SIM, dual-SIM, cross-slot independent controls, custom 5G / 5G CA labels, VoWiFi, Roaming, and VoLTE / VoNR on Wi-Fi states, checked against an independent Ground Truth Oracle (0 mismatches).
+- **Real Java rules** (`tests/test_java_policy.py`): the presentation rules in `IconPolicy.java` are the exact code SystemUI runs. `tests/java/PolicyProbe.java` executes them on a plain JVM for every input combination (2,870 cases, including custom label validation and the per-SIM fallback of the label keys), and each result is compared with the same oracle. Requires a JDK.
 - **On-device smoke test** (`tests/device_smoke.sh`): over adb, checks the installed version, the hook status reported by SystemUI and the phone process, and the data icon on the live status bar for every Wi-Fi mode, then restores your setting.
   ```bash
   bash tests/device_smoke.sh            # add --rom china on China ROMs

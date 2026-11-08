@@ -410,6 +410,11 @@
                     android:id="@+id/rb_ca_5guwb_6rx"
                     style="@style/OptionRow"
                     android:text="@string/opt_5guwb_6rx" />
+
+                <RadioButton
+                    android:id="@+id/rb_ca_custom"
+                    style="@style/OptionRow"
+                    android:text="@string/opt_custom" />
             </RadioGroup>
         </LinearLayout>
 
@@ -465,6 +470,11 @@
                     android:id="@+id/rb_basic_follow_ca"
                     style="@style/OptionRow"
                     android:text="@string/opt_5g_follow_ca" />
+
+                <RadioButton
+                    android:id="@+id/rb_basic_custom"
+                    style="@style/OptionRow"
+                    android:text="@string/opt_custom" />
             </RadioGroup>
         </LinearLayout>
 

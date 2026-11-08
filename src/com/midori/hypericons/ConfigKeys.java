@@ -21,6 +21,8 @@ public final class ConfigKeys {
 
     public static final String KEY_5G_CA = "pref_5g_ca";
     public static final String KEY_5G_BASIC = "pref_5g_basic";
+    public static final String KEY_5G_CA_TEXT = "pref_5g_ca_text";
+    public static final String KEY_5G_BASIC_TEXT = "pref_5g_basic_text";
     public static final String KEY_CAPSULE_STYLE = "pref_capsule_style";
     public static final String KEY_4G_RAT = "pref_4g_rat";
     public static final String KEY_ALWAYS_SHOW_RAT = "pref_always_show_rat";
@@ -37,6 +39,8 @@ public final class ConfigKeys {
     private static final String[] SIM_OPTION_KEYS = {
         KEY_5G_CA,
         KEY_5G_BASIC,
+        KEY_5G_CA_TEXT,
+        KEY_5G_BASIC_TEXT,
         KEY_CAPSULE_STYLE,
         KEY_4G_RAT,
         KEY_ALWAYS_SHOW_RAT,

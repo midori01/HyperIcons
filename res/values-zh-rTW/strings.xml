@@ -22,6 +22,18 @@
     <string name="sec_5g_basic_desc">普通單載波 5G 駐留時的圖示顯示模式</string>
     <string name="opt_5g_default">系統預設 (5G)</string>
     <string name="opt_5g_follow_ca">跟隨 5G CA 圖示</string>
+    <string name="opt_custom">自訂…</string>
+    <string name="opt_custom_value">自訂：%1$s</string>
+    <string name="dialog_custom_ca_title">自訂 5G CA 文字</string>
+    <string name="dialog_custom_basic_title">自訂 5G 文字</string>
+    <string name="custom_text_hint">例如 5G UC</string>
+    <string name="custom_text_help">最多 10 個字元。狀態列字型可能無法顯示部分符號。</string>
+    <string name="custom_err_empty">請輸入要顯示的文字</string>
+    <string name="custom_err_long">最多 10 個字元</string>
+    <string name="custom_err_chars">不能包含換行或不可見字元</string>
+    <string name="custom_err_reserved">這個文字已用於其他網路類型</string>
+    <string name="custom_err_same_as_ca">與 5G CA 顯示的文字相同，請改選「跟隨 5G CA 圖示」。</string>
+    <string name="custom_err_same_as_basic">與自訂的 5G 文字相同</string>
 
     <string name="sec_capsule_style_title">圖示膠囊樣式</string>
     <string name="sec_capsule_style_desc">將 5G/4G 圖示統一封裝為 9.0dp 圓角膠囊徽章，雙載波聚合 CA 自動啟用發光微光呼吸</string>

@@ -71,6 +71,8 @@ public class MainHook {
     public static class IconConfig {
         public String ca = "default";
         public String basic = "default";
+        public String caText = "default";
+        public String basicText = "default";
         public String capsule = "default";
         public String rat = "default";
         public String alwaysRat = "default";
@@ -87,6 +89,8 @@ public class MainHook {
         IconConfig cfg = new IconConfig();
         cfg.ca = configValue(c, KEY_5G_CA, slot);
         cfg.basic = configValue(c, KEY_5G_BASIC, slot);
+        cfg.caText = configValue(c, ConfigKeys.KEY_5G_CA_TEXT, slot);
+        cfg.basicText = configValue(c, ConfigKeys.KEY_5G_BASIC_TEXT, slot);
         cfg.capsule = configValue(c, KEY_CAPSULE_STYLE, slot);
         cfg.rat = configValue(c, KEY_4G_RAT, slot);
         cfg.alwaysRat = configValue(c, KEY_ALWAYS_SHOW_RAT, slot);
@@ -462,8 +466,21 @@ public class MainHook {
         return null;
     }
 
+    private static IconConfig orGlobal(IconConfig cfg) {
+        return cfg != null ? cfg : getConfigForSlot(-1);
+    }
+
+    private static String caCustom(IconConfig cfg) {
+        return IconPolicy.custom5gCaText(cfg.ca, cfg.caText);
+    }
+
+    private static String basicCustom(IconConfig cfg) {
+        return IconPolicy.custom5gBasicText(cfg.basic, cfg.basicText, cfg.ca, cfg.caText);
+    }
+
     private static String getTarget5gCaText(IconConfig cfg) {
-        return IconPolicy.target5gCaText(cfg != null ? cfg.ca : pref(KEY_5G_CA));
+        IconConfig c = orGlobal(cfg);
+        return IconPolicy.target5gCaText(c.ca, c.caText);
     }
 
     private static String getTarget5gCaText() {
@@ -471,7 +488,8 @@ public class MainHook {
     }
 
     private static String getEffective5gCaText(IconConfig cfg) {
-        return IconPolicy.effective5gCaText(cfg != null ? cfg.ca : pref(KEY_5G_CA));
+        IconConfig c = orGlobal(cfg);
+        return IconPolicy.effective5gCaText(c.ca, c.caText);
     }
 
     private static String getEffective5gCaText() {
@@ -479,8 +497,8 @@ public class MainHook {
     }
 
     private static String getTarget5gBasicText(IconConfig cfg) {
-        return IconPolicy.target5gBasicText(cfg != null ? cfg.basic : pref(KEY_5G_BASIC),
-                cfg != null ? cfg.ca : pref(KEY_5G_CA));
+        IconConfig c = orGlobal(cfg);
+        return IconPolicy.target5gBasicText(c.basic, c.basicText, c.ca, c.caText);
     }
 
     private static String getTarget5gBasicText() {
@@ -495,8 +513,14 @@ public class MainHook {
         return getEffective5gBasicText(null);
     }
 
-    private static boolean is5gCaText(String text) {
-        return IconPolicy.is5gCaText(text);
+    private static boolean is5gCaText(String text, IconConfig cfg) {
+        IconConfig c = orGlobal(cfg);
+        return IconPolicy.is5gCaText(text, caCustom(c), basicCustom(c));
+    }
+
+    private static int radioTypeForText(String text, IconConfig cfg) {
+        IconConfig c = orGlobal(cfg);
+        return IconPolicy.radioTypeForText(text, caCustom(c), basicCustom(c));
     }
 
     private static boolean is4gCaText(String text) {
@@ -511,8 +535,9 @@ public class MainHook {
         return IconPolicy.is4gText(text);
     }
 
-    private static boolean isCapsuleTargetText(String text) {
-        return IconPolicy.isCapsuleTargetText(text);
+    private static boolean isCapsuleTargetText(String text, IconConfig cfg) {
+        IconConfig c = orGlobal(cfg);
+        return IconPolicy.isCapsuleTargetText(text, caCustom(c), basicCustom(c));
     }
 
     private static boolean isTargetBreathText(String text) {
@@ -678,7 +703,7 @@ public class MainHook {
         return -1;
     }
 
-    private static int getRadioTypeForView(View view, String text) {
+    private static int getRadioTypeForView(View view, String text, IconConfig cfg) {
         if (view != null) {
             int subId = getSubIdForView(view);
             if (subId >= 0) {
@@ -692,7 +717,7 @@ public class MainHook {
                 return ((Integer) viewR).intValue();
             }
         }
-        return IconPolicy.radioTypeForText(text);
+        return radioTypeForText(text, cfg);
     }
 
     private static int getDefaultDataSubId() {
@@ -1205,14 +1230,15 @@ public class MainHook {
             }
         }
 
-        int radioType = getRadioTypeForView(refView, currentText);
+        int radioType = getRadioTypeForView(refView, currentText, cfg);
         boolean is5g = (radioType == RADIO_TYPE_5G || radioType == RADIO_TYPE_5G_CA);
-        boolean is5gCa = (radioType == RADIO_TYPE_5G_CA) || is5gCaText(currentText);
+        boolean is5gCa = (radioType == RADIO_TYPE_5G_CA) || is5gCaText(currentText, cfg);
         boolean isBase5g = is5g && !is5gCa;
-        if (!is5g && ("5G".equals(currentText) || "5G".equals(text))) {
+        if (!is5g && (radioTypeForText(currentText, cfg) == RADIO_TYPE_5G || "5G".equals(text))) {
             isBase5g = true;
         }
-        boolean shouldShowSpecial5G = isCapsuleMode && isBase5g && !"follow_ca".equals(cfg.basic);
+        boolean shouldShowSpecial5G = isCapsuleMode && isBase5g
+                && IconPolicy.usesNativeBase5gPill(cfg.basic, basicCustom(cfg));
 
         boolean targetSpecialVisible = shouldShowSpecial5G;
         boolean targetMobileVisible = !targetSpecialVisible;
@@ -1226,7 +1252,7 @@ public class MainHook {
 
             if (targetMobileVisible) {
                 Drawable d = mobileTypeView.getDrawable();
-                if (isCapsuleMode && isCapsuleTargetText(currentText)) {
+                if (isCapsuleMode && isCapsuleTargetText(currentText, cfg)) {
                     ViewGroup.LayoutParams lp = mobileTypeView.getLayoutParams();
                     if (lp instanceof ViewGroup.MarginLayoutParams) {
                         ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) lp;
@@ -1847,10 +1873,10 @@ public class MainHook {
                                 text = getDrawableMobileType(d);
                             }
 
-                            int radioType = getRadioTypeForView(mobileTypeView, text);
+                            int radioType = getRadioTypeForView(mobileTypeView, text, cfg);
 
                             if (radioType == RADIO_TYPE_5G || radioType == RADIO_TYPE_5G_CA) {
-                                boolean isCa = (radioType == RADIO_TYPE_5G_CA) || is5gCaText(text);
+                                boolean isCa = (radioType == RADIO_TYPE_5G_CA) || is5gCaText(text, cfg);
                                 Object viewCaObj = Reflect.getAdditionalInstanceField(mobileTypeView, "isCaActive");
                                 if (viewCaObj instanceof Boolean) {
                                     isCa = isCa || ((Boolean) viewCaObj).booleanValue();
@@ -1861,8 +1887,7 @@ public class MainHook {
                                     targetText = getEffective5gCaText(cfg);
                                     isCa = true;
                                 } else {
-                                    // "default"
-                                    targetText = isCa ? getEffective5gCaText(cfg) : "5G";
+                                    targetText = isCa ? getEffective5gCaText(cfg) : getEffective5gBasicText(cfg);
                                 }
 
                                 text = targetText;
@@ -2213,10 +2238,8 @@ public class MainHook {
     }
 
     private static void applyConfigToList(List<String> list, IconConfig cfg) {
-        IconPolicy.applyMobileTypeNames(list,
-                cfg != null ? cfg.ca : pref(KEY_5G_CA),
-                cfg != null ? cfg.basic : pref(KEY_5G_BASIC),
-                cfg != null ? cfg.rat : pref(KEY_4G_RAT));
+        IconConfig c = orGlobal(cfg);
+        IconPolicy.applyMobileTypeNames(list, c.ca, c.caText, c.basic, c.basicText, c.rat);
     }
 
     private static void applyConfigToList(List<String> list) {
@@ -2375,12 +2398,13 @@ public class MainHook {
                 int slotId = getSlotIdForSubId(subId);
                 IconConfig cfg = getConfigForSlot(slotId);
 
-                if (is5gCaText(text)) {
+                int textType = radioTypeForText(text, cfg);
+                if (textType == RADIO_TYPE_5G_CA) {
                     String ca = getTarget5gCaText(cfg);
                     if (!TextUtils.isEmpty(ca)) {
                         param.setResult(ca);
                     }
-                } else if ("5G".equals(text)) {
+                } else if (textType == RADIO_TYPE_5G) {
                     param.setResult(getEffective5gBasicText(cfg));
                 } else if ("4G".equals(text) || "LTE".equals(text) || "4G LTE".equals(text) || "4.5G".equals(text)) {
                     if ("force_4g".equals(cfg.rat)) param.setResult("4G");
@@ -2848,7 +2872,7 @@ public class MainHook {
                 View v = (View) Reflect.getAdditionalInstanceField(drawable, "view");
                 int slotId = getSlotIdForView(v);
                 IconConfig cfg = getConfigForSlot(slotId);
-                if ("korean".equals(cfg.capsule) && isCapsuleTargetText(mobileType)) {
+                if ("korean".equals(cfg.capsule) && isCapsuleTargetText(mobileType, cfg)) {
                     param.setResult((int) Math.ceil(dpToPx(9.0f)));
                 }
             }
@@ -2862,7 +2886,7 @@ public class MainHook {
                 View v = (View) Reflect.getAdditionalInstanceField(drawable, "view");
                 int slotId = getSlotIdForView(v);
                 IconConfig cfg = getConfigForSlot(slotId);
-                if ("korean".equals(cfg.capsule) && isCapsuleTargetText(mobileType)) {
+                if ("korean".equals(cfg.capsule) && isCapsuleTargetText(mobileType, cfg)) {
                     Paint textPaint = (Paint) Reflect.getObjectField(drawable, "mMobileTypeTextPaint");
                     textPaint.setTextSize(dpToPx(6.1f));
                     float measuredW = textPaint.measureText(mobileType);
@@ -2882,7 +2906,7 @@ public class MainHook {
                 IconConfig cfg = getConfigForSlot(slotId);
                 Paint textPaint = (Paint) Reflect.getObjectField(drawable, "mMobileTypeTextPaint");
                 int mMobileTypeSize = Reflect.getIntField(drawable, "mMobileTypeSize");
-                if ("korean".equals(cfg.capsule) && isCapsuleTargetText(mobileType)) {
+                if ("korean".equals(cfg.capsule) && isCapsuleTargetText(mobileType, cfg)) {
                     textPaint.setTextSize(dpToPx(6.1f));
                 } else if (mMobileTypeSize > 0) {
                     textPaint.setTextSize(mMobileTypeSize);
@@ -2920,7 +2944,8 @@ public class MainHook {
                         IconConfig cfg = getConfigForSlot(slotId);
                         int rType = RADIO_TYPE_UNKNOWN;
 
-                        if (is5gCaText(str)) {
+                        int textType = radioTypeForText(str, cfg);
+                        if (textType == RADIO_TYPE_5G_CA) {
                             rType = RADIO_TYPE_5G_CA;
                             sIs5GConnected = true;
                             sIs5GCaConnected = true;
@@ -2930,7 +2955,7 @@ public class MainHook {
                                 sSubIdRadioType.put(subId, Integer.valueOf(rType));
                             }
                             Reflect.setAdditionalInstanceField(mobileTypeView, "isCaActive", Boolean.TRUE);
-                        } else if ("5G".equals(str)) {
+                        } else if (textType == RADIO_TYPE_5G) {
                             rType = RADIO_TYPE_5G;
                             sIs5GConnected = true;
                             if (subId >= 0) {
@@ -2944,7 +2969,7 @@ public class MainHook {
                                 }
                                 Reflect.setAdditionalInstanceField(mobileTypeView, "isCaActive", Boolean.FALSE);
                             }
-                        } else if (str.contains("+") || str.contains("-A")) {
+                        } else if (textType == RADIO_TYPE_4G_CA) {
                             rType = RADIO_TYPE_4G_CA;
                             if (subId >= 0) {
                                 sSubIdIs5G.put(subId, Boolean.FALSE);
@@ -2952,7 +2977,7 @@ public class MainHook {
                                 sSubIdRadioType.put(subId, Integer.valueOf(rType));
                             }
                             Reflect.setAdditionalInstanceField(mobileTypeView, "isCaActive", Boolean.FALSE);
-                        } else if (str.contains("4G") || str.contains("LTE") || str.contains("4.5G")) {
+                        } else if (textType == RADIO_TYPE_4G) {
                             rType = RADIO_TYPE_4G;
                             if (subId >= 0) {
                                 sSubIdIs5G.put(subId, Boolean.FALSE);
@@ -2960,7 +2985,7 @@ public class MainHook {
                                 sSubIdRadioType.put(subId, Integer.valueOf(rType));
                             }
                             Reflect.setAdditionalInstanceField(mobileTypeView, "isCaActive", Boolean.FALSE);
-                        } else if (!TextUtils.isEmpty(str)) {
+                        } else if (textType == RADIO_TYPE_2G_3G) {
                             rType = RADIO_TYPE_2G_3G;
                             if (subId >= 0) {
                                 sSubIdIs5G.put(subId, Boolean.FALSE);
@@ -3343,7 +3368,7 @@ public class MainHook {
                         int slotId = getSlotIdForView(v);
                         IconConfig cfg = getConfigForSlot(slotId);
                         boolean isCapsuleMode = "korean".equals(cfg.capsule);
-                        if (!isCapsuleMode || !isCapsuleTargetText(mobileType)) {
+                        if (!isCapsuleMode || !isCapsuleTargetText(mobileType, cfg)) {
                             // Non-capsule mode or non-target text: use default native system drawing
                             return;
                         }

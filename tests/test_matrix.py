@@ -15,8 +15,10 @@ The engine executes 100% of all Cartesian permutations and performs
 strict equality assertions between the MainHook implementation and the Oracle specification.
 """
 
+import functools
 import sys
 import time
+import unicodedata
 from itertools import product
 
 # --- Constants ---
@@ -28,8 +30,12 @@ RADIO_5G_CA = "5G_CA"
 
 ALL_RADIO_TYPES = [RADIO_2G_3G, RADIO_4G, RADIO_4G_CA, RADIO_5G, RADIO_5G_CA]
 
-CA_OPTIONS = ["default", "5ga", "5g_plus", "5g_plus_plus", "5guwb", "5ge", "5g_6rx", "5g_plus_plus_6rx", "5guwb_6rx"]
-BASIC_OPTIONS = ["default", "follow_ca"]
+# "custom:<label>" stands for the "custom" option with that label stored in the
+# matching pref_5g_*_text key. The labels cover a plain one, ones that look like
+# another network type, an empty one, and base labels that clash with 5G CA.
+CA_OPTIONS = ["default", "5ga", "5g_plus", "5g_plus_plus", "5guwb", "5ge", "5g_6rx", "5g_plus_plus_6rx", "5guwb_6rx",
+              "custom:5G UC", "custom:LTE X", "custom:"]
+BASIC_OPTIONS = ["default", "follow_ca", "custom:NR", "custom:5G+", "custom:5G UC"]
 CAPSULE_OPTIONS = ["default", "korean"]
 RAT_4G_OPTIONS = ["default", "force_4g", "force_lte", "force_4g_lte", "force_45g", "force_ltea"]
 RAT_WIFI_OPTIONS = ["default", "always", "data_sim", "wifi_hide"]
@@ -39,6 +45,13 @@ ROAMING_OPTIONS = ["default", "small", "hide"]
 WIFI_VOLTE_OPTIONS = ["default", "show", "hide"]
 
 CA_TEXTS = ("5GA", "5G+", "5G++", "5GUWB", "5Ge", "5G 6Rx", "5G++ 6Rx", "5GUWB 6Rx")
+
+
+def split_pref(pref):
+    """'custom:<label>' -> ('custom', '<label>'); any other option -> (option, None)."""
+    if pref.startswith("custom:"):
+        return "custom", pref[len("custom:"):]
+    return pref, None
 
 VIS_VISIBLE = "VISIBLE"
 VIS_GONE = "GONE"
@@ -52,8 +65,56 @@ class StatusIconGroundTruthOracle:
     Independent specification defining the EXACT expected status bar presentation.
     """
 
+    # Labels other network types show; a custom label equal to one is not used.
+    RESERVED_LABELS = {"default", "5G", "G", "E", "1X", "2G", "3G", "H", "H+",
+                       "4G", "4G+", "LTE", "LTE+", "4G LTE", "4G LTE+", "4.5G", "4.5G+", "LTE-A"}
+
+    @classmethod
+    @functools.lru_cache(maxsize=None)
+    def get_expected_custom_label(cls, raw):
+        """A stored custom label is shown trimmed if it is 1-10 UTF-16 units of visible text and not reserved."""
+        blank = lambda ch: ord(ch) <= 0x20 or unicodedata.category(ch) in ("Zs", "Zl", "Zp")
+        text = raw or ""
+        if len(text.encode("utf-16-le")) // 2 > 64:
+            return ""
+        while text and blank(text[0]):
+            text = text[1:]
+        while text and blank(text[-1]):
+            text = text[:-1]
+        if not text or len(text.encode("utf-16-le")) // 2 > 10 or text in cls.RESERVED_LABELS:
+            return ""
+        if any(unicodedata.category(ch) in ("Cc", "Cf", "Zl", "Zp") for ch in text):
+            return ""
+        return text
+
+    @classmethod
+    @functools.lru_cache(maxsize=None)
+    def get_expected_5g_ca_target(cls, pref_ca):
+        """Label 5G CA is forced to, or '' when SystemUI keeps its own 5G+ / 5GA."""
+        mode, raw = split_pref(pref_ca)
+        if mode == "custom":
+            return cls.get_expected_custom_label(raw)
+        if mode == "default":
+            return ""
+        return cls.get_expected_effective_5g_ca_text(mode)
+
+    @classmethod
+    @functools.lru_cache(maxsize=None)
+    def get_expected_5g_basic_custom(cls, pref_basic, pref_ca):
+        """Custom base 5G label in effect; never one that 5G CA could also show."""
+        mode, raw = split_pref(pref_basic)
+        if mode != "custom":
+            return ""
+        text = cls.get_expected_custom_label(raw)
+        ca_target = cls.get_expected_5g_ca_target(pref_ca)
+        ca_labels = {ca_target} if ca_target else {"5G+", "5GA"}
+        return "" if text in ca_labels else text
+
     @staticmethod
     def get_expected_effective_5g_ca_text(pref_ca):
+        mode, raw = split_pref(pref_ca)
+        if mode == "custom":
+            return StatusIconGroundTruthOracle.get_expected_custom_label(raw) or "5G+"
         if pref_ca == "5ga": return "5GA"
         if pref_ca == "5g_plus": return "5G+"
         if pref_ca == "5g_plus_plus": return "5G++"
@@ -124,12 +185,13 @@ class StatusIconGroundTruthOracle:
         elif radio_type in (RADIO_5G, RADIO_5G_CA):
             is_ca = (radio_type == RADIO_5G_CA)
             eff_ca = cls.get_expected_effective_5g_ca_text(pref_ca)
+            basic_custom = cls.get_expected_5g_basic_custom(pref_basic, pref_ca)
 
             if pref_basic == "follow_ca":
                 exp_text = eff_ca
                 is_ca = True
-            else:  # "default"
-                exp_text = eff_ca if is_ca else "5G"
+            else:  # "default" or a custom label
+                exp_text = eff_ca if is_ca else (basic_custom or "5G")
 
             if not rat_allowed:
                 exp_special_vis = VIS_GONE
@@ -142,6 +204,11 @@ class StatusIconGroundTruthOracle:
                         exp_special_vis = VIS_GONE
                         exp_mobile_vis = VIS_VISIBLE
                         exp_breath = True
+                    elif basic_custom:
+                        # Custom base 5G label -> our own idle capsule around that text
+                        exp_special_vis = VIS_GONE
+                        exp_mobile_vis = VIS_VISIBLE
+                        exp_breath = False
                     else:
                         # Base 5G in Capsule mode -> Native Korean pill
                         exp_special_vis = VIS_VISIBLE
@@ -299,13 +366,117 @@ class MainHookSystemUISimulator:
             return drawable.additional_fields["actualMobileType"]
         return drawable.mMobileType
 
-    def get_radio_type_for_view(self, view, text):
+    # --- Mirror of the IconPolicy custom label helpers MainHook calls ---
+    POLICY_RESERVED = ("5G", "G", "E", "1X", "2G", "3G", "H", "H+",
+                       "4G", "4G+", "LTE", "LTE+", "4G LTE", "4G LTE+", "4.5G", "4.5G+", "LTE-A")
+
+    @classmethod
+    @functools.lru_cache(maxsize=None)
+    def custom_text(cls, raw):
+        """IconPolicy.customText"""
+        text = raw or ""
+        if len(text.encode("utf-16-le")) // 2 > 64:
+            return ""
+        start, end = 0, len(text)
+        while start < end and (ord(text[start]) <= 0x20 or unicodedata.category(text[start]) in ("Zs", "Zl", "Zp")):
+            start += 1
+        while end > start and (ord(text[end - 1]) <= 0x20 or unicodedata.category(text[end - 1]) in ("Zs", "Zl", "Zp")):
+            end -= 1
+        text = text[start:end]
+        if len(text) == 0 or len(text.encode("utf-16-le")) // 2 > 10:
+            return ""
+        for ch in text:
+            if unicodedata.category(ch) in ("Cc", "Cf", "Zl", "Zp"):
+                return ""
+        if text == "default" or text in cls.POLICY_RESERVED:
+            return ""
+        return text
+
+    @classmethod
+    @functools.lru_cache(maxsize=None)
+    def target_ca(cls, pref_ca):
+        """IconPolicy.target5gCaText(ca, caText)"""
+        mode, raw = split_pref(pref_ca)
+        if mode == "custom":
+            return cls.custom_text(raw)
+        return {"5ga": "5GA", "5g_plus": "5G+", "5g_plus_plus": "5G++", "5guwb": "5GUWB", "5ge": "5Ge",
+                "5g_6rx": "5G 6Rx", "5g_plus_plus_6rx": "5G++ 6Rx", "5guwb_6rx": "5GUWB 6Rx"}.get(mode, "")
+
+    @classmethod
+    @functools.lru_cache(maxsize=None)
+    def effective_ca(cls, pref_ca):
+        return cls.target_ca(pref_ca) or "5G+"
+
+    @classmethod
+    @functools.lru_cache(maxsize=None)
+    def custom_ca(cls, pref_ca):
+        mode, _ = split_pref(pref_ca)
+        return cls.target_ca(pref_ca) if mode == "custom" else ""
+
+    @classmethod
+    @functools.lru_cache(maxsize=None)
+    def custom_basic(cls, pref_basic, pref_ca):
+        """IconPolicy.custom5gBasicText"""
+        mode, raw = split_pref(pref_basic)
+        if mode != "custom":
+            return ""
+        text = cls.custom_text(raw)
+        target = cls.target_ca(pref_ca)
+        is_ca_label = (text == target) if target else (text in ("5G+", "5GA"))
+        return "" if (not text or is_ca_label) else text
+
+    @classmethod
+    @functools.lru_cache(maxsize=None)
+    def target_basic(cls, pref_basic, pref_ca):
+        if pref_basic == "follow_ca":
+            return cls.effective_ca(pref_ca)
+        return cls.custom_basic(pref_basic, pref_ca) or "5G"
+
+    @staticmethod
+    def stock_radio_type(text):
+        """IconPolicy.radioTypeForText(text)"""
+        if text in CA_TEXTS:
+            return 5
+        if text == "5G":
+            return 4
+        if "+" in text or "-A" in text:
+            return 3
+        if "4G" in text or "LTE" in text or "4.5G" in text:
+            return 2
+        if text:
+            return 1
+        return 0
+
+    @classmethod
+    @functools.lru_cache(maxsize=None)
+    def text_radio_type(cls, text, pref_ca, pref_basic):
+        """IconPolicy.radioTypeForText(text, caCustom, basicCustom)"""
+        if text:
+            if text == cls.custom_ca(pref_ca):
+                return 5
+            if text == cls.custom_basic(pref_basic, pref_ca):
+                return 4
+        return cls.stock_radio_type(text)
+
+    @classmethod
+    @functools.lru_cache(maxsize=None)
+    def is_breath_text(cls, text, pref_ca, pref_basic):
+        """Capsule breathing marks CA labels: custom 5G CA, stock 5G CA, or 4G CA."""
+        if text and text == cls.custom_ca(pref_ca):
+            return True
+        if text and text == cls.custom_basic(pref_basic, pref_ca):
+            return False
+        return text in CA_TEXTS or "+" in text or "-A" in text
+
+    def get_radio_type_for_view(self, view, text, pref_ca="default", pref_basic="default"):
         """Exact mirror of getRadioTypeForView in MainHook.java"""
         sub_id = view.additional_fields.get("subId", -1)
         if sub_id >= 0 and sub_id in self.sSubIdRadioType:
             return self.sSubIdRadioType[sub_id]
         if "radioType" in view.additional_fields:
             return view.additional_fields["radioType"]
+        if text and (text == self.custom_ca(pref_ca) or text == self.custom_basic(pref_basic, pref_ca)):
+            return self.text_radio_type(text, pref_ca, pref_basic)
         if text in CA_TEXTS:
             return 5  # RADIO_TYPE_5G_CA
         if text == "5G":
@@ -369,7 +540,7 @@ class MainHookSystemUISimulator:
         return False
 
     def sync_view_visibility(self, mobile_view, special_view, text, default_data_sub_id,
-                             is_wifi, rom_region, pref_always, pref_basic, pref_capsule):
+                             is_wifi, rom_region, pref_always, pref_basic, pref_capsule, pref_ca="default"):
         """Exact mirror of syncViewVisibility in MainHook.java"""
         sub_id = mobile_view.additional_fields.get("subId", -1)
         if not self.should_show_rat(sub_id, default_data_sub_id, is_wifi, rom_region, pref_always):
@@ -378,14 +549,15 @@ class MainHookSystemUISimulator:
             return
 
         is_capsule = (pref_capsule == "korean")
-        radio_type = self.get_radio_type_for_view(mobile_view, text)
+        radio_type = self.get_radio_type_for_view(mobile_view, text, pref_ca, pref_basic)
         is_5g = (radio_type == 4 or radio_type == 5)
-        is_5g_ca = (radio_type == 5) or (text in CA_TEXTS)
+        is_5g_ca = (radio_type == 5) or (self.text_radio_type(text, pref_ca, pref_basic) == 5)
         is_base_5g = is_5g and not is_5g_ca
-        if not is_5g and text == "5G":
+        if not is_5g and self.text_radio_type(text, pref_ca, pref_basic) == 4:
             is_base_5g = True
 
-        should_show_special_5g = is_capsule and is_base_5g and (pref_basic != "follow_ca")
+        uses_native_pill = (pref_basic != "follow_ca") and not self.custom_basic(pref_basic, pref_ca)
+        should_show_special_5g = is_capsule and is_base_5g and uses_native_pill
         target_special_visible = should_show_special_5g
         target_mobile_visible = not target_special_visible
 
@@ -405,17 +577,17 @@ class MainHookSystemUISimulator:
                 volte_view.visibility = VIS_VISIBLE
 
         text = mobile_view.tag or self.get_drawable_mobile_type(drawable)
-        radio_type = self.get_radio_type_for_view(mobile_view, text)
+        radio_type = self.get_radio_type_for_view(mobile_view, text, pref_ca, pref_basic)
 
         if radio_type == 4 or radio_type == 5:
             # 5G
-            is_ca = (radio_type == 5) or (text in CA_TEXTS)
-            eff_ca = StatusIconGroundTruthOracle.get_expected_effective_5g_ca_text(pref_ca)
+            is_ca = (radio_type == 5) or (self.text_radio_type(text, pref_ca, pref_basic) == 5)
+            eff_ca = self.effective_ca(pref_ca)
 
             if pref_basic == "follow_ca":
                 target_text = eff_ca
             else:
-                target_text = eff_ca if is_ca else "5G"
+                target_text = eff_ca if is_ca else self.target_basic(pref_basic, pref_ca)
 
             text = target_text
             mobile_view.tag = text
@@ -448,7 +620,7 @@ class MainHookSystemUISimulator:
             drawable.measure()
 
         self.sync_view_visibility(mobile_view, special_view, text, default_data_sub_id,
-                                  is_wifi, rom_region, pref_always, pref_basic, pref_capsule)
+                                  is_wifi, rom_region, pref_always, pref_basic, pref_capsule, pref_ca)
 
     def punch_vowifi_and_roaming(self, vowifi_view, roam_view, small_roam_view, pref_vowifi, pref_roaming, slot_id):
         # VoWiFi punch
@@ -550,12 +722,12 @@ def run_dual_model_verification():
     start_time = time.time()
 
     menu_configs = list(product(CA_OPTIONS, BASIC_OPTIONS, CAPSULE_OPTIONS, RAT_4G_OPTIONS, RAT_WIFI_OPTIONS, VOLTE_OPTIONS))
-    assert len(menu_configs) == 7776
+    assert len(menu_configs) == 25920
 
     rom_regions = ["intl", "china"]
     wifi_states = [True, False]
 
-    # --- Part 1: Single SIM Scenarios (40 environments * 7776 menus = 311,040) ---
+    # --- Part 1: Single SIM Scenarios (40 environments * 25920 menus = 1,036,800) ---
     for slot_id in [1, 2]:
         sub_id = slot_id
         default_data_sub_id = sub_id
@@ -594,7 +766,7 @@ def run_dual_model_verification():
                         act_v_vis = volte_view.visibility
                         
                         # Breath condition in MainHook: isCapsuleMode and isTargetBreathText(actualText)
-                        is_ca_breath = (act_text in CA_TEXTS or ("+" in act_text or "-A" in act_text))
+                        is_ca_breath = MainHookSystemUISimulator.is_breath_text(act_text, pref_ca, pref_basic)
                         act_breath = (pref_capsule == "korean" and is_ca_breath and act_m_vis == VIS_VISIBLE)
 
                         # 3. Exact Equality Assertion
@@ -611,7 +783,7 @@ def run_dual_model_verification():
 
                         passed_permutations += 1
 
-    # --- Part 2: Dual SIM Scenarios (200 environments * 7776 menus = 1,555,200) ---
+    # --- Part 2: Dual SIM Scenarios (200 environments * 25920 menus = 5,184,000) ---
     for data_slot in [1, 2]:
         default_data_sub_id = data_slot
         for is_wifi in wifi_states:
@@ -654,8 +826,8 @@ def run_dual_model_verification():
                                 pref_ca, pref_basic, pref_capsule, pref_4g, pref_always, pref_volte
                             )
 
-                            is_ca_breath1 = (mv1.tag in CA_TEXTS or ("+" in mv1.tag or "-A" in mv1.tag))
-                            is_ca_breath2 = (mv2.tag in CA_TEXTS or ("+" in mv2.tag or "-A" in mv2.tag))
+                            is_ca_breath1 = MainHookSystemUISimulator.is_breath_text(mv1.tag, pref_ca, pref_basic)
+                            is_ca_breath2 = MainHookSystemUISimulator.is_breath_text(mv2.tag, pref_ca, pref_basic)
                             act1_breath = (pref_capsule == "korean" and is_ca_breath1 and mv1.visibility == VIS_VISIBLE)
                             act2_breath = (pref_capsule == "korean" and is_ca_breath2 and mv2.visibility == VIS_VISIBLE)
 
@@ -691,6 +863,7 @@ def run_dual_model_verification():
         ("5ge", "default", "korean", "force_ltea", "wifi_hide", "hide"),
         ("5g_plus_plus", "follow_ca", "korean", "force_4g_lte", "data_sim", "intl_vo4g"),
         ("5g_6rx", "follow_ca", "korean", "force_4g", "always", "china_hd_plus"),
+        ("custom:5G UC", "custom:NR", "korean", "force_lte", "always", "default"),
     ]
     sample_configs_sim2 = [
         ("5g_plus", "follow_ca", "default", "force_lte", "wifi_hide", "intl_4g"),
@@ -698,6 +871,7 @@ def run_dual_model_verification():
         ("5ga", "default", "default", "force_4g", "default", "intl_hollow"),
         ("5guwb", "default", "korean", "force_lte", "wifi_hide", "hide"),
         ("5guwb_6rx", "default", "korean", "force_45g", "data_sim", "china_hd_plus"),
+        ("custom:LTE X", "custom:5G+", "korean", "default", "data_sim", "default"),
     ]
 
     for is_esim in [False, True]:  # Physical SIM 2 vs eSIM replacing SIM 2
@@ -745,8 +919,8 @@ def run_dual_model_verification():
                                         p_ca2, p_basic2, p_capsule2, p_4g2, p_always2, p_volte2
                                     )
 
-                                    is_ca_breath1 = (mv1.tag in CA_TEXTS or ("+" in mv1.tag or "-A" in mv1.tag))
-                                    is_ca_breath2 = (mv2.tag in CA_TEXTS or ("+" in mv2.tag or "-A" in mv2.tag))
+                                    is_ca_breath1 = MainHookSystemUISimulator.is_breath_text(mv1.tag, p_ca1, p_basic1)
+                                    is_ca_breath2 = MainHookSystemUISimulator.is_breath_text(mv2.tag, p_ca2, p_basic2)
                                     act1_breath = (p_capsule1 == "korean" and is_ca_breath1 and mv1.visibility == VIS_VISIBLE)
                                     act2_breath = (p_capsule2 == "korean" and is_ca_breath2 and mv2.visibility == VIS_VISIBLE)
 

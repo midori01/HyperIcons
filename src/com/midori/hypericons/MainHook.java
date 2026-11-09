@@ -431,10 +431,12 @@ public class MainHook {
     private static final float SPECIAL_5G_HEIGHT_DP = 20f;
     private static final float SPECIAL_5G_PILL_TOP_DP = 1.6f;
     private static final float SPECIAL_5G_PILL_BOTTOM_DP = 7.6f;
-    private static final float SPECIAL_5G_PILL_LEFT_DP = 3f;
-    private static final float SPECIAL_5G_PILL_RIGHT_DP = 12f;
+    private static final float SPECIAL_5G_PILL_LEFT_DP = 2.1f;
+    private static final float SPECIAL_5G_PILL_RIGHT_DP = 12.9f;
     private static final float SIGNAL_WIDTH_DP = 20f;
     private static final float SMALL_ROAM_GAP_DP = 0.8f;
+    // The capsule label has inner padding before its border; the native pill's border is its edge.
+    private static final float SMALL_ROAM_PILL_GAP_DP = 1.2f;
     private static final float TYPE_HALF_MARGIN_END_OFFSET_DP = -1.8f;
     private static final float TYPE_AVAILABLE_HALF_OFFSET_DP = -10.7f;
 
@@ -508,7 +510,7 @@ public class MainHook {
         float glyphWidth = (SMALL_ROAM_GLYPH_RIGHT_DP - SMALL_ROAM_GLYPH_LEFT_DP) * roamScale;
         float glyphStart = signalWidth - (SMALL_ROAM_WIDTH_DP - SMALL_ROAM_GLYPH_LEFT_DP) * roamScale;
         float pillEnd = signalWidth - (SPECIAL_5G_WIDTH_DP - SPECIAL_5G_PILL_RIGHT_DP) * pillScale;
-        float gap = SMALL_ROAM_GAP_DP * density;
+        float gap = (pillShown ? SMALL_ROAM_PILL_GAP_DP : SMALL_ROAM_GAP_DP) * density;
 
         int typeMarginEnd = 0;
         int pillMarginEnd = 0;

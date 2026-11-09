@@ -102,6 +102,13 @@ def expected_custom_radio(ca, basic, text):
     return "\t".join([str(radio), bit(is_ca), bit(capsule), bit(pill)])
 
 
+def expected_nsa_icon_action(nr_config, bearer, data, since):
+    """0 keeps the 5G icon, 1 keeps it during the hold window, 2 clears it."""
+    if nr_config != 0 or bearer > 0 or data not in (13, 19):
+        return 0
+    return 1 if since < 11000 else 2
+
+
 def run_probe():
     javac, java = shutil.which("javac"), shutil.which("java")
     if not javac or not java:
@@ -164,6 +171,10 @@ def check(line):
         exp = Oracle.get_expected_volte_wifi_visibility(
             wifi_pref, volte, flag(wifi_on), flag(active), flag(policy), flag(show_when_wifi), flag(drip_end))
         return exp == flag(act), exp
+    if kind == "NSAICON":
+        nr_config, bearer, data, since, act = map(int, cols[1:])
+        exp = expected_nsa_icon_action(nr_config, bearer, data, since)
+        return exp == act, exp
     if kind == "LAMBDA":
         sim_mode, g, s1, s2, act = cols[1:]
         exp = MainHookSystemUISimulator.lambda_wifi_pref(sim_mode, g, s1, s2)
@@ -185,6 +196,7 @@ def main():
         + len(EXPECTED_CONFIG)
         + len(VOLTE_OPTIONS) * len(WIFI_VOLTE_OPTIONS) * 32
         + len(SIM_MODES) * len(WIFI_VOLTE_OPTIONS) ** 3
+        + 2 * 3 * 5 * 4
     )
     if len(lines) != expected_total:
         print(f"[FAIL] probe printed {len(lines)} cases, expected {expected_total}")

@@ -107,7 +107,7 @@ public class MainHook {
         return v != null ? v : ConfigKeys.DEFAULT_VALUE;
     }
 
-    private static String pref(String key) {
+    static String pref(String key) {
         String v = sConfig.get(key);
         return v != null ? v : ConfigKeys.DEFAULT_VALUE;
     }
@@ -1955,6 +1955,7 @@ public class MainHook {
     }
 
     private static void performStatusReload() {
+        Nsa5gHook.onConfigChanged();
         if (sPolicyInstance != null) {
             try {
                 Reflect.callMethod(sPolicyInstance, "initResource", "reload", null);
@@ -2224,6 +2225,7 @@ public class MainHook {
         HookEnv.group("VoLTE view model", () -> hookVolteViewModel(lpparam));
         HookEnv.group("Mobile icon binder", () -> hookMobileIconBinder(lpparam));
         HookEnv.group("VoNR carrier config", () -> hookCarrierConfigVonr(lpparam));
+        HookEnv.group("Ignore ULI", () -> Nsa5gHook.hookIgnoreUli(lpparam));
     }
 
     private static void reportHooksLater(long delayMs) {

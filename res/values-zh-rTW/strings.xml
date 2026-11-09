@@ -121,6 +121,10 @@
     <string name="subtitle_experimental">高級通訊協定與基頻底層特性調優</string>
     <string name="pref_5ga_keepalive_title">行動網路與 5G+ 特性鎖定保活</string>
     <string name="pref_5ga_keepalive_desc">在 SIM 2 / eSIM (Slot 1) 切換時，自動按您原有的設定鎖定保活 3GPP 協定版本、5G+、VoNR、雙卡雙通及強制 APN 編輯</string>
+    <string name="pref_ignore_uli_title">忽略 ULI</string>
+    <string name="pref_ignore_uli_desc">在 NSA 網路下，只有真正連上 NR 時才顯示 5G。否則基地台只要廣播支援 5G，狀態列在 LTE 上也會顯示 5G。高通機型在 NR 釋放後會多保留幾秒，避免圖示閃爍。</string>
+    <string name="section_status_bar">狀態列顯示</string>
+    <string name="section_keep_alive">SIM 切換保活</string>
     <string name="status_enabled">[已啟用]</string>
     <string name="status_disabled_default">[已關閉 (預設)]</string>
     <string name="experimental_explain_title">功能背景與運作原理</string>

@@ -43,6 +43,18 @@ public class PolicyProbe {
             }
         }
 
+        for (int nrConfig : new int[]{ 0, 1 }) {
+            for (int bearer : new int[]{ 0, 1, 2 }) {
+                for (int data : new int[]{ -1, 0, 13, 19, 20 }) {
+                    for (long since : new long[]{ 0L, 10999L, 11000L, Long.MAX_VALUE }) {
+                        line(out, "NSAICON", String.valueOf(nrConfig), String.valueOf(bearer),
+                                String.valueOf(data), String.valueOf(since),
+                                String.valueOf(IconPolicy.nsaIconAction(nrConfig, bearer, data, since, 11000L)));
+                    }
+                }
+            }
+        }
+
         for (String ca : opts.get("ca")) {
             for (String basic : opts.get("basic")) {
                 for (String rat : opts.get("rat")) {

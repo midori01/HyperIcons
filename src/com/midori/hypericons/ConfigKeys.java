@@ -32,7 +32,10 @@ public final class ConfigKeys {
     public static final String KEY_VONR_VISIBILITY = "pref_vonr_visibility";
     public static final String KEY_WIFI_VOLTE_VISIBILITY = "pref_wifi_volte_visibility";
 
+    public static final String KEY_IGNORE_ULI = "pref_ignore_uli";
+
     public static final String DEFAULT_VALUE = "default";
+    public static final String VALUE_ON = "on";
     public static final String DEFAULT_SIM_MODE = "both";
     public static final String DEFAULT_TARGET_TAB = "both";
 
@@ -49,6 +52,10 @@ public final class ConfigKeys {
         KEY_ROAMING_STYLE,
         KEY_VONR_VISIBILITY,
         KEY_WIFI_VOLTE_VISIBILITY,
+    };
+
+    private static final String[] GLOBAL_OPTION_KEYS = {
+        KEY_IGNORE_ULI,
     };
 
     /** Reads one stored value, returning {@code def} when it is missing. */
@@ -74,6 +81,7 @@ public final class ConfigKeys {
         List<String> keys = new ArrayList<String>();
         keys.add(KEY_SIM_MODE);
         keys.add(KEY_TARGET_TAB);
+        Collections.addAll(keys, GLOBAL_OPTION_KEYS);
         for (String key : SIM_OPTION_KEYS) {
             keys.add(key);
             keys.add(slotKey(key, 0));
@@ -87,6 +95,9 @@ public final class ConfigKeys {
         Map<String, String> config = new HashMap<String, String>();
         config.put(KEY_SIM_MODE, src.get(KEY_SIM_MODE, DEFAULT_SIM_MODE));
         config.put(KEY_TARGET_TAB, src.get(KEY_TARGET_TAB, DEFAULT_TARGET_TAB));
+        for (String key : GLOBAL_OPTION_KEYS) {
+            config.put(key, src.get(key, DEFAULT_VALUE));
+        }
         for (String key : SIM_OPTION_KEYS) {
             String global = src.get(key, DEFAULT_VALUE);
             config.put(key, global);

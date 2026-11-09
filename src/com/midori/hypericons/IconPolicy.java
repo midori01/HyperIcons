@@ -28,6 +28,24 @@ public final class IconPolicy {
         return s == null || s.length() == 0;
     }
 
+    // ---- NSA 5G ----
+
+    public static final int NSA_ICON_KEEP = 0;
+    public static final int NSA_ICON_HOLD = 1;
+    public static final int NSA_ICON_CLEAR = 2;
+
+    private static final int NETWORK_TYPE_LTE = 13;
+    private static final int NETWORK_TYPE_LTE_CA = 19;
+    private static final int NR_CONFIG_NSA = 0;
+
+    /** What to do with a 5G icon group when only an active NR link may show 5G. */
+    public static int nsaIconAction(int nrConfigType, int bearerStatus, int dataNetworkType,
+            long sinceBearerMs, long holdMs) {
+        boolean onLte = dataNetworkType == NETWORK_TYPE_LTE || dataNetworkType == NETWORK_TYPE_LTE_CA;
+        if (nrConfigType != NR_CONFIG_NSA || !onLte || bearerStatus > 0) return NSA_ICON_KEEP;
+        return sinceBearerMs < holdMs ? NSA_ICON_HOLD : NSA_ICON_CLEAR;
+    }
+
     // ---- RAT visibility ----
 
     /** Only "default" depends on the ROM region; callers can skip the lookup otherwise. */

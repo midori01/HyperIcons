@@ -121,6 +121,10 @@
     <string name="subtitle_experimental">高度なプロトコルおよびモデム最適化</string>
     <string name="pref_5ga_keepalive_title">モバイルネットワークと 5G+ 機能ロック保持</string>
     <string name="pref_5ga_keepalive_desc">SIM 2 / eSIM (Slot 1) 切替時に、元の設定に基づき 3GPP プロトコルバージョン、5G+、VoNR、DSDA、強制APN編集を自動保持します</string>
+    <string name="pref_ignore_uli_title">ULI を無視</string>
+    <string name="pref_ignore_uli_desc">NSA ネットワークでは、NR に実際に接続しているときだけ 5G を表示します。無効の場合、基地局が 5G 対応を通知しているだけで LTE 接続中でも 5G と表示されることがあります。Qualcomm 端末では、アイコンのちらつきを防ぐため NR 解放後も数秒間 5G を維持します。</string>
+    <string name="section_status_bar">ステータスバー表示</string>
+    <string name="section_keep_alive">SIM 切替時の維持</string>
     <string name="status_enabled">[有効]</string>
     <string name="status_disabled_default">[無効 (デフォルト)]</string>
     <string name="experimental_explain_title">機能の背景と動作原理</string>

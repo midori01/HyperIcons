@@ -64,6 +64,10 @@ public class ExperimentalActivity extends Activity {
 
         updateUiState(enabled);
 
+        setupExplainCard();
+
+        bindOption(R.id.switch_ignore_uli, R.id.badge_ignore_uli_status, ConfigKeys.KEY_IGNORE_ULI);
+
         View btnRestartPhone = findViewById(R.id.btn_restart_phone);
         if (btnRestartPhone != null) {
             btnRestartPhone.setOnClickListener(new View.OnClickListener() {
@@ -73,6 +77,59 @@ public class ExperimentalActivity extends Activity {
                 }
             });
         }
+    }
+
+    private void setupExplainCard() {
+        final View header = findViewById(R.id.explain_header);
+        final View body = findViewById(R.id.explain_content);
+        final View chevron = findViewById(R.id.explain_chevron);
+        if (header == null || body == null || chevron == null) return;
+        describeExplainCard(header, false);
+        header.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean expand = body.getVisibility() != View.VISIBLE;
+                body.setVisibility(expand ? View.VISIBLE : View.GONE);
+                chevron.animate().rotation(expand ? 180f : 0f).setDuration(200).start();
+                describeExplainCard(header, expand);
+            }
+        });
+    }
+
+    private void describeExplainCard(View header, boolean expanded) {
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+            header.setStateDescription(getString(expanded ? R.string.card_state_expanded : R.string.card_state_collapsed));
+        }
+    }
+
+    private void bindOption(int switchId, int badgeId, final String key) {
+        final Switch toggle = findViewById(switchId);
+        final TextView badge = findViewById(badgeId);
+        if (toggle == null || badge == null) return;
+        toggle.setChecked(isOptionOn(key));
+        showOptionBadge(badge, toggle.isChecked());
+        toggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                SharedPreferences p = MainActivity.getSafePrefs(ExperimentalActivity.this);
+                if (p != null) {
+                    p.edit().putString(key, isChecked ? ConfigKeys.VALUE_ON : ConfigKeys.DEFAULT_VALUE).commit();
+                    MainActivity.fixPermissions(ExperimentalActivity.this);
+                    getContentResolver().notifyChange(IconConfigProvider.CONTENT_URI, null);
+                }
+                showOptionBadge(badge, isChecked);
+            }
+        });
+    }
+
+    private boolean isOptionOn(String key) {
+        SharedPreferences prefs = MainActivity.getSafePrefs(this);
+        return prefs != null && ConfigKeys.VALUE_ON.equals(prefs.getString(key, ConfigKeys.DEFAULT_VALUE));
+    }
+
+    private void showOptionBadge(TextView badge, boolean on) {
+        badge.setText(on ? R.string.status_enabled : R.string.status_disabled_default);
+        badge.setTextColor(on ? getColor(R.color.accent) : getColor(R.color.text_caption));
     }
 
     private void confirmRestartPhone() {

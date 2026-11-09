@@ -69,10 +69,12 @@ final class Nsa5gHook {
     private static void applyIgnoreUli(Object client, int slot) {
         Object state = Reflect.callMethod(client, "getCurrentServiceState", slot);
         long now = SystemClock.elapsedRealtime();
-        int bearer = Reflect.getIntField(state, "mBearerAllocationStatus");
-        // The modem only reports changes, so the hold has to start when the bearer goes away.
-        Boolean wasUp = sBearerUp.put(slot, bearer > 0);
-        if (bearer > 0) {
+        // Some modems never push the bearer status, so a serving NR carrier counts as well.
+        Integer carriers = sNrCarriers.get(MainHook.getSubIdForSlotId(slot));
+        int nrLink = Math.max(Reflect.getIntField(state, "mBearerAllocationStatus"), carriers != null ? carriers : 0);
+        // The modem only reports changes, so the hold has to start when the link goes away.
+        Boolean wasUp = sBearerUp.put(slot, nrLink > 0);
+        if (nrLink > 0) {
             sBearerReleasedAt.remove(slot);
         } else if (Boolean.TRUE.equals(wasUp)) {
             sBearerReleasedAt.put(slot, now);
@@ -81,7 +83,7 @@ final class Nsa5gHook {
 
         Long released = sBearerReleasedAt.get(slot);
         long sinceBearer = released == null ? Long.MAX_VALUE : now - released;
-        int action = IconPolicy.nsaIconAction(Reflect.getIntField(state, "mNrConfigType"), bearer,
+        int action = IconPolicy.nsaIconAction(Reflect.getIntField(state, "mNrConfigType"), nrLink,
                 dataNetworkType(client, slot), sinceBearer, BEARER_HOLD_MS);
         if (action == IconPolicy.NSA_ICON_CLEAR) {
             Reflect.setObjectField(state, "mIconGroup", sUnknownIconGroup);
@@ -187,6 +189,7 @@ final class Nsa5gHook {
         if (previous == null || previous != carriers) {
             HookEnv.log(TAG + ": subId=" + subId + " has " + carriers + " NR carriers");
         }
+        if (ignoreUli() && (previous != null && previous > 0) != (carriers > 0)) recomputeIcons();
         Handler handler = MainHook.getMainHandler();
         if (handler == null) return;
         boolean active = Boolean.TRUE.equals(sNrCaActive.get(subId));

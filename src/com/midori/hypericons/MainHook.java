@@ -3233,6 +3233,16 @@ public class MainHook {
                                 sSubIdRadioType.put(subId, Integer.valueOf(rType));
                             }
                             Reflect.setAdditionalInstanceField(mobileTypeView, "isCaActive", Boolean.FALSE);
+                        } else if (TextUtils.isEmpty(str)) {
+                            // SystemUI clears the label when the SIM is out of service. Forget the
+                            // last network too, or the next reload writes its label back.
+                            if (subId >= 0) {
+                                sSubIdIs5G.put(subId, Boolean.FALSE);
+                                sSubIdIs5GCa.put(subId, Boolean.FALSE);
+                                sSubIdRadioType.remove(subId);
+                            }
+                            Reflect.setAdditionalInstanceField(mobileTypeView, "isCaActive", Boolean.FALSE);
+                            Reflect.setAdditionalInstanceField(mobileTypeView, "radioType", Integer.valueOf(RADIO_TYPE_UNKNOWN));
                         }
 
                         if (rType != RADIO_TYPE_UNKNOWN) {

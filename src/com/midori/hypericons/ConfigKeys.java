@@ -33,6 +33,7 @@ public final class ConfigKeys {
     public static final String KEY_WIFI_VOLTE_VISIBILITY = "pref_wifi_volte_visibility";
 
     public static final String KEY_IGNORE_ULI = "pref_ignore_uli";
+    public static final String KEY_NSA_NR_CA = "pref_nsa_nr_ca";
 
     public static final String DEFAULT_VALUE = "default";
     public static final String VALUE_ON = "on";
@@ -56,6 +57,7 @@ public final class ConfigKeys {
 
     private static final String[] GLOBAL_OPTION_KEYS = {
         KEY_IGNORE_ULI,
+        KEY_NSA_NR_CA,
     };
 
     /** Reads one stored value, returning {@code def} when it is missing. */

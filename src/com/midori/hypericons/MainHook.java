@@ -257,7 +257,7 @@ public class MainHook {
         }
     };
 
-    private static Handler getMainHandler() {
+    static Handler getMainHandler() {
         if (sMainHandler == null) {
             synchronized (MainHook.class) {
                 if (sMainHandler == null) {
@@ -1944,6 +1944,18 @@ public class MainHook {
         }
     }
 
+    static void refreshOperatorConfig(final int slotId) {
+        final Object policy = sPolicyInstance;
+        Handler handler = getMainHandler();
+        if (policy == null || handler == null || slotId < 0) return;
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                Reflect.callMethod(policy, "updateMiuiOperatorConfig", slotId);
+            }
+        });
+    }
+
     private static void triggerStatusReload() {
         Handler handler = getMainHandler();
         if (handler != null) {
@@ -2226,6 +2238,7 @@ public class MainHook {
         HookEnv.group("Mobile icon binder", () -> hookMobileIconBinder(lpparam));
         HookEnv.group("VoNR carrier config", () -> hookCarrierConfigVonr(lpparam));
         HookEnv.group("Ignore ULI", () -> Nsa5gHook.hookIgnoreUli(lpparam));
+        HookEnv.group("NSA NR CA", () -> Nsa5gHook.hookNsaNrCa(lpparam));
     }
 
     private static void reportHooksLater(long delayMs) {
@@ -2416,6 +2429,11 @@ public class MainHook {
                         if (list.size() >= 14) {
                             ArrayList<String> modified = new ArrayList<String>(list);
                             applyConfigToList(modified, cfg);
+                            // The config flow only re-emits when its content changes, so the NSA
+                            // entry has to differ for a carrier count change to reach the label.
+                            if (Nsa5gHook.isNrCaActive(getSubIdForSlotId(slotId))) {
+                                modified.set(10, modified.get(12));
+                            }
                             Reflect.setObjectField(opConfig, "mobileTypeName", modified);
                         }
                     }
@@ -2519,6 +2537,7 @@ public class MainHook {
                 try {
                     subId = Reflect.getIntField(param.thisObject, "subId");
                 } catch (Throwable ignored) {}
+                index = IconPolicy.mobileTypeIndexForNsa(index, Nsa5gHook.isNrCaActive(subId));
                 int slotId = getSlotIdForSubId(subId);
                 IconConfig cfg = getConfigForSlot(slotId);
 

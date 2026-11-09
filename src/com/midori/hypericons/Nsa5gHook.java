@@ -2,9 +2,12 @@ package com.midori.hypericons;
 
 import android.os.Handler;
 import android.os.SystemClock;
+import android.telephony.PhysicalChannelConfig;
 import android.telephony.ServiceState;
+import android.telephony.TelephonyManager;
 
 import java.lang.ref.WeakReference;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /** Experimental NSA 5G rules for the status bar. Everything here is off by default. */
@@ -19,6 +22,9 @@ final class Nsa5gHook {
 
     // Stock SystemUI waits this long before dropping 5G on its Korean carrier path.
     private static final long BEARER_HOLD_MS = 11000L;
+    private static final long NR_CA_DROP_HOLD_MS = 3000L;
+    private static final String CHANNEL_CALLBACK_CLASS =
+            "com.android.systemui.statusbar.pipeline.mobile.data.repository.prod.MobileConnectionRepositoryImpl$callbackEvents$1$1$callback$1";
     private static final int NR_STATE_RESTRICTED = 1;
     private static final int NR_STATE_NOT_RESTRICTED = 2;
 
@@ -28,6 +34,9 @@ final class Nsa5gHook {
     private static final ConcurrentHashMap<Integer, Boolean> sBearerUp = new ConcurrentHashMap<Integer, Boolean>();
     private static final ConcurrentHashMap<Integer, Long> sBearerReleasedAt = new ConcurrentHashMap<Integer, Long>();
     private static final ThreadLocal<Boolean> sEvaluatingFiveG = new ThreadLocal<Boolean>();
+    private static final ConcurrentHashMap<Integer, Boolean> sNrCaActive = new ConcurrentHashMap<Integer, Boolean>();
+    private static final ConcurrentHashMap<Integer, Integer> sNrCarriers = new ConcurrentHashMap<Integer, Integer>();
+    private static final ConcurrentHashMap<Integer, Runnable> sNrCaDrops = new ConcurrentHashMap<Integer, Runnable>();
     private static final ConcurrentHashMap<Integer, Runnable> sHoldExpiries = new ConcurrentHashMap<Integer, Runnable>();
 
     static boolean ignoreUli() {
@@ -135,6 +144,75 @@ final class Nsa5gHook {
                 }
             }
         });
+    }
+
+    private static boolean nsaNrCa() {
+        return ConfigKeys.VALUE_ON.equals(MainHook.pref(ConfigKeys.KEY_NSA_NR_CA));
+    }
+
+    static boolean isNrCaActive(int subId) {
+        return nsaNrCa() && Boolean.TRUE.equals(sNrCaActive.get(subId));
+    }
+
+    /** SystemUI already listens for channel configs on every SIM, but drops them outside MediaTek and XRING. */
+    static void hookNsaNrCa(LoadPackageParam lpparam) {
+        Class<?> callback = Reflect.findClassIfExists(CHANNEL_CALLBACK_CLASS, lpparam.classLoader);
+        if (callback == null) return;
+        HookEnv.findAndHookMethod(callback, "onPhysicalChannelConfigChanged", List.class, new MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                int subId = Reflect.getIntField(Reflect.getObjectField(param.thisObject, "$this_run"), "subId");
+                onNrCarrierCount(subId, countNrCarriers((List<?>) param.args[0]));
+            }
+        });
+    }
+
+    private static int countNrCarriers(List<?> channels) {
+        int count = 0;
+        for (Object channel : channels) {
+            if (!(channel instanceof PhysicalChannelConfig)) continue;
+            PhysicalChannelConfig config = (PhysicalChannelConfig) channel;
+            int status = config.getConnectionStatus();
+            if (config.getNetworkType() == TelephonyManager.NETWORK_TYPE_NR
+                    && (status == PhysicalChannelConfig.CONNECTION_PRIMARY_SERVING
+                        || status == PhysicalChannelConfig.CONNECTION_SECONDARY_SERVING)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    static void onNrCarrierCount(final int subId, int carriers) {
+        Integer previous = sNrCarriers.put(subId, carriers);
+        if (previous == null || previous != carriers) {
+            HookEnv.log(TAG + ": subId=" + subId + " has " + carriers + " NR carriers");
+        }
+        Handler handler = MainHook.getMainHandler();
+        if (handler == null) return;
+        boolean active = Boolean.TRUE.equals(sNrCaActive.get(subId));
+        if (IconPolicy.isNsaNrCa(carriers)) {
+            Runnable pendingDrop = sNrCaDrops.remove(subId);
+            if (pendingDrop != null) handler.removeCallbacks(pendingDrop);
+            if (!active) {
+                sNrCaActive.put(subId, Boolean.TRUE);
+                refreshNrCaLabel(subId);
+            }
+        } else if (active && !sNrCaDrops.containsKey(subId)) {
+            Runnable drop = new Runnable() {
+                @Override
+                public void run() {
+                    sNrCaDrops.remove(subId);
+                    sNrCaActive.put(subId, Boolean.FALSE);
+                    refreshNrCaLabel(subId);
+                }
+            };
+            sNrCaDrops.put(subId, drop);
+            handler.postDelayed(drop, NR_CA_DROP_HOLD_MS);
+        }
+    }
+
+    private static void refreshNrCaLabel(int subId) {
+        if (nsaNrCa()) MainHook.refreshOperatorConfig(MainHook.getSlotIdForSubId(subId));
     }
 
     static void onConfigChanged() {

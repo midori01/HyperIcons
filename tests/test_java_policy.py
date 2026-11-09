@@ -175,6 +175,14 @@ def check(line):
         nr_config, bearer, data, since, act = map(int, cols[1:])
         exp = expected_nsa_icon_action(nr_config, bearer, data, since)
         return exp == act, exp
+    if kind == "NRCA":
+        carriers, act = cols[1:]
+        exp = int(carriers) >= 2
+        return exp == flag(act), exp
+    if kind == "NSAIDX":
+        index, active, act = cols[1:]
+        exp = 12 if index == "10" and flag(active) else int(index)
+        return exp == int(act), exp
     if kind == "LAMBDA":
         sim_mode, g, s1, s2, act = cols[1:]
         exp = MainHookSystemUISimulator.lambda_wifi_pref(sim_mode, g, s1, s2)
@@ -197,6 +205,7 @@ def main():
         + len(VOLTE_OPTIONS) * len(WIFI_VOLTE_OPTIONS) * 32
         + len(SIM_MODES) * len(WIFI_VOLTE_OPTIONS) ** 3
         + 2 * 3 * 5 * 4
+        + 4 + 5 * 2
     )
     if len(lines) != expected_total:
         print(f"[FAIL] probe printed {len(lines)} cases, expected {expected_total}")

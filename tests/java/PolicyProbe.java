@@ -55,6 +55,16 @@ public class PolicyProbe {
             }
         }
 
+        for (int carriers = 0; carriers <= 3; carriers++) {
+            line(out, "NRCA", String.valueOf(carriers), b(IconPolicy.isNsaNrCa(carriers)));
+        }
+        for (int index : new int[]{ 9, 10, 11, 12, 13 }) {
+            for (boolean active : BOOLS) {
+                line(out, "NSAIDX", String.valueOf(index), b(active),
+                        String.valueOf(IconPolicy.mobileTypeIndexForNsa(index, active)));
+            }
+        }
+
         for (String ca : opts.get("ca")) {
             for (String basic : opts.get("basic")) {
                 for (String rat : opts.get("rat")) {

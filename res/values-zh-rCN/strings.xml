@@ -123,6 +123,8 @@
     <string name="pref_5ga_keepalive_desc">在 SIM 2 / eSIM (Slot 1) 切换时，自动按您原有的设置锁定保活 3GPP 协议版本、5G+、VoNR、双卡双通及强制 APN 编辑</string>
     <string name="pref_ignore_uli_title">忽略 ULI</string>
     <string name="pref_ignore_uli_desc">在 NSA 网络下，只有真正连上 NR 时才显示 5G。否则基站只要广播支持 5G，状态栏在 LTE 上也会显示 5G。高通机型在 NR 释放后会多保留几秒，避免图标闪烁。</string>
+    <string name="pref_nsa_nr_ca_title">NSA NR 聚合显示 5G CA 标签</string>
+    <string name="pref_nsa_nr_ca_desc">在 NSA 网络下，至少 2 条 NR 载波同时激活时（例如 2 LTE + 2 NR）显示 5G CA 标签。需要基带上报全部 NR 载波，部分机型只上报一条，此时不会生效。</string>
     <string name="section_status_bar">状态栏显示</string>
     <string name="section_keep_alive">SIM 切换保活</string>
     <string name="status_enabled">[已启用]</string>

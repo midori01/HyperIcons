@@ -67,6 +67,7 @@ public class ExperimentalActivity extends Activity {
         setupExplainCard();
 
         bindOption(R.id.switch_ignore_uli, R.id.badge_ignore_uli_status, ConfigKeys.KEY_IGNORE_ULI);
+        bindOption(R.id.switch_nsa_nr_ca, R.id.badge_nsa_nr_ca_status, ConfigKeys.KEY_NSA_NR_CA);
 
         View btnRestartPhone = findViewById(R.id.btn_restart_phone);
         if (btnRestartPhone != null) {

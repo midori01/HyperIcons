@@ -124,6 +124,8 @@
     <string name="pref_5ga_keepalive_desc">Preserve 3GPP protocol version, 5G+, VoNR, DSDA, and Force APN editing based on your original settings when switching SIM 2 / eSIM (Slot 1)</string>
     <string name="pref_ignore_uli_title">Ignore ULI</string>
     <string name="pref_ignore_uli_desc">On NSA networks, show 5G only while an NR link is active. Otherwise the status bar can show 5G on LTE just because the cell advertises 5G. On Qualcomm phones 5G stays for a few seconds after NR is released, so the icon does not flicker.</string>
+    <string name="pref_nsa_nr_ca_title">5G CA label on NSA NR-CA</string>
+    <string name="pref_nsa_nr_ca_desc">On NSA networks, use the 5G CA label while at least two NR carriers are active, for example 2 LTE + 2 NR. The modem has to report every NR carrier, and some phones only report one.</string>
     <string name="section_status_bar">Status bar</string>
     <string name="section_keep_alive">SIM switch keep-alive</string>
     <string name="status_enabled">[Enabled]</string>

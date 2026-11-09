@@ -123,6 +123,8 @@
     <string name="pref_5ga_keepalive_desc">SIM 2 / eSIM (Slot 1) 전환 시 기존 설정을 기반으로 3GPP 프로토콜 버전, 5G+, VoNR, DSDA, 강제 APN 편집을 자동 유지합니다</string>
     <string name="pref_ignore_uli_title">ULI 무시</string>
     <string name="pref_ignore_uli_desc">NSA 네트워크에서 실제로 NR에 연결된 경우에만 5G를 표시합니다. 끄면 기지국이 5G 지원을 알리는 것만으로 LTE 연결 중에도 5G로 표시될 수 있습니다. 퀄컴 기기에서는 아이콘 깜박임을 막기 위해 NR 해제 후에도 몇 초간 5G를 유지합니다.</string>
+    <string name="pref_nsa_nr_ca_title">NSA NR-CA에 5G CA 라벨 표시</string>
+    <string name="pref_nsa_nr_ca_desc">NSA 네트워크에서 NR 캐리어가 2개 이상 활성화되면(예: 2 LTE + 2 NR) 5G CA 라벨을 표시합니다. 모뎀이 모든 NR 캐리어를 보고해야 하며, 1개만 보고하는 기기에서는 작동하지 않습니다.</string>
     <string name="section_status_bar">상태 표시줄</string>
     <string name="section_keep_alive">SIM 전환 유지</string>
     <string name="status_enabled">[활성화됨]</string>

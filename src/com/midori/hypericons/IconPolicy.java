@@ -46,6 +46,19 @@ public final class IconPolicy {
         return sinceBearerMs < holdMs ? NSA_ICON_HOLD : NSA_ICON_CLEAR;
     }
 
+    private static final int MIN_NR_CARRIERS_FOR_CA = 2;
+    private static final int INDEX_5G_NSA = 10;
+    private static final int INDEX_5G_CA = 12;
+
+    public static boolean isNsaNrCa(int nrCarriers) {
+        return nrCarriers >= MIN_NR_CARRIERS_FOR_CA;
+    }
+
+    /** NSA with NR carrier aggregation takes the 5G CA label; every other index is unchanged. */
+    public static int mobileTypeIndexForNsa(int index, boolean nrCaActive) {
+        return index == INDEX_5G_NSA && nrCaActive ? INDEX_5G_CA : index;
+    }
+
     // ---- RAT visibility ----
 
     /** Only "default" depends on the ROM region; callers can skip the lookup otherwise. */
